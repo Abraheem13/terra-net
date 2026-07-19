@@ -1,0 +1,15 @@
+# Global defaults — every experiment config composes on top of this.
+seed: 0
+seeds: [0, 1, 2, 3, 4]        # full sweeps rerun with all seeds
+paths:
+  raw: data/raw
+  processed: data/processed
+  splits: data/splits
+  outputs: outputs
+wandb:
+  project: terra-net
+  mode: online                 # set to "disabled" for offline runs
+tile:
+  sizes_m: [1000, 800, 600, 400, 300, 200]
+  primary_size_m: 200
+  raster_hw: 128

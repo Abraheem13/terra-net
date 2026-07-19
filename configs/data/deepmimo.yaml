@@ -1,0 +1,7 @@
+dataset: deepmimo
+cities: [city_0_newyork, city_1_losangeles, city_2_chicago, city_3_houston,
+         city_4_phoenix, city_5_philadelphia, city_6_miami, city_7_sandiego,
+         city_8_dallas, city_9_sanfrancisco]
+freq_ghz: 3.5
+min_measurements_per_tile: 10
+license: CC-BY-NC-SA-4.0

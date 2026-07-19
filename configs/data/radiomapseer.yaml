@@ -1,0 +1,7 @@
+dataset: radiomap3dseer
+maps: 701
+tx_per_map: 80
+resolution_m: 1.0
+freq_ghz: 5.9
+license: CC-BY-4.0
+role: comparability-benchmark   # for RadioUNet/PMNet-style comparison only

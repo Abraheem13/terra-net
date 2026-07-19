@@ -1,0 +1,11 @@
+dataset: sionna_euro
+# Cities with high-quality open 3D data; bboxes are (min_lon, min_lat, max_lon, max_lat)
+cities:
+  amsterdam: [4.85, 52.35, 4.95, 52.40]     # 3D BAG LoD2
+  rotterdam: [4.45, 51.90, 4.55, 51.95]
+  delft:     [4.33, 51.98, 4.39, 52.02]
+  london:    [-0.14, 51.50, -0.06, 51.53]   # OSM heights + EA LiDAR
+freq_ghz: 3.5
+cell_size_m: 5.0
+bs_per_city: 30
+sionna_version: "0.19"                       # PINNED: later versions drop diffraction

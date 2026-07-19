@@ -1,0 +1,8 @@
+defaults: [../base.yaml, ../model/terranet.yaml]
+name: terranet_loco
+protocol: loco
+datasets: [deepmimo]
+kshot: [0, 5, 10, 50, 100]
+ablations:
+  encoder: [descriptor_only, raster_only, fusion]
+  da: [none, dann, coral, mmd]

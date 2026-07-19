@@ -1,0 +1,7 @@
+defaults: [../base.yaml, ../model/terranet.yaml]
+name: robustness
+corruption:
+  gaussian_noise_std: [0.0, 0.05, 0.1, 0.2, 0.4]   # on normalized descriptors
+  missing_groups: [none, climate, landcover, built, topographic]
+  temporal_drift:                                   # train on old geometry snapshot
+    enabled: true

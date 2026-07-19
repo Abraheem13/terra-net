@@ -1,0 +1,24 @@
+name: terranet
+channels: [pytorch, nvidia, conda-forge]
+dependencies:
+  - python=3.10
+  - pytorch>=2.2
+  - pytorch-cuda=12.1
+  - numpy>=1.26
+  - scipy
+  - pandas
+  - geopandas
+  - rasterio
+  - shapely
+  - pyproj
+  - h5py
+  - zarr
+  - xarray
+  - matplotlib
+  - seaborn
+  - scikit-learn
+  - pip
+  - pip:
+      - -e .[dev]
+      # install [rt] extra separately in the Sionna env if generating data:
+      # pip install -e .[rt]

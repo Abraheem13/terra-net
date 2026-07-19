@@ -1,0 +1,5 @@
+dataset: ofcom
+cities: [london, boston_uk, merthyr_tydfil, nottingham, southampton, stevenage]
+freqs_mhz: [449, 915, 1802, 2695, 3602, 5850]
+license: OGL-3.0
+role: real-measurement-validation

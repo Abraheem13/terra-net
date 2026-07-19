@@ -1,0 +1,6 @@
+defaults: [../base.yaml]
+name: baselines_loco
+protocol: loco
+datasets: [deepmimo]
+models: [log_distance_global, okumura_hata, cost231, tr38901,
+         gaussian_descriptor_transfer, descriptor_mlp, descriptor_gp]
