@@ -13,3 +13,4 @@ wandb/
 *.pt
 *.lock
 .env
+deepmimo_scenarios/
