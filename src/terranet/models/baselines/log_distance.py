@@ -47,3 +47,23 @@ def fit_tiles_mixed_path(
             counts[t] += 1
     sol = lsqr(A.tocsr(), pl_db, damp=damp)[0]
     return sol[:n_tiles], sol[n_tiles:], counts
+
+
+def fit_tiles_local(tile_idx: np.ndarray, d_m: np.ndarray, pl_db: np.ndarray,
+                    n_tiles: int, min_count: int = 10, d0: float = 1.0):
+    """Well-conditioned per-tile fit: each tile uses only measurements whose RX
+    lies inside it, with full Tx-Rx distance. Identifiable with a single BS,
+    unlike the joint mixed-path system. Returns (gamma, pl0, counts, rmse_db)."""
+    gamma = np.full(n_tiles, np.nan)
+    pl0 = np.full(n_tiles, np.nan)
+    rmse = np.full(n_tiles, np.nan)
+    counts = np.bincount(tile_idx, minlength=n_tiles).astype(float)
+    for t in range(n_tiles):
+        m = tile_idx == t
+        if m.sum() < min_count:
+            continue
+        g, p = fit_global(d_m[m], pl_db[m], d0=d0)
+        gamma[t], pl0[t] = g, p
+        res = pl_db[m] - predict(d_m[m], g, p, d0=d0)
+        rmse[t] = float(np.sqrt((res ** 2).mean()))
+    return gamma, pl0, counts, rmse

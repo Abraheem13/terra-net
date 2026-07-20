@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-"""Phase 1: tile each city, fit per-tile (gamma, PL0) via mixed-path LS,
-extract 116-dim descriptors + rasters, write tiles.parquet + rasters.zarr.
+"""Phase 1: tile each city, fit per-tile (gamma, PL0), write tiles.parquet.
 
-Expects normalized measurement parquet per city in data/raw/<dataset>/<city>/measurements.parquet
-with columns: tx_lat, tx_lon, rx_lat, rx_lon, pathloss_db  (degrees).
+--fit local  (default): per-tile fit on RX points inside the tile. Well-posed
+             even with a single BS.
+--fit mixed: joint mixed-path LS across LoS segments (needs multiple BSs to be
+             identifiable; use for city scenarios).
 """
 import argparse
 from pathlib import Path
@@ -13,69 +14,86 @@ import pandas as pd
 from omegaconf import OmegaConf
 from shapely.geometry import LineString, box
 
-from terranet.data.tiling import build_grid, assign_structures, tiles_to_gdf
-from terranet.models.baselines.log_distance import fit_tiles_mixed_path
+from terranet.data.tiling import build_grid, tiles_to_gdf
+from terranet.models.baselines.log_distance import fit_tiles_local, fit_tiles_mixed_path
+from terranet.utils.geo import haversine_m
 from terranet.utils.logging import get_logger
 
 log = get_logger("extract")
 
 
-def segment_measurements(tiles_gdf, meas: pd.DataFrame):
-    """Split each Tx-Rx LoS trace across intersected tiles -> segment lists."""
-    sindex = tiles_gdf.sindex
-    keys = list(zip(tiles_gdf["m"], tiles_gdf["z"]))
-    key_to_idx = {k: i for i, k in enumerate(keys)}
+def rx_tile_index(tgdf, meas):
+    import geopandas as gpd
+    pts = gpd.GeoDataFrame(
+        geometry=gpd.points_from_xy(meas.rx_lon, meas.rx_lat), crs="EPSG:4326")
+    joined = gpd.sjoin(pts, tgdf.reset_index(drop=True), how="left", predicate="within")
+    return joined["index_right"].to_numpy()
+
+
+def segment_measurements(tgdf, meas):
+    sindex = tgdf.sindex
     segments, pl = [], []
     for row in meas.itertuples():
         line = LineString([(row.tx_lon, row.tx_lat), (row.rx_lon, row.rx_lat)])
-        hits = sindex.query(line, predicate="intersects")
         segs = []
-        for h in hits:
-            inter = line.intersection(tiles_gdf.geometry.iloc[h])
-            if inter.is_empty:
-                continue
-            # approx metres: 1 deg ~ 111 km (fine within a city; refine with pyproj if needed)
-            seg_len = inter.length * 111_000.0
-            if seg_len > 0:
-                segs.append((h, seg_len))
+        for h in sindex.query(line, predicate="intersects"):
+            inter = line.intersection(tgdf.geometry.iloc[h])
+            if not inter.is_empty and inter.length > 0:
+                segs.append((int(h), inter.length * 111_000.0))
         if segs:
             segments.append(segs)
             pl.append(row.pathloss_db)
-    return segments, np.asarray(pl), key_to_idx
+    return segments, np.asarray(pl)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/data/deepmimo.yaml")
     ap.add_argument("--tile-size", type=float, default=200.0)
+    ap.add_argument("--fit", choices=["local", "mixed"], default="local")
     args = ap.parse_args()
     cfg = OmegaConf.load(args.config)
     base = OmegaConf.load("configs/base.yaml")
 
     for city in cfg.cities:
-        raw = Path(base.paths.raw) / cfg.dataset / city
-        meas_f = raw / "measurements.parquet"
+        meas_f = Path(base.paths.raw) / cfg.dataset / city / "measurements.parquet"
         if not meas_f.exists():
             log.warning(f"skip {city}: {meas_f} missing")
             continue
         meas = pd.read_parquet(meas_f)
-        pad = 0.01
+        pad = 0.002
         region = box(meas.rx_lon.min() - pad, meas.rx_lat.min() - pad,
                      meas.rx_lon.max() + pad, meas.rx_lat.max() + pad)
         tiles = build_grid(region, args.tile_size)
         tgdf = tiles_to_gdf(tiles)
-        segments, pl, _ = segment_measurements(tgdf, meas)
-        gamma, pl0, counts = fit_tiles_mixed_path(segments, pl, len(tgdf))
+
+        if args.fit == "local":
+            idx = rx_tile_index(tgdf, meas)
+            ok = ~pd.isna(idx)
+            d = haversine_m(np.radians(meas.tx_lat), np.radians(meas.tx_lon),
+                            np.radians(meas.rx_lat), np.radians(meas.rx_lon)).to_numpy()
+            gamma, pl0, counts, rmse = fit_tiles_local(
+                idx[ok].astype(int), d[ok], meas.pathloss_db.to_numpy()[ok],
+                len(tgdf), min_count=int(cfg.min_measurements_per_tile))
+        else:
+            segments, pl = segment_measurements(tgdf, meas)
+            gamma, pl0, counts = fit_tiles_mixed_path(segments, pl, len(tgdf))
+            rmse = np.full(len(tgdf), np.nan)
+
+        df = tgdf.drop(columns="geometry").copy()
+        df["gamma"], df["pl0"] = gamma, pl0
+        df["n_measurements"], df["fit_rmse_db"] = counts, rmse
+        df["raster_idx"] = np.arange(len(df))
+        desc = pd.DataFrame(np.zeros((len(df), 116), np.float32),
+                            columns=[f"descriptor_{i}" for i in range(116)])
+        df = pd.concat([df.reset_index(drop=True), desc], axis=1)
         out = Path(base.paths.processed) / cfg.dataset / city
         out.mkdir(parents=True, exist_ok=True)
-        df = tgdf.drop(columns="geometry").copy()
-        df["gamma"], df["pl0"], df["n_measurements"] = gamma, pl0, counts
-        df["raster_idx"] = np.arange(len(df))
-        # Descriptors + rasters require structure/DEM inputs; see docs/DESCRIPTORS.md.
-        for i in range(116):
-            df[f"descriptor_{i}"] = 0.0   # filled by the descriptor pass
         df.to_parquet(out / "tiles.parquet")
-        log.info(f"{city}: {len(df)} tiles, {int(counts.sum())} segment contributions")
+        fitted = np.isfinite(gamma)
+        log.info(f"{city}: {fitted.sum()}/{len(df)} tiles fitted "
+                 f"(median gamma={np.nanmedian(gamma):.2f}, "
+                 f"median fit RMSE={np.nanmedian(rmse):.2f} dB)")
 
 
 if __name__ == "__main__":

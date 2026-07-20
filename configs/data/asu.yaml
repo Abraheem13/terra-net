@@ -1,0 +1,4 @@
+dataset: deepmimo
+cities: [asu]
+freq_ghz: 3.5
+min_measurements_per_tile: 10
