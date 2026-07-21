@@ -94,8 +94,9 @@ def generate_city(scene_dir: Path, out_dir: Path, *, freq_ghz: float,
             "pathloss_db": -gain_db[idx],
             "los": np.nan,
         }))
+        pl_i = -gain_db[idx]
         print(f"    bs{i}: {len(idx)} points, PL "
-              f"{-gain_db[idx].min():.1f}-{-gain_db[idx].max():.1f} dB")
+              f"{pl_i.min():.1f}-{pl_i.max():.1f} dB")
 
     if not frames:
         raise RuntimeError(f"{scene_dir.name}: no coverage from any BS")
