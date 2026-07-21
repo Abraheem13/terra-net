@@ -18,3 +18,4 @@ deepmimo_scenarios/
 .venv/
 /data/
 .venv-rt/
+.venv-rt/
