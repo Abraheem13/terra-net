@@ -1,0 +1,4 @@
+dataset: lwm
+cities: [miami, sandiego, santaclara, fortworth, indianapolis, denver, oklahoma]
+freq_ghz: 3.5
+min_measurements_per_tile: 30
