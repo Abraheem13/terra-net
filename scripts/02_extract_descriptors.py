@@ -15,7 +15,7 @@ from omegaconf import OmegaConf
 from shapely.geometry import LineString, box
 
 from terranet.data.tiling import build_grid, tiles_to_gdf
-from terranet.models.baselines.log_distance import fit_tiles_local, fit_tiles_mixed_path
+from terranet.models.baselines.log_distance import fit_tiles_local_ridge, fit_tiles_mixed_path
 from terranet.utils.geo import haversine_m
 from terranet.utils.logging import get_logger
 
@@ -72,9 +72,10 @@ def main():
             ok = ~pd.isna(idx)
             d = haversine_m(np.radians(meas.tx_lat), np.radians(meas.tx_lon),
                             np.radians(meas.rx_lat), np.radians(meas.rx_lon)).to_numpy()
-            gamma, pl0, counts, rmse = fit_tiles_local(
+            gamma, pl0, counts, rmse, shrink, theta_g = fit_tiles_local_ridge(
                 idx[ok].astype(int), d[ok], meas.pathloss_db.to_numpy()[ok],
                 len(tgdf), min_count=int(cfg.min_measurements_per_tile))
+            log.info(f"{city}: global fit gamma={theta_g[0]:.2f} pl0={theta_g[1]:.1f}")
         else:
             segments, pl = segment_measurements(tgdf, meas)
             gamma, pl0, counts = fit_tiles_mixed_path(segments, pl, len(tgdf))
@@ -83,6 +84,7 @@ def main():
         df = tgdf.drop(columns="geometry").copy()
         df["gamma"], df["pl0"] = gamma, pl0
         df["n_measurements"], df["fit_rmse_db"] = counts, rmse
+        df["shrinkage"] = shrink if args.fit == "local" else np.nan
         df["raster_idx"] = np.arange(len(df))
         desc = pd.DataFrame(np.zeros((len(df), 116), np.float32),
                             columns=[f"descriptor_{i}" for i in range(116)])

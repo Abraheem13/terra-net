@@ -67,3 +67,38 @@ def fit_tiles_local(tile_idx: np.ndarray, d_m: np.ndarray, pl_db: np.ndarray,
         res = pl_db[m] - predict(d_m[m], g, p, d0=d0)
         rmse[t] = float(np.sqrt((res ** 2).mean()))
     return gamma, pl0, counts, rmse
+
+
+def fit_tiles_local_ridge(tile_idx: np.ndarray, d_m: np.ndarray, pl_db: np.ndarray,
+                          n_tiles: int, min_count: int = 10, d0: float = 1.0,
+                          n_prior: float = 50.0):
+    """Per-tile fit with Tikhonov shrinkage toward the GLOBAL (gamma, pl0).
+
+    Solves (A^T A + lam*I) theta = A^T y + lam*theta_global with lam = n_prior,
+    i.e. the global fit acts as ~n_prior pseudo-measurements. Tiles with wide
+    log-distance spans override the prior; narrow-span tiles (unidentifiable
+    slope) shrink to global instead of exploding. Returns
+    (gamma, pl0, counts, rmse_db, shrinkage in [0,1], theta_global)."""
+    g_glob, p_glob = fit_global(d_m, pl_db, d0=d0)
+    theta_g = np.array([g_glob, p_glob])
+    gamma = np.full(n_tiles, np.nan)
+    pl0 = np.full(n_tiles, np.nan)
+    rmse = np.full(n_tiles, np.nan)
+    shrink = np.full(n_tiles, np.nan)
+    counts = np.bincount(tile_idx, minlength=n_tiles).astype(float)
+    for t in range(n_tiles):
+        m = tile_idx == t
+        n = int(m.sum())
+        if n < min_count:
+            continue
+        x = 10.0 * np.log10(np.maximum(d_m[m], d0) / d0)
+        A = np.c_[x, np.ones(n)]
+        lam = n_prior
+        lhs = A.T @ A + lam * np.eye(2)
+        rhs = A.T @ pl_db[m] + lam * theta_g
+        theta = np.linalg.solve(lhs, rhs)
+        gamma[t], pl0[t] = theta
+        res = pl_db[m] - A @ theta
+        rmse[t] = float(np.sqrt((res ** 2).mean()))
+        shrink[t] = lam / (lam + n * max(np.var(x), 1e-9))
+    return gamma, pl0, counts, rmse, shrink, theta_g
