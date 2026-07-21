@@ -16,3 +16,4 @@ wandb/
 deepmimo_scenarios/
 .venv/
 .venv/
+/data/
