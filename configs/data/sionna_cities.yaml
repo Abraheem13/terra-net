@@ -16,7 +16,6 @@ sionna_version_pin: ">=0.19"   # code adapts to 0.19 (coverage_map) and 1.x (Rad
 cities:
   # name:        [lat, lon]            morphology note
   amsterdam:     [52.3676, 4.9041]     # low-rise dense, canals (water descriptors)
-  rotterdam:     [51.9244, 4.4777]     # modern high-rise + port
   berlin:        [52.5200, 13.4050]    # mid-rise uniform blocks
   hamburg:       [53.5511, 9.9937]     # mixed, waterways
   munich:        [48.1351, 11.5820]    # mid-rise, height-capped centre
