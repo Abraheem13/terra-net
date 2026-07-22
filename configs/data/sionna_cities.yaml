@@ -9,7 +9,8 @@ bs_per_city: 20
 bs_height_agl: 6.0      # antenna mast above the host rooftop
 ue_height_agl: 1.5
 cell_size_m: 5.0        # radio-map raster resolution
-max_points_per_bs: 200000
+max_points_per_bs: 2000000
+max_pathloss_db: 160.0   # 3GPP-style max coupling loss; drop deeper cells
 sionna_version_pin: ">=0.19"   # code adapts to 0.19 (coverage_map) and 1.x (RadioMapSolver)
 
 cities:

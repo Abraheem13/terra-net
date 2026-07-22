@@ -37,14 +37,17 @@ def _radio_map_legacy(scene, cell_size, samples):
 def _radio_map_modern(scene, cell_size, samples):
     from sionna.rt import RadioMapSolver
     solver = RadioMapSolver()
-    rm = solver(scene, cell_size=(cell_size, cell_size), samples_per_tx=samples)
+    rm = solver(scene, cell_size=(cell_size, cell_size), samples_per_tx=samples,
+                max_depth=5, diffraction=True, edge_diffraction=True,
+                specular_reflection=True, diffuse_reflection=True)
     return np.asarray(rm.path_gain).squeeze(), np.asarray(rm.cell_centers)
 
 
 def generate_city(scene_dir: Path, out_dir: Path, *, freq_ghz: float,
                   n_bs: int, bs_mast_agl: float, ue_agl: float,
                   cell_size: float, max_points_per_bs: int,
-                  rt_samples: int = 2_000_000, seed: int = 0) -> dict:
+                  rt_samples: int = 2_000_000, max_pathloss_db: float = 160.0,
+                  seed: int = 0) -> dict:
     import sionna.rt as rt
 
     from .bs_placement import rooftop_sites
@@ -74,7 +77,7 @@ def generate_city(scene_dir: Path, out_dir: Path, *, freq_ghz: float,
 
         cc = centers.reshape(-1, 3)
         gain_db = 10.0 * np.log10(np.maximum(np.atleast_2d(pg).reshape(-1), 1e-30))
-        ok = np.isfinite(gain_db) & (gain_db > -250.0)
+        ok = np.isfinite(gain_db) & (-gain_db <= max_pathloss_db)
         idx = np.flatnonzero(ok)
         if idx.size == 0:
             print(f"    bs{i}: no coverage, skipped")
@@ -107,7 +110,10 @@ def generate_city(scene_dir: Path, out_dir: Path, *, freq_ghz: float,
         "source": "sionna_rt", "sionna_version": ver, "api": api,
         "freq_ghz": freq_ghz, "cell_size_m": cell_size, "rt_samples": rt_samples,
         "n_bs": int(df.bs_id.nunique()), "n_measurements": int(len(df)),
+        "max_pathloss_db": max_pathloss_db,
         "origin_is_true_geo": True, "scene_meta": meta,
+        "propagation": {"max_depth": 5, "diffraction": True, "edge_diffraction": True,
+                        "specular_reflection": True, "diffuse_reflection": True},
     }
     (out_dir / "origin.json").write_text(json.dumps(run, indent=2))
     print(f"  [ok] {len(df)} measurements from {df.bs_id.nunique()} BSs")

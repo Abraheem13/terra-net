@@ -40,6 +40,7 @@ def main():
                           ue_agl=float(cfg.ue_height_agl),
                           cell_size=float(cfg.cell_size_m),
                           max_points_per_bs=int(cfg.max_points_per_bs),
+                          max_pathloss_db=float(cfg.get('max_pathloss_db', 160.0)),
                           rt_samples=args.rt_samples)
         except Exception as e:
             print(f"  FAILED: {type(e).__name__}: {e}")
