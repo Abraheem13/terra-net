@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 
 GAMMA_RANGE = (1.0, 6.0)
-PL0_RANGE = (0.0, 60.0)
+PL0_RANGE = (-40.0, 90.0)
 
 
 class ParamHead(nn.Module):
