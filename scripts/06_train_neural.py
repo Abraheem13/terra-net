@@ -70,8 +70,16 @@ def main():
     for sp in splits:
         seed_everything(args.seed)
         fold = sp["test_cities"][0]
-        Xtr, Ytr = stack(proc, ds, sp["train_cities"])
-        Xva, Yva = stack(proc, ds, sp["val_cities"])
+        # pool train+val source cities, then hold out 15% of tiles for early
+        # stopping: a single val city is too noisy and biases toward its morphology
+        src_cities = sp["train_cities"] + sp["val_cities"]
+        Xall, Yall = stack(proc, ds, src_cities)
+        rng_v = np.random.default_rng(args.seed)
+        perm_v = rng_v.permutation(len(Xall))
+        n_val = int(0.15 * len(Xall))
+        vi, ti = perm_v[:n_val], perm_v[n_val:]
+        Xtr, Ytr = Xall[ti], Yall[ti]
+        Xva, Yva = Xall[vi], Yall[vi]
         Xte, Yte = load_city(proc, ds, fold)
 
         mx = np.abs(Xtr).max(0); mx[mx == 0] = 1.0
