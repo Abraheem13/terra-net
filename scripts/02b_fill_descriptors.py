@@ -82,7 +82,9 @@ def main():
         bbox = (float(meas.rx_lon.min() - pad), float(meas.rx_lat.min() - pad),
                 float(meas.rx_lon.max() + pad), float(meas.rx_lat.max() + pad))
         log.info(f"{city}: bbox={tuple(round(b, 4) for b in bbox)}")
-        cache_dir = Path(base.paths.raw) / "osm" / city
+        cache_dir = (Path(base.paths.raw) / "sionna_scenes" / city
+             if cfg.dataset == "sionna"
+             else Path(base.paths.raw) / "osm" / city)
         cache_dir.mkdir(parents=True, exist_ok=True)
 
         frames = load_osm_local(cache_dir) if args.local else fetch_osm_live(bbox, cache_dir)
