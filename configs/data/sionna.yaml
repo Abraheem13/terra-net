@@ -1,0 +1,5 @@
+dataset: sionna
+cities: [amsterdam, barcelona, berlin, chicago, hamburg, london,
+         munich, newyork, paris, prague, vienna]
+freq_ghz: 3.5
+min_measurements_per_tile: 30
