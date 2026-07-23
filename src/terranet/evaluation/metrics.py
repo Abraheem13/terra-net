@@ -18,6 +18,8 @@ def mae(pred: np.ndarray, target: np.ndarray) -> float:
 
 
 def correlations(pred: np.ndarray, target: np.ndarray) -> dict[str, float]:
+    if np.std(pred) < 1e-12 or np.std(target) < 1e-12:
+        return {"pearson": float("nan"), "spearman": float("nan")}
     return {"pearson": float(pearsonr(pred, target)[0]),
             "spearman": float(spearmanr(pred, target)[0])}
 
