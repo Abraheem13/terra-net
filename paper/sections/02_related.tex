@@ -1,0 +1,69 @@
+%% ===================================================================
+\section{Related work}
+\label{sec:related}
+
+\paragraph{Empirical and site-specific propagation models}
+Empirical models such as Okumura--Hata~\cite{hata1980} and the 3GPP
+TR~38.901 formulas~\cite{tr38901} express path loss through a small number
+of parameters fitted to measurement campaigns and applied uniformly over an
+environment class. Measurement studies showed early that the path-loss
+exponent is itself a random quantity that changes from cell to
+cell~\cite{erceg1999}, which is the variability a tile-level model tries to
+capture. Deterministic ray tracing resolves the geometry
+explicitly~\cite{yun2015raytracing}; differentiable ray tracers such as
+Sionna~RT make city-scale simulation and calibration against measurements
+practical~\cite{hoydis2023sionna,hoydis2024learning}. We use ray tracing to
+produce ground truth for many cities, not as the run-time predictor.
+
+\paragraph{Learned radio maps and path-loss regression}
+Convolutional~\cite{levie2021radiounet}, autoencoder~\cite{teganya2022},
+adversarial~\cite{zhang2023rmegan} and diffusion~\cite{wang2025radiodiff}
+models predict dense radio maps from environment maps, and radio-map
+estimation from sparse measurements has a mature statistical
+treatment~\cite{romero2022}. Channel knowledge maps~\cite{zeng2021ckm}
+generalise the idea to other channel quantities. Regression of path loss
+from engineered or image features has been studied with measurements at
+\SI{2.6}{\giga\hertz}~\cite{thrane2020} and \SI{28}{\giga\hertz}~\cite{gupta2022},
+across several cities with obstruction-height maps~\cite{dempsey2025}, and is
+surveyed in~\cite{seretis2022}. These methods predict path loss or maps
+directly; the tile-parameter approach studied here predicts a compact,
+physically interpretable pair per tile that a planning tool can evaluate
+for any site layout.
+
+\paragraph{Tile-based transfer and digital twins}
+Digital twins of wireless networks~\cite{khan2022dt,alkhateeb2023dt} need
+propagation models for regions where no measurements exist yet. MAPLE
+divides 3-D city maps into tiles and estimates mixed-path propagation in a
+new deployment area from the similarity of its tiles to tiles of measured
+areas~\cite{ozyurt2020maple}. The descriptor-based framework
+of~\cite{ozyurt2026} describes each tile by terrain, built-structure,
+land-cover and climatic descriptors, calibrates log-distance parameters per
+tile from measurements, and transfers them to unmeasured tiles by a
+Gaussian-kernel weighting of descriptor similarity, with a cross-city
+evaluation on two urban datasets. We study the same transfer problem on a
+larger public corpus, analyse the kernel operator, compare it with learned
+regressors under a common protocol, and evaluate the consequences for
+network planning.
+
+\paragraph{Transfer under covariate shift and planning}
+Transfer between domains with different input distributions is covariate
+shift~\cite{shimodaira2000}, and its difficulty depends on the discrepancy
+between the domains~\cite{bendavid2010}; importance
+weighting~\cite{shimodaira2000} and the alignment of feature
+statistics~\cite{sun2016coral} are standard remedies, which we include as
+baselines. In operational networks, targeted measurements can be collected
+with the minimisation-of-drive-tests (MDT) framework~\cite{johansson2012mdt,ts37320},
+which motivates our few-shot setting; choosing where to measure is a
+submodular sensor-placement problem~\cite{krause2008}. Site selection with
+propagation predictions is a classical optimisation
+problem~\cite{amaldi2003}; coverage maximisation is submodular and admits
+greedy approximation guarantees~\cite{nemhauser1978}.
+
+\paragraph{Uncertainty and censored measurements}
+Conformal prediction gives distribution-free prediction sets under
+exchangeability~\cite{vovk2005}, and leave-one-out variants such as the
+jackknife+ reuse every training point for calibration~\cite{barber2021}; we
+apply the exchangeability argument at the level of cities, the unit of
+shift. Measurements with a detection floor are censored, for which the
+Tobit model is the classical treatment~\cite{tobin1958}; received-power
+data beyond a receiver's sensitivity are censored in exactly this sense.

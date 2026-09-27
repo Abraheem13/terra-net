@@ -1,0 +1,46 @@
+% Fig. 1 -- processing pipeline. Pure TikZ, monochrome, explicit grid.
+\begin{tikzpicture}[
+  font=\footnotesize,
+  box/.style={draw, rectangle, minimum height=11mm, minimum width=30mm,
+              text width=28mm, align=center, inner sep=1.5pt, line width=0.5pt},
+  io/.style={box, fill=black!7},
+  res/.style={box, line width=1pt},
+  arr/.style={-{Stealth[length=1.8mm,width=1.5mm]}, line width=0.5pt},
+  band/.style={font=\scriptsize\bfseries, anchor=west, inner sep=0pt}]
+\def\dx{35mm}\def\dy{-25mm}
+% band A: corpus generation
+\node[io]  (osm)   at (0*\dx, 0)      {Building footprints\\(Overture Maps)};
+\node[box] (scene) at (1*\dx, 0)      {Geo-referenced scene\\LoD1, $\sceneSize\times\sceneSize$\,km};
+\node[box] (rt)    at (2*\dx, 0)      {Sionna RT, \nSitesPerCity{} sites\\\freqGHz{} and \freqTwoGHz\,GHz};
+\node[io]  (links) at (3*\dx, 0)      {Path-loss links\\\cellSize\,m cells, $\le\maxPl$\,dB};
+% band B: tiles
+\node[box] (tile)  at (0*\dx, 1*\dy)  {Tiling\\$G_s=\tileSize$\,m};
+\node[box, minimum height=8.5mm] (desc)  at (1*\dx, 1*\dy+5.2mm) {Descriptor $\mathbf{v}_t\in\mathbb{R}^{32}$};
+\node[box, minimum height=8.5mm] (fit)   at (1*\dx, 1*\dy-5.2mm) {Labels $\boldsymbol{\theta}_t=(\gamma_t,P_{L_0,t})$};
+\node[io]  (table) at (2*\dx, 1*\dy)  {Tile table\\\nCities{} cities};
+% band C: transfer and evaluation
+\node[box] (op)    at (0*\dx, 2*\dy)  {Transfer operator\\(source cities)};
+\node[box] (fs)    at (1*\dx, 2*\dy)  {Few-shot correction\\($k$ surveyed tiles)};
+\node[res] (pm)    at (2*\dx, 2*\dy)  {Parameter error\\$\gamma$, $P_{L_0}$};
+\node[res] (net)   at (3*\dx, 2*\dy)  {Network metrics,\\planning, certificate};
+\node[box] (rtn) at (3*\dx, 1*\dy) {Site-aware link\\transfer model};
+% flows
+\draw[arr] (osm) -- (scene);
+\draw[arr] (scene) -- (rt);
+\draw[arr] (rt) -- (links);
+\draw[arr] ([xshift=-6mm]links.south) -- ++(0,-6.5mm) -| ([xshift=6mm]tile.north);
+\draw[arr] (scene.south) -- (desc.north);
+\draw[arr] (tile.east) -- ++(1.6mm,0) |- (desc.west);
+\draw[arr] (tile.east) -- ++(1.6mm,0) |- (fit.west);
+\draw[arr] (desc.east) -- ++(1.6mm,0) |- (table.west);
+\draw[arr] (fit.east) -- ++(1.6mm,0) |- (table.west);
+\draw[arr] (table.south) -- ++(0,-6.5mm) -| ([xshift=6mm]op.north);
+\draw[arr] (op) -- (fs);
+\draw[arr] (fs) -- (pm);
+\draw[arr] (pm) -- (net);
+\draw[arr] ([xshift=8mm]links.south) -- ([xshift=8mm]rtn.north);
+\draw[arr] (rtn) -- (net);
+% band labels (rotated, left margin)
+\foreach \n/\t in {osm/(a) Corpus, tile/(b) Tiles, op/(c) Transfer}
+  \node[band, rotate=90, anchor=south] at ([xshift=-2.5mm]\n.west) {\t};
+\end{tikzpicture}

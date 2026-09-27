@@ -1,107 +1,112 @@
 #!/usr/bin/env python
-"""Few-shot cross-city adaptation curve.
+"""Few-shot correction: reveal k labelled target tiles, correct the zero-shot model.
 
-Source model trained on source cities, then k labeled target tiles are revealed
-and used to correct it. Evaluation is always on the UNSEEN target tiles.
+Zero-shot predictions are read from outputs/predictions/loco.parquet (written by
+04_fit_baselines.py), so k = 0 reproduces the zero-shot table exactly.
 
-  --source ridge|gbdt        zero-shot model
-  correction modes compared:
-    bias     : single scalar offset per output (most robust at tiny k)
-    residual : ridge on the k anchors, predicting source-model residuals
+  operators : kernel, ridge, gbdt (every seed), mlp (every seed)
+  modes     : bias      - add the mean anchor residual
+              residual  - ridge (alpha = 10) on normalised descriptors -> residual
+  sampling  : random    - k tiles uniformly at random
+              patch     - the k tiles nearest a random seed tile (a contiguous
+                          survey area, e.g. one drive-test route)
+              design    - greedy facility location over the target descriptors
+                          (deterministic, chosen before any measurement)
+Every (fold, k, draw, sampling) uses the same anchors for all operators, so
+comparisons are paired. Evaluation is always on the unrevealed tiles.
+
+Output: outputs/tables/kshot.csv
 """
-import argparse, json
+import argparse
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from omegaconf import OmegaConf
 from sklearn.linear_model import Ridge
 
-from terranet.evaluation.metrics import rmse
+from terranet.experiments.common import (
+    MaxAbs,
+    facility_location,
+    load_cfg,
+    load_splits,
+    load_tiles,
+    stack,
+    xy,
+)
 from terranet.utils.logging import get_logger
-from terranet.utils.seed import seed_everything
 
 log = get_logger("kshot")
-DCOLS = [f"descriptor_{i}" for i in range(116)]
 KS = [0, 3, 5, 10, 25, 50, 100]
 N_DRAWS = 10
+OPERATORS = ["kernel", "ridge", "mlp", "gbdt"]
+RESIDUAL_ALPHA = 10.0
 
 
-def load_city(proc, ds, city):
-    d = pd.read_parquet(Path(proc) / ds / city / "tiles.parquet")
-    d = d[np.isfinite(d.gamma)].reset_index(drop=True)
-    return d[DCOLS].to_numpy(np.float32), d[["gamma", "pl0"]].to_numpy(np.float32)
-
-
-def fit_source(kind, X, Y, seed):
-    if kind == "ridge":
-        m = Ridge(alpha=1.0).fit(X, Y)
-        return lambda Z: m.predict(Z)
-    import lightgbm as lgb
-    ms = [lgb.LGBMRegressor(n_estimators=600, learning_rate=0.05, num_leaves=31,
-                            min_child_samples=40, subsample=0.8, colsample_bytree=0.8,
-                            random_state=seed, verbose=-1).fit(X, Y[:, j]) for j in (0, 1)]
-    return lambda Z: np.column_stack([m.predict(Z) for m in ms])
+def anchors(rng, k, sampling, xy_m, X=None):
+    n = len(xy_m)
+    if sampling == "design":
+        return facility_location(X, k)
+    if sampling == "random":
+        return rng.choice(n, size=k, replace=False)
+    c = xy_m[rng.integers(n)]
+    return np.argsort(((xy_m - c) ** 2).sum(1), kind="stable")[:k]
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/data/sionna.yaml")
-    ap.add_argument("--source", choices=["ridge", "gbdt"], default="gbdt")
-    ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
-    cfg = OmegaConf.load(args.config); base = OmegaConf.load("configs/base.yaml")
-    splits = json.loads(Path("data/splits/loco.json").read_text())
-    proc, ds = base.paths.processed, cfg.dataset
+    cfg, base = load_cfg(args.config)
+    P = pd.read_parquet(Path(base.paths.outputs) / "predictions" / "loco.parquet")
 
     rows = []
-    for sp in splits:
-        seed_everything(args.seed)
+    for fi, sp in enumerate(load_splits()):
         fold = sp["test_cities"][0]
-        src_cities = sp["train_cities"] + sp["val_cities"]
-        Xs = np.concatenate([load_city(proc, ds, c)[0] for c in src_cities])
-        Ys = np.concatenate([load_city(proc, ds, c)[1] for c in src_cities])
-        mx = np.abs(Xs).max(0); mx[mx == 0] = 1.0
-        Xs = Xs / mx
-        Xt_raw, Yt = load_city(proc, ds, fold)
-        Xt = Xt_raw / mx
+        te = load_tiles(base, cfg, fold)
+        Xte, Yte = xy(te)
+        Xte = MaxAbs().fit(xy(stack(base, cfg, sp["train_cities"]))[0])(Xte)
+        lat0 = np.radians(te.lat_c.mean())
+        xy_m = np.c_[te.lon_c * 111_320 * np.cos(lat0), te.lat_c * 111_320]
+        pf = P[P.fold == fold]
+        base_preds = {(op, s): g.set_index("tile_row").loc[te.tile_row, ["gamma_hat", "pl0_hat"]]
+                      .to_numpy() for (op, s), g in pf.groupby(["operator", "seed"])
+                      if op in OPERATORS}
 
-        predict_src = fit_source(args.source, Xs, Ys, args.seed)
-        base_pred = predict_src(Xt)
-
-        for mode in ("bias", "residual"):
-            rows.append(dict(fold=fold, mode=mode, k=0, draw=0,
-                             gamma_rmse=rmse(base_pred[:, 0], Yt[:, 0]),
-                             pl0_rmse=rmse(base_pred[:, 1], Yt[:, 1])))
-
-        rng = np.random.default_rng(args.seed)
-        for k in KS[1:]:
-            for draw in range(N_DRAWS):
-                idx = rng.choice(len(Xt), size=min(k, len(Xt)), replace=False)
-                mask = np.ones(len(Xt), bool); mask[idx] = False
-                resid = Yt[idx] - base_pred[idx]
-                for mode in ("bias", "residual"):
-                    if mode == "bias":
-                        pred = base_pred[mask] + resid.mean(0)
-                    else:
-                        corr = Ridge(alpha=10.0).fit(Xt[idx], resid)
-                        pred = base_pred[mask] + corr.predict(Xt[mask])
-                    rows.append(dict(fold=fold, mode=mode, k=k, draw=draw,
-                                     gamma_rmse=rmse(pred[:, 0], Yt[mask, 0]),
-                                     pl0_rmse=rmse(pred[:, 1], Yt[mask, 1])))
+        for sampling in ("random", "patch", "design"):
+            for k in KS:
+                if k > len(te) // 2:          # keep most tiles for evaluation
+                    continue
+                n_draws = N_DRAWS if k and sampling != "design" else 1
+                for draw in range(n_draws):
+                    rng = np.random.default_rng([fi, k, draw, sampling == "patch"])
+                    idx = anchors(rng, k, sampling, xy_m, Xte) if k else np.array([], int)
+                    mask = np.ones(len(te), bool)
+                    mask[idx] = False
+                    for (op, seed), bp in base_preds.items():
+                        resid = Yte[idx] - bp[idx]
+                        for mode in ("bias", "residual"):
+                            if k == 0:
+                                pred = bp[mask]
+                            elif mode == "bias":
+                                pred = bp[mask] + resid.mean(0)
+                            else:
+                                corr = Ridge(alpha=RESIDUAL_ALPHA).fit(Xte[idx], resid)
+                                pred = bp[mask] + corr.predict(Xte[mask])
+                            e = pred - Yte[mask]
+                            rows.append(dict(
+                                fold=fold, operator=op, seed=seed, sampling=sampling,
+                                mode=mode, k=k, draw=draw,
+                                gamma_rmse=float(np.sqrt((e[:, 0] ** 2).mean())),
+                                pl0_rmse=float(np.sqrt((e[:, 1] ** 2).mean())),
+                                gamma_mse=float((e[:, 0] ** 2).mean())))
         log.info(f"{fold} done")
 
     df = pd.DataFrame(rows)
-    df["source"] = args.source
-    out = Path(base.paths.outputs) / "tables" / f"kshot_{args.source}.csv"
+    out = Path(base.paths.outputs) / "tables" / "kshot.csv"
     df.to_csv(out, index=False)
-
-    print(f"\n=== gamma_rmse vs k  (source={args.source}) ===")
-    print(df.pivot_table(index="k", columns="mode", values="gamma_rmse").round(3))
-    print("\n=== per-city, residual mode: k=0 / 10 / 50 ===")
-    sub = df[(df["mode"] == "residual") & df.k.isin([0, 10, 50])]
-    print(sub.groupby(["fold", "k"]).gamma_rmse.mean().unstack().round(3))
-    print(f"\nwrote {out}")
+    s = df[(df["mode"] == "residual") & (df.sampling == "random")]
+    print(s.groupby(["operator", "k"]).gamma_rmse.mean().unstack().round(3))
+    log.info(f"wrote {out}")
 
 
 if __name__ == "__main__":

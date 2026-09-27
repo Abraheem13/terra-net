@@ -1,0 +1,42 @@
+{
+  "city": "barcelona",
+  "lat0": 41.3851,
+  "lon0": 2.1734,
+  "size_m": 3000.0,
+  "epsg": 32631,
+  "bbox_wsen": [
+    2.1552866396204684,
+    41.37145973826486,
+    2.191505935840279,
+    41.39873755495808
+  ],
+  "origin_is_true_geo": true,
+  "building_source": {
+    "provider": "Overture Maps Foundation",
+    "theme": "buildings",
+    "release": "2026-09-23.0",
+    "bbox_wsen": [
+      2.154682733017163,
+      41.37100501630295,
+      2.192109339224815,
+      41.399192093460634
+    ],
+    "n_buildings": 12337,
+    "footprint_sources": {
+      "OpenStreetMap": 12220,
+      "Instituto Geogr\u00e1fico Nacional (Espa\u00f1a)": 80,
+      "Microsoft ML Buildings": 37
+    },
+    "frac_with_height": 0.12434141201264488,
+    "frac_with_levels": 0.7271621950231012
+  },
+  "n_building_parts_meshed": 11474,
+  "n_extrusion_failures": 0,
+  "height_provenance": {
+    "n_buildings": 12337,
+    "frac_height_tag": 0.12434141201264488,
+    "frac_levels": 0.6414849639296425,
+    "frac_imputed": 0.23417362405771258,
+    "median_height_m": 19.200000000000003
+  }
+}

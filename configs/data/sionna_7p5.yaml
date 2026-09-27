@@ -1,0 +1,12 @@
+# Second band: the Sionna RT corpus ray traced at 7.5 GHz (sionna_cities_7p5.yaml).
+# Same scenes, sites, tiles and protocol as sionna.yaml; results go to outputs_dir.
+dataset: sionna_7p5
+scenes_dir: sionna_scenes
+cities: [amsterdam, barcelona, berlin, chicago, hamburg, london,
+         munich, newyork, paris, prague, vienna]
+freq_ghz: 7.5
+tile_size_m: 100.0          # tile side G_s
+d0_m: 100.0                 # reference distance of the log-distance law
+min_measurements_per_tile: 30
+qc_fspl_margin_db: 6.0      # drop links > 6 dB below free space (estimator outliers)
+outputs_dir: outputs/sionna_7p5

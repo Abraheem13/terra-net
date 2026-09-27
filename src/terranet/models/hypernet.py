@@ -1,7 +1,8 @@
 """Hypernetwork head: tile embedding -> (gamma, PL0) + heteroscedastic log-variances.
 
-Outputs are physically constrained: gamma in [1.0, 6.0] via scaled sigmoid,
-PL0 in [0, 60] dB. Replaces the fixed Gaussian-kernel transfer of the base paper.
+Outputs are physically constrained by scaled sigmoids: gamma in [1, 6] and
+PL0 (path loss at the reference distance d0 = 100 m) in [40, 160] dB. Free-space
+loss at 100 m and 3.5 GHz is 83.3 dB, so the range brackets every physical value.
 """
 from __future__ import annotations
 
@@ -9,7 +10,7 @@ import torch
 import torch.nn as nn
 
 GAMMA_RANGE = (1.0, 6.0)
-PL0_RANGE = (-40.0, 90.0)
+PL0_RANGE = (40.0, 160.0)
 
 
 class ParamHead(nn.Module):

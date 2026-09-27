@@ -1,0 +1,41 @@
+{
+  "city": "prague",
+  "lat0": 50.0755,
+  "lon0": 14.4378,
+  "size_m": 3000.0,
+  "epsg": 32633,
+  "bbox_wsen": [
+    14.41667442566395,
+    50.061906370763204,
+    14.458913812842308,
+    50.08908990902421
+  ],
+  "origin_is_true_geo": true,
+  "building_source": {
+    "provider": "Overture Maps Foundation",
+    "theme": "buildings",
+    "release": "2026-09-23.0",
+    "bbox_wsen": [
+      14.415970037192373,
+      50.06145318578092,
+      14.459617404145982,
+      50.089542841858716
+    ],
+    "n_buildings": 9907,
+    "footprint_sources": {
+      "OpenStreetMap": 9713,
+      "Microsoft ML Buildings": 194
+    },
+    "frac_with_height": 0.01130513778136671,
+    "frac_with_levels": 0.7054607853033209
+  },
+  "n_building_parts_meshed": 9268,
+  "n_extrusion_failures": 0,
+  "height_provenance": {
+    "n_buildings": 9907,
+    "frac_height_tag": 0.01130513778136671,
+    "frac_levels": 0.7028363783183608,
+    "frac_imputed": 0.2858584839002725,
+    "median_height_m": 16.0
+  }
+}

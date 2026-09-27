@@ -1,0 +1,138 @@
+%% ===================================================================
+\section{Proofs}
+\label{app:proofs}
+
+\paragraph{Proposition~\ref{prop:tilemodel}}
+With the parameters of tile $t$ for every site,
+$P_{pb}=P_{\mathrm{tx}}-P_{L_0,t}-10\gamma_t\log_{10}(d_{pb}/d_0)$ is strictly
+decreasing in $d_{pb}$ when $\gamma_t>0$, which gives (i). Writing
+$10^{P_{pb}/10}=C(d_{pb}/d_0)^{-\gamma_t}$ with
+$C=10^{(P_{\mathrm{tx}}-P_{L_0,t})/10}$ in Eq.~\eqref{eq:sinr} and dividing
+numerator and denominator by $C$ gives Eq.~\eqref{eq:sinrtile}.
+\hfill$\square$
+
+\paragraph{Proposition~\ref{prop:decomp}}
+With $\hat\btheta(\bv)=\sum_j w_j(\bv)\bigl(\btheta^{\star}(\bv_j)+\boldsymbol\eta_j\bigr)$
+and $\sum_j w_j=1$,
+$\hat\btheta-\btheta^{\star}(\bv)=\bigl[\sum_j w_j\btheta^{\star}(\bv_j)-\btheta^{\star}(\bv)\bigr]
++\sum_j w_j\boldsymbol\eta_j$. The weights depend on descriptors only and
+$\E[\boldsymbol\eta_j]=\mathbf0$ independently of the descriptors, so the
+cross term has zero expectation, and independence across $j$ gives
+$\E\lVert\sum_j w_j\boldsymbol\eta_j\rVert^{2}=\tr(\Sigma_\eta)\sum_j w_j^{2}$.
+\hfill$\square$
+
+\paragraph{Proposition~\ref{prop:identify}}
+$\mathbf{A}^{\top}\mathbf{A}=\bigl[\begin{smallmatrix}\sum x_i^{2}&\sum x_i\\
+\sum x_i&n\end{smallmatrix}\bigr]$ has determinant
+$n\sum x_i^{2}-(\sum x_i)^{2}=n^{2}\Var(x)$, and the $(1,1)$ entry of its
+inverse is $n/(n^{2}\Var(x))$, so
+$\Var(\hat\gamma_{\mathrm{OLS}})=\sigma_\varepsilon^{2}/(n\Var(x))$.
+\hfill$\square$
+
+\paragraph{Proposition~\ref{prop:eb}}
+Given the true slope, $b_t$ has mean $\gamma_t$ and variance $v_t$; the true
+slopes have mean $\mu$ and variance $\tau^{2}$. For fixed $w$,
+$\hat\gamma_t-\gamma_t=(1-w)(b_t-\gamma_t)+w(\mu-\gamma_t)$; the two terms
+are uncorrelated, so the mean squared error is
+$(1-w)^{2}v_t+w^{2}\tau^{2}$, a convex quadratic in $w$ minimised at
+$w_t=v_t/(v_t+\tau^{2})$ with value $v_t\tau^{2}/(v_t+\tau^{2})$, which is
+at most $\min(v_t,\tau^{2})$. With centred $x$, the ridge problem
+$\min_\gamma\sum_i(y_i-\bar y-\gamma x_i)^{2}+\lambda(\gamma-\mu)^{2}$ has
+solution $(S_{xy}+\lambda\mu)/(S_{xx}+\lambda)=(1-w)b_t+w\mu$ with
+$w=\lambda/(\lambda+S_{xx})$; setting $\lambda_t=S_{xx}v_t/\tau^{2}$ gives
+$w=v_t/(v_t+\tau^{2})=w_t$.
+\hfill$\square$
+
+\paragraph{Theorem~\ref{thm:regimes}, part (a)}
+Put $\alpha=1/(2\sigma^{2})$. The factor $e^{-\alpha\min_k d_k}$ cancels in
+Eq.~\eqref{eq:nw}, so $\tilde w_j=e^{-\alpha\delta_j}/\sum_k e^{-\alpha\delta_k}$
+with $\alpha\delta_j\le\epsilon_u<1$. By Taylor's theorem,
+$e^{-\alpha\delta_j}=1-\alpha\delta_j+r_j$ with $0\le r_j\le\epsilon_u^{2}/2$,
+hence $\sum_k e^{-\alpha\delta_k}=N(1-\alpha\bar\delta)+O(N\epsilon_u^{2})$ and
+\[
+\tilde w_j=\tfrac1N\bigl(1-\alpha(\delta_j-\bar\delta)\bigr)+O(\epsilon_u^{2}/N).
+\]
+Then $\hat\btheta_u=\sum_j\tilde w_j\btheta_j=\bar\btheta-\alpha\,\Cov_j(\delta_j,\btheta_j)
++O(\epsilon_u^{2})$, where the remainder is bounded by a constant times
+$\epsilon_u^{2}\max_j\lVert\btheta_j-\bar\btheta\rVert$. By Cauchy--Schwarz,
+$\lVert\Cov_j(\delta_j,\btheta_j)\rVert\le\sigma_\delta\sigma_\theta$, and by
+Popoviciu's inequality $\sigma_\delta\le D_u/2$, which gives the bound in
+Eq.~\eqref{eq:flat}. Squaring the weight expansion,
+$\sum_j\tilde w_j^{2}=N^{-1}\bigl(1+\alpha^{2}\sigma_\delta^{2}\bigr)+O(\epsilon_u^{2}/N)$,
+the linear term vanishing because $\sum_j(\delta_j-\bar\delta)=0$; since
+$\alpha\sigma_\delta\le\epsilon_u/2$, $n_{\mathrm{eff}}=N(1+O(\epsilon_u^{2}))$.
+\hfill$\square$
+
+\paragraph{Theorem~\ref{thm:regimes}, part (b)}
+Order the source tiles by distance, so $\delta_{(1)}=0$ and
+$\delta_{(j)}\ge g_u$ for $j\ge2$. Then
+$\tilde w_{(1)}=\bigl(1+\sum_{j\ge2}e^{-\alpha\delta_{(j)}}\bigr)^{-1}
+\ge\bigl(1+(N-1)e^{-\alpha g_u}\bigr)^{-1}$, and
+$\lVert\hat\btheta_u-\btheta_{(1)}\rVert=\lVert\sum_{j\ge2}\tilde w_{(j)}(\btheta_{(j)}-\btheta_{(1)})\rVert
+\le(1-\tilde w_{(1)})\max_j\lVert\btheta_j-\btheta_{(1)}\rVert
+\le(N-1)e^{-\alpha g_u}\max_j\lVert\btheta_j-\btheta_{(1)}\rVert$.
+\hfill$\square$
+
+\paragraph{Proposition~\ref{prop:survey}}
+$n_s(T)$ is a non-negative modular function of $T$ and
+$\phi(n)=n/(n+\kappa)$ is non-decreasing and concave on $[0,\infty)$. For
+$A\subseteq B$ and a tile $t\notin B$, $n_s(A)\le n_s(B)$ and concavity give
+$\phi(n_s(A)+c_{ts})-\phi(n_s(A))\ge\phi(n_s(B)+c_{ts})-\phi(n_s(B))\ge0$.
+Summing over $s$ shows that $F$ is monotone and has diminishing returns, i.e.\
+is submodular, and $F(\emptyset)=0$; the greedy bound is the theorem
+of~\cite{nemhauser1978}. The posterior variance follows from the conjugate
+normal model: the precision of $o_s$ is $1/\tau_o^{2}+n_s/\sigma_\varepsilon^{2}$,
+so its variance is $\tau_o^{2}\kappa/(n_s+\kappa)$ and the reduction is
+$\tau_o^{2}n_s/(n_s+\kappa)$.
+\hfill$\square$
+
+\paragraph{Proposition~\ref{prop:certify}}
+Each $q_c$ is a function of city $c$ and of the multiset of the other cities,
+through the same symmetric procedure, so exchangeable cities give an
+exchangeable vector $(q_1,\dots,q_n)$. The event $q_t>\max_{c\ne t}q_c$ means
+that $q_t$ is the strict maximum of the vector, which by exchangeability has
+probability at most $1/n$; hence $\Pr(q_t\le\hat q_t)\ge(n-1)/n$. On this
+event, a claimed pixel with $r_p\le\hat q_t$ satisfies
+$PL_{\mathrm{serv}}(p)=\widehat{PL}_{\mathrm{serv}}(p)+r_p\le\widehat{PL}_{\mathrm{serv}}(p)+\hat q_t\le L$,
+so it is covered. Claimed but uncovered pixels therefore have
+$r_p>\hat q_t\ge q_t$, and by the definition of the quantile at most a
+fraction $\alpha$ of the pixels do.
+\hfill$\square$
+
+\section{Selected hyper-parameters}
+\label{app:hparams}
+
+\begin{table}[H]
+\centering
+\caption{Hyper-parameters selected on the validation city of each split.
+$N$: training tiles; $\sigma$: kernel bandwidth; $k$: neighbours; trees:
+median number of boosting rounds for $\gamma$ over the five seeds.}
+\label{tab:hparams}
+\small\setlength{\tabcolsep}{3pt}
+\input{generated/tab_hparams}
+\end{table}
+
+\section{Complete city-level comparisons}
+\label{app:stats}
+
+\begin{table*}[!t]
+\centering
+\caption{City-level comparisons of the tile parameters ($n=\nFolds$ held-out
+cities). $\Delta$: mean difference first minus second; CI: 95\% percentile
+bootstrap over cities; $p$: exact two-sided Wilcoxon signed-rank; better:
+cities in which the first is better; Holm: significant at 5\% after Holm's
+correction within the family.}
+\label{tab:stats-param}
+\small
+\input{generated/tab_stats_param}
+\end{table*}
+
+\begin{table*}[!t]
+\centering
+\caption{City-level comparisons at the network level, as in
+Table~\ref{tab:stats-param} ($\Delta$ in percentage points for shares:
+serving site, coverage agreement, regret).}
+\label{tab:stats-net}
+\small
+\input{generated/tab_stats_net}
+\end{table*}

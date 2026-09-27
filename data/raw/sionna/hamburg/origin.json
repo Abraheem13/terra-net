@@ -1,0 +1,71 @@
+{
+  "source": "sionna_rt",
+  "sionna_version": "2.1.0",
+  "api": "RadioMapSolver",
+  "mitsuba_variant": "llvm_ad_mono_polarized",
+  "freq_ghz": 3.5,
+  "cell_size_m": 10.0,
+  "rt_samples": 100000000,
+  "n_bs": 20,
+  "n_measurements": 1152324,
+  "max_pathloss_db": 150.0,
+  "ue_height_m": 1.5,
+  "site_mast_m": 6.0,
+  "seed": 0,
+  "propagation": {
+    "max_depth": 5,
+    "los": true,
+    "specular_reflection": true,
+    "diffuse_reflection": true,
+    "refraction": true,
+    "diffraction": true,
+    "edge_diffraction": true
+  },
+  "materials": {
+    "buildings": "itu concrete",
+    "ground": "itu medium_dry_ground"
+  },
+  "wall_clock_s": 1356.1,
+  "origin_is_true_geo": true,
+  "scene_meta": {
+    "city": "hamburg",
+    "lat0": 53.5511,
+    "lon0": 9.9937,
+    "size_m": 3000.0,
+    "epsg": 32632,
+    "bbox_wsen": [
+      9.97075418222791,
+      53.53742898583779,
+      10.01666020198646,
+      53.56476688249249
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        9.969989569234302,
+        53.53697321428174,
+        10.017425789910144,
+        53.56522237401313
+      ],
+      "n_buildings": 4335,
+      "footprint_sources": {
+        "OpenStreetMap": 4206,
+        "Microsoft ML Buildings": 129
+      },
+      "frac_with_height": 0.17024221453287197,
+      "frac_with_levels": 0.508881199538639
+    },
+    "n_building_parts_meshed": 4023,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 4335,
+      "frac_height_tag": 0.17024221453287197,
+      "frac_levels": 0.4244521337946944,
+      "frac_imputed": 0.40530565167243365,
+      "median_height_m": 16.0
+    }
+  }
+}

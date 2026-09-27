@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-"""Phase 1a (CPU): build Mitsuba scenes from OSM for every city.
+"""Build the ray-tracing scene of every city from its fetched footprints.
 
-Network + CPU bound; safe to rerun (OSM layers are cached as GeoJSON).
-No Sionna needed here, so it runs in the main env.
+Run scripts/01a_fetch_buildings.py first. CPU only; no Sionna needed.
+Skips cities whose scene_meta.json already exists.
 """
 import argparse
 import json
@@ -36,7 +36,7 @@ def main():
             p = meta["height_provenance"]
             print(f"  {p['n_buildings']} buildings | height tag {p['frac_height_tag']:.0%} "
                   f"levels {p['frac_levels']:.0%} imputed {p['frac_imputed']:.0%} "
-                  f"| water {meta['n_water']} veg {meta['n_vegetation']}")
+                  f"| {meta['n_building_parts_meshed']} parts meshed")
             summary.append(meta)
         except Exception as e:
             print(f"  FAILED: {type(e).__name__}: {e}")

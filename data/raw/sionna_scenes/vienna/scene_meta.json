@@ -1,0 +1,41 @@
+{
+  "city": "vienna",
+  "lat0": 48.2082,
+  "lon0": 16.3738,
+  "size_m": 3000.0,
+  "epsg": 32633,
+  "bbox_wsen": [
+    16.353260392826687,
+    48.194465691078065,
+    16.39435020366098,
+    48.221930959593756
+  ],
+  "origin_is_true_geo": true,
+  "building_source": {
+    "provider": "Overture Maps Foundation",
+    "theme": "buildings",
+    "release": "2026-09-23.0",
+    "bbox_wsen": [
+      16.35257592166418,
+      48.19400782315544,
+      16.395035393029865,
+      48.22238860050634
+    ],
+    "n_buildings": 7082,
+    "footprint_sources": {
+      "OpenStreetMap": 7006,
+      "Microsoft ML Buildings": 76
+    },
+    "frac_with_height": 0.2632024851736798,
+    "frac_with_levels": 0.7763343688223666
+  },
+  "n_building_parts_meshed": 6290,
+  "n_extrusion_failures": 0,
+  "height_provenance": {
+    "n_buildings": 7082,
+    "frac_height_tag": 0.2632024851736798,
+    "frac_levels": 0.599689353290031,
+    "frac_imputed": 0.13710816153628919,
+    "median_height_m": 16.0
+  }
+}

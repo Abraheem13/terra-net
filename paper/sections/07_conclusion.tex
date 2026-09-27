@@ -1,0 +1,27 @@
+%% ===================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+We built reproducible ray-traced corpora of \nCities{} cities in two bands
+for cross-city transfer of path-loss models and evaluated transfer where a
+network planner uses it. Tile labels of the log-distance law are
+ill-conditioned and, once their correlated errors are accounted for,
+imprecise: the cluster-robust standard error of the exponent is \seRatio{}
+times the naive one, and the exponent depends on the serving sites, the tile
+size and the cut-off of the data. Transferring tile parameters with learned
+regressors improves on the source median; kernel transfer does not improve
+on it significantly, and our analysis of its limiting regimes and the gain
+from learning its metric locate its weakness in the isotropic distance. At
+the network level, even perfect tile parameters leave a path-loss error of
+\SI{\netOracle}{\decibel}, assign only \assocOracle\% of the pixels to the
+correct site and misplace cell edges by \SI{\edgeOracle}{\metre}. Site-aware
+hurdle link transfer, which predicts each link and whether it exists from its
+obstruction geometry, reduces the path-loss error to \SI{\netLink}{\decibel},
+raises serving-site accuracy to \assocLink\% and lowers the planning regret in
+every held-out city, and a city-level certificate turns its accuracy into
+coverage that can be promised at a stated risk.
+
+Future work should validate these findings on measured data with known site
+positions, extend the corpora to terrain, antenna patterns and further
+bands, and study certificates that adapt to the target city from a small
+survey.

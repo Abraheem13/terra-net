@@ -11,8 +11,15 @@ import trimesh
 
 
 def rooftop_sites(mesh_path, n_bs: int, size_m: float, mast_agl: float,
-                  min_sep_m: float = 250.0, seed: int = 0) -> np.ndarray:
-    """Return (n, 3) BS positions in local metres, z = rooftop + mast."""
+                  min_sep_m: float = 250.0, seed: int = 0,
+                  policy: str = "tallest") -> np.ndarray:
+    """Return (n, 3) BS positions in local metres, z = rooftop + mast.
+
+    policy "tallest": candidates ranked by height (macro practice);
+    policy "random": candidates in random order (seeded), same separation rule.
+    """
+    if policy not in ("tallest", "random"):
+        raise ValueError(f"unknown siting policy {policy!r}")
     mesh = trimesh.load(str(mesh_path))
     verts = np.asarray(mesh.vertices)
     rng = np.random.default_rng(seed)
@@ -29,7 +36,10 @@ def rooftop_sites(mesh_path, n_bs: int, size_m: float, mast_agl: float,
     if len(cand) == 0:
         raise RuntimeError("no rooftop candidates above 6 m")
 
-    cand = cand[np.argsort(-cand[:, 2])]             # tallest first
+    if policy == "tallest":
+        cand = cand[np.argsort(-cand[:, 2])]         # tallest first
+    else:
+        cand = cand[rng.permutation(len(cand))]
     chosen: list[np.ndarray] = []
     for p in cand:
         if len(chosen) >= n_bs:

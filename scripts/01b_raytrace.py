@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-"""Phase 1b (GPU): ray-trace each scene with Sionna -> measurements.parquet.
+"""Ray-trace each scene with Sionna RT -> measurements.parquet + origin.json.
 
-Run in the [rt] environment. Resumable: skips cities already generated.
+Uses the GPU when available, otherwise the CPU (LLVM) backend. All settings
+come from the city config. Resumable: skips cities already generated.
 """
 import argparse
 from pathlib import Path
@@ -16,16 +17,16 @@ def main():
     ap.add_argument("--config", default="configs/data/sionna_cities.yaml")
     ap.add_argument("--city", default=None)
     ap.add_argument("--scenes", default="data/raw/sionna_scenes")
-    ap.add_argument("--out", default="data/raw/sionna")
-    ap.add_argument("--rt-samples", type=int, default=2_000_000)
+    ap.add_argument("--out", default=None, help="default: data/raw/<dataset>")
     args = ap.parse_args()
     cfg = OmegaConf.load(args.config)
 
-    for city in cfg.cities:
+    cities = cfg.get("rt_cities", None) or list(cfg.cities)
+    for city in cities:
         if args.city and city != args.city:
             continue
         scene_dir = Path(args.scenes) / city
-        out_dir = Path(args.out) / city
+        out_dir = Path(args.out or f"data/raw/{cfg.dataset}") / city
         if not (scene_dir / "scene.xml").exists():
             print(f"[skip] {city}: scene not built")
             continue
@@ -39,9 +40,9 @@ def main():
                           bs_mast_agl=float(cfg.bs_height_agl),
                           ue_agl=float(cfg.ue_height_agl),
                           cell_size=float(cfg.cell_size_m),
-                          max_points_per_bs=int(cfg.max_points_per_bs),
-                          max_pathloss_db=float(cfg.get('max_pathloss_db', 160.0)),
-                          rt_samples=args.rt_samples)
+                          rt_samples=int(cfg.rt_samples), max_depth=int(cfg.max_depth),
+                          max_pathloss_db=float(cfg.max_pathloss_db),
+                          siting=str(cfg.get("siting", "tallest")))
         except Exception as e:
             print(f"  FAILED: {type(e).__name__}: {e}")
 

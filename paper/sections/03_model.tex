@@ -1,0 +1,124 @@
+%% ===================================================================
+\section{System model and problem formulation}
+\label{sec:model}
+
+\subsection{Network and propagation model}
+\label{sec:netmodel}
+
+A city contains a set $\mathcal{B}$ of base-station sites and a set
+$\mathcal{P}$ of receiver locations (pixels) at user height. The link
+$(p,b)$ has three-dimensional length $d_{pb}$ and path loss $\PL(p,b)$ in dB.
+With transmit power $P_{\mathrm{tx}}$ (dBm) at every site and noise power $N$,
+the received power, serving site and downlink signal-to-interference-plus-noise
+ratio under full load are
+\begin{equation}
+\begin{gathered}
+P_{pb}=P_{\mathrm{tx}}-\PL(p,b),\qquad s(p)=\argmax_{b\in\mathcal{B}}P_{pb},\\
+\mathrm{SINR}(p)=\frac{10^{P_{p\,s(p)}/10}}
+{\sum_{b\neq s(p)}10^{P_{pb}/10}+10^{N/10}} .
+\end{gathered}
+\label{eq:sinr}
+\end{equation}
+A pixel is \emph{covered} at coupling-loss level $L$ if
+$\PL(p,s(p))\le L$, and its spectral efficiency is obtained from the SINR with
+the attenuated and truncated Shannon mapping used in 3GPP system
+evaluations~\cite{tr36942}.
+
+The city is partitioned into square tiles of side $G_s$. Inside tile $t$ the
+path loss follows the log-distance law~\cite{rappaport2002,erceg1999}
+\begin{equation}
+\PL(p,b)=P_{L_0,t}+10\,\gamma_t\log_{10}\frac{d_{pb}}{d_0}+\varepsilon_{pb},
+\qquad p\in t,
+\label{eq:logdist}
+\end{equation}
+with exponent $\gamma_t$, intercept $P_{L_0,t}$ at the reference distance
+$d_0$ and a residual $\varepsilon_{pb}$ of variance $\sigma_\varepsilon^2$.
+We use $d_0=\SI{\refDist}{\metre}$, the tile scale, so that $P_{L_0,t}$ is
+an interpolated rather than an extrapolated quantity; the intercept at
+\SI{1}{\metre} follows as $P_{L_0,t}-20\gamma_t$. Writing
+$x=10\log_{10}(d/d_0)$, Eq.~\eqref{eq:logdist} is linear in
+$\btheta_t=(\gamma_t,P_{L_0,t})^{\top}$ with design matrix
+$\mathbf{A}_t=[\mathbf{x}\;\mathbf{1}]$.
+
+Equation~\eqref{eq:logdist} is the interface between the digital twin and
+network planning: a planning tool that knows $\btheta_t$ for every tile and
+the site positions can evaluate Eq.~\eqref{eq:sinr} anywhere without ray
+tracing. Two structural consequences of the tile model are used later.
+
+\begin{proposition}[What a tile model can express]
+\label{prop:tilemodel}
+Let every link seen from pixel $p$ use the parameters of the tile containing
+$p$, with $\gamma_t>0$. Then (i) the predicted serving site is the nearest
+site, $s(p)=\argmin_b d_{pb}$, whatever $\btheta_t$; and (ii) the predicted SINR
+is
+\begin{equation}
+\mathrm{SINR}(p)=\frac{(d_{ps}/d_0)^{-\gamma_t}}
+{\sum_{b\neq s}(d_{pb}/d_0)^{-\gamma_t}
++10^{(N-P_{\mathrm{tx}}+P_{L_0,t})/10}},
+\label{eq:sinrtile}
+\end{equation}
+so in the interference-limited regime it depends on the exponent only, while
+coverage at level $L$ depends on both parameters.
+\end{proposition}
+
+\noindent The proof is immediate from Eqs.~\eqref{eq:sinr}
+and~\eqref{eq:logdist}. Part~(i) bounds what any tile-parameter predictor
+can achieve in cell association: the metric is identical for every transfer
+operator and measures the tile model itself. Part~(ii) identifies which
+parameter errors matter for which planning quantity.
+
+\subsection{The transfer problem}
+\label{sec:transfer}
+
+Each tile carries a descriptor $\bv_t\in\R^{p}$ computed from the geometry of
+the digital twin. Measurements, and hence labels $\btheta_t$, are available
+in a set of \emph{source} cities $\mathcal{T}_{\mathrm{S}}=\{(\bv_j,\btheta_j)\}_{j=1}^{N}$
+and not in the \emph{target} city, whose tiles have descriptors only. A
+\emph{transfer operator} maps the source data and a target descriptor to a
+parameter estimate, $\hat\btheta_u=\mathcal{A}(\mathcal{T}_{\mathrm{S}};\bv_u)$.
+Source and target descriptors follow different distributions: the purpose of
+transfer is to serve cities unlike those measured, so covariate
+shift~\cite{shimodaira2000,bendavid2010} is the defining feature of the
+problem. In the \emph{few-shot} variant, $k$ target tiles are surveyed and
+their labels revealed before prediction.
+
+The operator is judged at two levels: the parameter error on the target
+tiles and, more importantly for planning, the error of the network
+quantities of Section~\ref{sec:netmodel} computed from the predicted
+parameters and compared with the ray-traced network.
+
+\subsection{Risk of label-averaging operators}
+\label{sec:decomp}
+
+Many transfer operators, including the Gaussian-kernel operator
+of~\cite{ozyurt2026} and $k$-nearest-neighbour averaging, predict a convex
+combination of source labels, $\hat\btheta_u=\sum_j w_j(\bv_u)\btheta_j$ with
+$w_j\ge0$, $\sum_j w_j=1$ and weights that depend on descriptors only.
+
+\begin{proposition}[Risk decomposition]
+\label{prop:decomp}
+Let the source labels be $\btheta_j=\btheta^{\star}(\bv_j)+\boldsymbol\eta_j$,
+with $\btheta^{\star}(\bv)$ the conditional mean parameter and
+$\boldsymbol\eta_j$ zero-mean label noise of covariance $\Sigma_\eta$,
+independent across $j$ and of the descriptors. For a label-averaging
+operator the target risk
+$R=\E_{\bv}\lVert\hat\btheta(\bv)-\btheta^{\star}(\bv)\rVert^{2}$ is
+\begin{equation}
+R=\underbrace{\E_{\bv}\Bigl\lVert\textstyle\sum_j w_j(\bv)\btheta^{\star}(\bv_j)-\btheta^{\star}(\bv)\Bigr\rVert^{2}}_{\text{smoothing bias}}
++\underbrace{\tr(\Sigma_\eta)\,\E_{\bv}\textstyle\sum_j w_j(\bv)^{2}}_{\text{noise transmission}} .
+\label{eq:decomp}
+\end{equation}
+\end{proposition}
+
+\noindent The second term equals $\tr(\Sigma_\eta)\,\E[1/n_{\mathrm{eff}}]$ with
+the effective neighbourhood size
+$n_{\mathrm{eff}}(\bv)=1/\sum_j w_j(\bv)^2$. Concentrated weights lower the
+bias and raise the noise transmission; diffuse weights do the opposite.
+Under covariate shift the bias term grows, because the source set may
+contain no tile whose conditional mean resembles the target's; with noisy
+labels the second term matters as well.
+Ridge regression is also linear in the labels, and so is a regression tree
+once its partition is fixed; the difference is that their weights are not
+confined to the probability simplex and are shaped by the descriptor--label
+relation rather than fixed by an isotropic distance, which is the
+distinction that matters below.

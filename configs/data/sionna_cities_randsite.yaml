@@ -1,0 +1,31 @@
+# Siting replicate: four cities re-traced with sites on randomly chosen rooftops.
+# Each scene is a square of `size_m` centred on (lat, lon) -> true geo-reference,
+# so descriptors and ray-traced path loss describe the same ground.
+# Building footprints: Overture Maps buildings theme, fixed release (01a).
+dataset: sionna_randsite
+overture_release: "2026-09-23.0"
+size_m: 3000            # 3 x 3 km per city -> 900 tiles at 100 m, 225 at 200 m
+freq_ghz: 3.5
+bs_per_city: 20
+bs_height_agl: 6.0      # antenna mast above the host rooftop
+ue_height_agl: 1.5
+cell_size_m: 10.0       # radio-map raster resolution
+rt_samples: 100000000   # rays per site (convergence: scripts/01c_rt_convergence.py)
+max_depth: 5            # maximum number of interactions per path
+max_pathloss_db: 150.0  # cells beyond are 10 dB below the -94 dBm noise floor at 46 dBm
+siting: random          # rooftops in random order (default: tallest first)
+rt_cities: [amsterdam, london, newyork, paris]
+
+cities:
+  # name:        [lat, lon]            morphology note
+  amsterdam:     [52.3676, 4.9041]     # low-rise dense, canals (water descriptors)
+  berlin:        [52.5200, 13.4050]    # mid-rise uniform blocks
+  hamburg:       [53.5511, 9.9937]     # mixed, waterways
+  munich:        [48.1351, 11.5820]    # mid-rise, height-capped centre
+  london:        [51.5074, -0.1278]    # mixed heights, river
+  paris:         [48.8566, 2.3522]     # very uniform Haussmann canyons
+  prague:        [50.0755, 14.4378]    # hilly terrain, historic core
+  vienna:        [48.2082, 16.3738]    # mid-rise, parks
+  barcelona:     [41.3851, 2.1734]     # grid plan, uniform blocks
+  newyork:       [40.7580, -73.9855]   # extreme high-rise canyons
+  chicago:       [41.8781, -87.6298]   # high-rise + open lakefront

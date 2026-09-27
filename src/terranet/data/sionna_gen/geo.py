@@ -23,7 +23,7 @@ class LocalFrame:
     n0: float          # northing of the origin
 
     @classmethod
-    def from_center(cls, lat0: float, lon0: float) -> "LocalFrame":
+    def from_center(cls, lat0: float, lon0: float) -> LocalFrame:
         zone = int((lon0 + 180.0) // 6) + 1
         epsg = (32600 if lat0 >= 0 else 32700) + zone
         tf = Transformer.from_crs("EPSG:4326", f"EPSG:{epsg}", always_xy=True)

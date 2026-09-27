@@ -1,0 +1,41 @@
+{
+  "city": "london",
+  "lat0": 51.5074,
+  "lon0": -0.1278,
+  "size_m": 3000.0,
+  "epsg": 32630,
+  "bbox_wsen": [
+    -0.15022750058069378,
+    51.49339866254913,
+    -0.10535980085066708,
+    51.52139783529535
+  ],
+  "origin_is_true_geo": true,
+  "building_source": {
+    "provider": "Overture Maps Foundation",
+    "theme": "buildings",
+    "release": "2026-09-23.0",
+    "bbox_wsen": [
+      -0.15097486533475793,
+      51.49293189105047,
+      -0.10461157541586218,
+      51.521864369425685
+    ],
+    "n_buildings": 11891,
+    "footprint_sources": {
+      "OpenStreetMap": 11818,
+      "Microsoft ML Buildings": 73
+    },
+    "frac_with_height": 0.07568749474392397,
+    "frac_with_levels": 0.4471448995038264
+  },
+  "n_building_parts_meshed": 9903,
+  "n_extrusion_failures": 0,
+  "height_provenance": {
+    "n_buildings": 11891,
+    "frac_height_tag": 0.07568749474392397,
+    "frac_levels": 0.4201496930451602,
+    "frac_imputed": 0.5041628122109159,
+    "median_height_m": 12.8
+  }
+}

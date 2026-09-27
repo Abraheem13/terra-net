@@ -1,0 +1,71 @@
+{
+  "source": "sionna_rt",
+  "sionna_version": "2.1.0",
+  "api": "RadioMapSolver",
+  "mitsuba_variant": "llvm_ad_mono_polarized",
+  "freq_ghz": 3.5,
+  "cell_size_m": 10.0,
+  "rt_samples": 100000000,
+  "n_bs": 20,
+  "n_measurements": 1009653,
+  "max_pathloss_db": 150.0,
+  "ue_height_m": 1.5,
+  "site_mast_m": 6.0,
+  "seed": 0,
+  "propagation": {
+    "max_depth": 5,
+    "los": true,
+    "specular_reflection": true,
+    "diffuse_reflection": true,
+    "refraction": true,
+    "diffraction": true,
+    "edge_diffraction": true
+  },
+  "materials": {
+    "buildings": "itu concrete",
+    "ground": "itu medium_dry_ground"
+  },
+  "wall_clock_s": 1423.4,
+  "origin_is_true_geo": true,
+  "scene_meta": {
+    "city": "berlin",
+    "lat0": 52.52,
+    "lon0": 13.405,
+    "size_m": 3000.0,
+    "epsg": 32633,
+    "bbox_wsen": [
+      13.382406653847562,
+      52.50622018451121,
+      13.427579829451739,
+      52.53377594520554
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        13.381653309406182,
+        52.50576079074206,
+        13.428332257761197,
+        52.53423507665545
+      ],
+      "n_buildings": 6036,
+      "footprint_sources": {
+        "OpenStreetMap": 5958,
+        "Microsoft ML Buildings": 78
+      },
+      "frac_with_height": 0.14910536779324055,
+      "frac_with_levels": 0.7456925115970842
+    },
+    "n_building_parts_meshed": 5329,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 6036,
+      "frac_height_tag": 0.14910536779324055,
+      "frac_levels": 0.629555997349238,
+      "frac_imputed": 0.22133863485752153,
+      "median_height_m": 16.0
+    }
+  }
+}

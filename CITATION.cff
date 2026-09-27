@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this code or the ray-traced corpora, please cite the article below."
+title: "terra-net: cross-city path-loss transfer for digital-twin network planning"
+type: software
+license: MIT
+repository-code: "https://github.com/Abraheem13/terra-net"
+authors:
+  - family-names: Rashid
+    given-names: Abraheem
+  - family-names: Iradat
+    given-names: Faisal
+  - family-names: Iqbal
+    given-names: Waseem
+  - family-names: Bangash
+    given-names: Yawar Abbas
+  - family-names: Metin
+    given-names: Bilgin
+preferred-citation:
+  type: article
+  title: "Cross-city path-loss transfer for digital-twin network planning: why tile parameters fall short and how site-aware link models close the gap"
+  authors:
+    - family-names: Rashid
+      given-names: Abraheem
+    - family-names: Iradat
+      given-names: Faisal
+    - family-names: Iqbal
+      given-names: Waseem
+    - family-names: Bangash
+      given-names: Yawar Abbas
+    - family-names: Metin
+      given-names: Bilgin
+  status: submitted

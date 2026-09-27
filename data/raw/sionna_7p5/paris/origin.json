@@ -1,0 +1,72 @@
+{
+  "source": "sionna_rt",
+  "sionna_version": "2.1.0",
+  "api": "RadioMapSolver",
+  "mitsuba_variant": "llvm_ad_mono_polarized",
+  "freq_ghz": 7.5,
+  "cell_size_m": 10.0,
+  "rt_samples": 100000000,
+  "n_bs": 20,
+  "n_measurements": 421693,
+  "max_pathloss_db": 150.0,
+  "ue_height_m": 1.5,
+  "site_mast_m": 6.0,
+  "seed": 0,
+  "siting": "tallest",
+  "propagation": {
+    "max_depth": 5,
+    "los": true,
+    "specular_reflection": true,
+    "diffuse_reflection": true,
+    "refraction": true,
+    "diffraction": true,
+    "edge_diffraction": true
+  },
+  "materials": {
+    "buildings": "itu concrete",
+    "ground": "itu medium_dry_ground"
+  },
+  "wall_clock_s": 1501.2,
+  "origin_is_true_geo": true,
+  "scene_meta": {
+    "city": "paris",
+    "lat0": 48.8566,
+    "lon0": 2.3522,
+    "size_m": 3000.0,
+    "epsg": 32631,
+    "bbox_wsen": [
+      2.331572439960531,
+      48.84299043940894,
+      2.3728165703785535,
+      48.8702060107648
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        2.330884665267056,
+        48.8425367263129,
+        2.3735036002172376,
+        48.87065948326148
+      ],
+      "n_buildings": 14383,
+      "footprint_sources": {
+        "OpenStreetMap": 14270,
+        "Microsoft ML Buildings": 113
+      },
+      "frac_with_height": 0.03469373566015435,
+      "frac_with_levels": 0.6609191406521588
+    },
+    "n_building_parts_meshed": 13061,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 14383,
+      "frac_height_tag": 0.03469373566015435,
+      "frac_levels": 0.6397830772439685,
+      "frac_imputed": 0.3255231870958771,
+      "median_height_m": 19.200000000000003
+    }
+  }
+}

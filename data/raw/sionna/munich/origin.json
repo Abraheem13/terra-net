@@ -1,0 +1,71 @@
+{
+  "source": "sionna_rt",
+  "sionna_version": "2.1.0",
+  "api": "RadioMapSolver",
+  "mitsuba_variant": "llvm_ad_mono_polarized",
+  "freq_ghz": 3.5,
+  "cell_size_m": 10.0,
+  "rt_samples": 100000000,
+  "n_bs": 20,
+  "n_measurements": 794151,
+  "max_pathloss_db": 150.0,
+  "ue_height_m": 1.5,
+  "site_mast_m": 6.0,
+  "seed": 0,
+  "propagation": {
+    "max_depth": 5,
+    "los": true,
+    "specular_reflection": true,
+    "diffuse_reflection": true,
+    "refraction": true,
+    "diffraction": true,
+    "edge_diffraction": true
+  },
+  "materials": {
+    "buildings": "itu concrete",
+    "ground": "itu medium_dry_ground"
+  },
+  "wall_clock_s": 1433.3,
+  "origin_is_true_geo": true,
+  "scene_meta": {
+    "city": "munich",
+    "lat0": 48.1351,
+    "lon0": 11.582,
+    "size_m": 3000.0,
+    "epsg": 32632,
+    "bbox_wsen": [
+      11.561188223032788,
+      48.12116392814612,
+      11.602822300577765,
+      48.1490329325997
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        11.560494678294713,
+        48.12069933840937,
+        11.603516558582765,
+        48.14949730956475
+      ],
+      "n_buildings": 8616,
+      "footprint_sources": {
+        "OpenStreetMap": 8521,
+        "Microsoft ML Buildings": 95
+      },
+      "frac_with_height": 0.08658310120705665,
+      "frac_with_levels": 0.5230965645311049
+    },
+    "n_building_parts_meshed": 7577,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 8616,
+      "frac_height_tag": 0.08658310120705665,
+      "frac_levels": 0.489322191272052,
+      "frac_imputed": 0.42409470752089135,
+      "median_height_m": 12.8
+    }
+  }
+}

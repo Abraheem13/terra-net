@@ -1,0 +1,84 @@
+%% ===================================================================
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{The tile exponent is not an environmental constant}
+The central premise of descriptor-based tile transfer is that a tile has a
+path-loss exponent determined by its environment, which can be read from
+descriptors and carried to similar tiles elsewhere. On this corpus the
+premise is weak, for three measured reasons. Two estimates of the same tile's
+exponent from disjoint halves of the sites differ by \seSplitDiff{} in
+standard deviation, so the exponent depends on which sites serve the tile;
+it depends on the dynamic range of the measurements, shifting by
+\censDgOneForty{} when the cut-off is lowered by \SI{10}{\decibel}; and the
+cross-city spread of the city medians (\betweenSd) is small against the
+spread within a city. A tile is seen by each site through a different street
+canyon, and the exponent fitted over all of them mixes the geometry of the
+tile with that of the paths reaching it. This explains why learned operators
+improve on the source median only modestly, why few-shot correction of the
+exponent needs tens of surveyed tiles before it helps, and why a planning
+tool fed with even the \emph{true} tile labels assigns half of the pixels to
+the wrong site and draws cell edges \SI{\edgeOracle}{\metre} away from the
+true ones.
+
+\paragraph{What to transfer}
+The quantity that transfers is the effect of the geometry along a link,
+not a per-tile summary of it. Site-aware link transfer uses the same
+descriptors, the same training cities and the same protocol, but conditions
+on the path between site and receiver; it improves path loss, serving site,
+coverage and planning in every held-out city and outperforms the tile model
+with perfect labels. Its most important features, the knife-edge loss and
+the height of the obstruction above the line of sight, are the quantities of
+classical diffraction theory~\cite{itup526}, so the model remains
+interpretable in physical terms. Two design choices matter for planning.
+First, the model must represent the absence of a link: the hurdle, which
+predicts whether a site is received at all, reduces the planning regret from
+\regretLinkReg\% to \regretLink\% at the same path-loss error. Second, its
+errors must be stated at the level of the decision: the city-level
+certificate turns the leave-one-city-out residuals into a coverage promise
+with a guaranteed risk, and the more accurate the model, the more of the
+city it can promise (\certClaimLink\% against \certClaimGbdt\% for tile
+transfer). For a digital twin this means that the transferable
+representation should be attached to links (or to site--tile pairs), which
+is also what a planning tool evaluates.
+
+\paragraph{Kernel transfer}
+Theorem~\ref{thm:regimes} identifies two limits of kernel transfer; the
+tuned operator is in neither, but with the bandwidths selected on two
+targets it approaches the source mean without reaching the flat regime.
+Its disadvantage against the learned regressors is the noise-transmission
+term of Proposition~\ref{prop:decomp} combined with an isotropic distance:
+learning one length scale per descriptor (GP-ARD) removes most of the gap,
+which locates the weakness in the metric rather than in kernel averaging as
+such.
+
+\paragraph{Implications for planning}
+Four practical conclusions follow. First, a transfer model for a
+digital twin should be validated at the network level; parameter errors of
+similar size lead to very different planning losses (Table~\ref{tab:network}),
+and a uniformly biased model such as the 3GPP UMa NLoS constants has the
+largest path-loss error of all (\SI{\netUmaNlos}{\decibel}) yet a planning
+regret of \regretUmaNlos\%, below that of transferred tile parameters,
+because a uniform bias does not change which sites cover the most pixels. Second, models trained on links below a
+receiver cut-off overstate the reach of distant sites unless the cut-off is
+modelled; every zero-shot tile model with transferred parameters predicts that a
+single site covers \covTarget\% of a city. Third, small surveys are not an efficient way to calibrate either the
+tile exponent or per-site offsets; the survey is better used to certify
+coverage. Fourth, coverage claims should come with a margin estimated across
+cities: without it, \certNaiveFalseGbdt\% of the pixels promised by tile
+transfer are not covered.
+
+\paragraph{Limitations}
+The path loss is ray traced rather than measured, so absolute values depend
+on the solver, the ITU material models and the level-of-detail-1 geometry;
+the results are comparisons under identical conditions. The external scenes
+test a different geometry source and different materials but the same
+solver, and the siting replicate and the second band test other sites and
+another frequency; none replaces validation against measurements, which the
+public drive-test data we could access do not allow because they lack site
+positions. Between \impMin\% and \impMax\% of the building heights are
+imputed per city. The corpus has flat terrain, \nSitesPerCity{} rooftop sites
+per city with isotropic antennas, full load and a fixed link budget. Tile
+labels come from the same ray tracer as the network truth, so the oracle is
+the reference for tile models with exact labels on this corpus, not a
+statement about measured data.

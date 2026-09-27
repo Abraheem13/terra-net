@@ -1,0 +1,18 @@
+{
+  "provider": "Overture Maps Foundation",
+  "theme": "buildings",
+  "release": "2026-09-23.0",
+  "bbox_wsen": [
+    4.880755638004822,
+    52.35330388089471,
+    4.927458656843678,
+    52.38189206940003
+  ],
+  "n_buildings": 21135,
+  "footprint_sources": {
+    "OpenStreetMap": 21074,
+    "Microsoft ML Buildings": 61
+  },
+  "frac_with_height": 0.8311331913886918,
+  "frac_with_levels": 0.06505796072864917
+}

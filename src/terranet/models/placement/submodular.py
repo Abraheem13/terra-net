@@ -1,10 +1,9 @@
-"""Submodular coverage maximization with lazy greedy — (1-1/e) guarantee.
+"""Site selection as submodular coverage maximisation.
 
-Objective F(S) = # of high-priority points covered by at least one BS in S
-(monotone submodular). Budgeted variant: pick k stations maximizing coverage;
-or cost-minimal cover via greedy set-cover (ln n approximation). Operates on the
-LEARNED, uncertainty-aware coverage: a point counts as covered if the conformal
-LOWER bound of received power clears the threshold (risk-averse planning).
+Objective F(S) = number of points covered by at least one site in S, monotone
+submodular, so the (lazy) greedy choice of k sites attains a (1 - 1/e)
+approximation (Nemhauser et al. 1978). A greedy set cover (ln n approximation)
+is provided for minimum-cardinality covers.
 """
 from __future__ import annotations
 
@@ -51,8 +50,3 @@ def greedy_set_cover(cover_matrix: np.ndarray, required: np.ndarray | None = Non
         selected.append(j)
         need &= ~cover_matrix[j]
     return selected
-
-
-def risk_averse_cover_matrix(power_lower_bound_dbm: np.ndarray, p_th: float) -> np.ndarray:
-    """power_lower_bound_dbm: (n_candidates, n_points) conformal lower bounds."""
-    return power_lower_bound_dbm >= p_th

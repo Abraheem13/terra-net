@@ -1,0 +1,92 @@
+\documentclass[final,5p,times,twocolumn]{elsarticle}
+
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{array}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,fit,backgrounds,calc}
+\usepackage[hidelinks]{hyperref}
+\usepackage{siunitx}
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol,group-separator={,}}
+
+\setcounter{topnumber}{3}\setcounter{bottomnumber}{2}\setcounter{totalnumber}{4}
+\renewcommand{\topfraction}{0.9}\renewcommand{\bottomfraction}{0.5}
+\renewcommand{\textfraction}{0.08}\renewcommand{\floatpagefraction}{0.8}
+\setlength{\textfloatsep}{12pt plus 2pt minus 4pt}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator{\tr}{tr}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\bv}{\mathbf{v}}
+\newcommand{\PL}{P_{L}}
+\newcommand{\PLz}{P_{L_0}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+
+\input{generated/numbers}
+
+\journal{Computer Networks}
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{Cross-city path-loss transfer for digital-twin network planning:
+why tile parameters fall short and how site-aware link models close the
+gap}
+
+\author[bru]{Abraheem Rashid}
+\ead{2546393@brunel.ac.uk}
+\author[iba]{Faisal Iradat}
+\ead{firadat@iba.edu.pk}
+\author[squ]{Waseem Iqbal\corref{cor1}}
+\ead{m.waseem@squ.edu.om}
+\author[sun]{Yawar Abbas Bangash}
+\ead{yawarb@sunway.edu.my}
+\author[bou]{Bilgin Metin}
+\ead{bilgin.metin@boun.edu.tr}
+\cortext[cor1]{Corresponding author.}
+\address[bru]{Department of Computer Science, Brunel University London,
+London, United Kingdom}
+\address[iba]{Department of Computer Science, School of Mathematics and
+Science, Institute of Business Administration, Karachi, Pakistan}
+\address[squ]{Department of Electrical and Computer Engineering, Sultan
+Qaboos University, Muscat, Oman}
+\address[sun]{School of Computing and Artificial Intelligence, FET, Sunway
+University, Selangor Darul Ehsan, Malaysia}
+\address[bou]{Department of Management Information Systems,
+Bo\u{g}azi\c{c}i University, \.{I}stanbul, T\"urkiye}
+
+\input{sections/00_abstract}
+
+\end{frontmatter}
+
+\input{sections/01_intro}
+\input{sections/02_related}
+\input{sections/03_model}
+\input{sections/04_methods}
+\input{sections/05_results}
+\input{sections/06_discussion}
+\input{sections/07_conclusion}
+\input{sections/08_backmatter}
+
+\bibliographystyle{elsarticle-num}
+\bibliography{references}
+
+\appendix
+\input{sections/09_appendix}
+
+\end{document}

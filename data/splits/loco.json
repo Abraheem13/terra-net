@@ -1,0 +1,222 @@
+[
+  {
+    "name": "loco_amsterdam",
+    "test_cities": [
+      "amsterdam"
+    ],
+    "val_cities": [
+      "prague"
+    ],
+    "train_cities": [
+      "barcelona",
+      "berlin",
+      "chicago",
+      "hamburg",
+      "london",
+      "munich",
+      "newyork",
+      "paris",
+      "vienna"
+    ]
+  },
+  {
+    "name": "loco_barcelona",
+    "test_cities": [
+      "barcelona"
+    ],
+    "val_cities": [
+      "newyork"
+    ],
+    "train_cities": [
+      "amsterdam",
+      "berlin",
+      "chicago",
+      "hamburg",
+      "london",
+      "munich",
+      "paris",
+      "prague",
+      "vienna"
+    ]
+  },
+  {
+    "name": "loco_berlin",
+    "test_cities": [
+      "berlin"
+    ],
+    "val_cities": [
+      "munich"
+    ],
+    "train_cities": [
+      "amsterdam",
+      "barcelona",
+      "chicago",
+      "hamburg",
+      "london",
+      "newyork",
+      "paris",
+      "prague",
+      "vienna"
+    ]
+  },
+  {
+    "name": "loco_chicago",
+    "test_cities": [
+      "chicago"
+    ],
+    "val_cities": [
+      "berlin"
+    ],
+    "train_cities": [
+      "amsterdam",
+      "barcelona",
+      "hamburg",
+      "london",
+      "munich",
+      "newyork",
+      "paris",
+      "prague",
+      "vienna"
+    ]
+  },
+  {
+    "name": "loco_hamburg",
+    "test_cities": [
+      "hamburg"
+    ],
+    "val_cities": [
+      "chicago"
+    ],
+    "train_cities": [
+      "amsterdam",
+      "barcelona",
+      "berlin",
+      "london",
+      "munich",
+      "newyork",
+      "paris",
+      "prague",
+      "vienna"
+    ]
+  },
+  {
+    "name": "loco_london",
+    "test_cities": [
+      "london"
+    ],
+    "val_cities": [
+      "amsterdam"
+    ],
+    "train_cities": [
+      "barcelona",
+      "berlin",
+      "chicago",
+      "hamburg",
+      "munich",
+      "newyork",
+      "paris",
+      "prague",
+      "vienna"
+    ]
+  },
+  {
+    "name": "loco_munich",
+    "test_cities": [
+      "munich"
+    ],
+    "val_cities": [
+      "amsterdam"
+    ],
+    "train_cities": [
+      "barcelona",
+      "berlin",
+      "chicago",
+      "hamburg",
+      "london",
+      "newyork",
+      "paris",
+      "prague",
+      "vienna"
+    ]
+  },
+  {
+    "name": "loco_newyork",
+    "test_cities": [
+      "newyork"
+    ],
+    "val_cities": [
+      "amsterdam"
+    ],
+    "train_cities": [
+      "barcelona",
+      "berlin",
+      "chicago",
+      "hamburg",
+      "london",
+      "munich",
+      "paris",
+      "prague",
+      "vienna"
+    ]
+  },
+  {
+    "name": "loco_paris",
+    "test_cities": [
+      "paris"
+    ],
+    "val_cities": [
+      "barcelona"
+    ],
+    "train_cities": [
+      "amsterdam",
+      "berlin",
+      "chicago",
+      "hamburg",
+      "london",
+      "munich",
+      "newyork",
+      "prague",
+      "vienna"
+    ]
+  },
+  {
+    "name": "loco_prague",
+    "test_cities": [
+      "prague"
+    ],
+    "val_cities": [
+      "paris"
+    ],
+    "train_cities": [
+      "amsterdam",
+      "barcelona",
+      "berlin",
+      "chicago",
+      "hamburg",
+      "london",
+      "munich",
+      "newyork",
+      "vienna"
+    ]
+  },
+  {
+    "name": "loco_vienna",
+    "test_cities": [
+      "vienna"
+    ],
+    "val_cities": [
+      "munich"
+    ],
+    "train_cities": [
+      "amsterdam",
+      "barcelona",
+      "berlin",
+      "chicago",
+      "hamburg",
+      "london",
+      "newyork",
+      "paris",
+      "prague"
+    ]
+  }
+]

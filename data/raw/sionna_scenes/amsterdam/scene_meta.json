@@ -1,0 +1,41 @@
+{
+  "city": "amsterdam",
+  "lat0": 52.3676,
+  "lon0": 4.9041,
+  "size_m": 3000.0,
+  "epsg": 32631,
+  "bbox_wsen": [
+    4.881508458923965,
+    52.35376510917218,
+    4.926704928551233,
+    52.381431098179846
+  ],
+  "origin_is_true_geo": true,
+  "building_source": {
+    "provider": "Overture Maps Foundation",
+    "theme": "buildings",
+    "release": "2026-09-23.0",
+    "bbox_wsen": [
+      4.880755638004822,
+      52.35330388089471,
+      4.927458656843678,
+      52.38189206940003
+    ],
+    "n_buildings": 21135,
+    "footprint_sources": {
+      "OpenStreetMap": 21074,
+      "Microsoft ML Buildings": 61
+    },
+    "frac_with_height": 0.8311331913886918,
+    "frac_with_levels": 0.06505796072864917
+  },
+  "n_building_parts_meshed": 18378,
+  "n_extrusion_failures": 0,
+  "height_provenance": {
+    "n_buildings": 21135,
+    "frac_height_tag": 0.8311331913886918,
+    "frac_levels": 0.01745919091554294,
+    "frac_imputed": 0.15140761769576533,
+    "median_height_m": 15.5
+  }
+}

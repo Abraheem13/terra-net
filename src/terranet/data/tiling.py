@@ -89,3 +89,46 @@ def assign_structures(
 def tiles_to_gdf(tiles: dict[tuple[int, int], Tile]) -> gpd.GeoDataFrame:
     rows = [{"m": t.m, "z": t.z, "geometry": t.geometry} for t in tiles.values()]
     return gpd.GeoDataFrame(rows, crs="EPSG:4326")
+
+
+def grid_frame(region_polygon_deg: Polygon, tile_size_m: float):
+    """Tile table (one row per tile) with integer keys and degree bounds.
+
+    Row order is the canonical tile index used by every downstream script,
+    so labels, descriptors and evaluation always refer to the same tiles.
+    """
+    import pandas as pd
+
+    tiles = build_grid(region_polygon_deg, tile_size_m)
+    rows = []
+    for t in tiles.values():
+        minx, miny, maxx, maxy = t.bounds_deg
+        rows.append({"m": t.m, "z": t.z, "lat_c": float(np.degrees(t.lat_c)),
+                     "lon_c": float(np.degrees(t.lon_c)),
+                     "minx": minx, "miny": miny, "maxx": maxx, "maxy": maxy})
+    df = pd.DataFrame(rows)
+    t0 = next(iter(tiles.values()))
+    df.attrs.update(lat0=float(t0.lat_c - t0.m * t0.dphi), lon0=float(t0.lon_c - t0.z * t0.dlam),
+                    dphi=float(t0.dphi), dlam=float(t0.dlam), tile_size_m=float(tile_size_m))
+    return df
+
+
+def region_from_points(lon: np.ndarray, lat: np.ndarray, pad_deg: float = 0.002) -> Polygon:
+    return box(float(np.min(lon)) - pad_deg, float(np.min(lat)) - pad_deg,
+               float(np.max(lon)) + pad_deg, float(np.max(lat)) + pad_deg)
+
+
+def point_tile_index(grid, lon_deg: np.ndarray, lat_deg: np.ndarray) -> np.ndarray:
+    """Tile row index for each point (-1 if outside every tile). O(n), no spatial join."""
+    a = grid.attrs
+    m = np.rint((np.radians(lat_deg) - a["lat0"]) / a["dphi"]).astype(np.int64)
+    z = np.rint((np.radians(lon_deg) - a["lon0"]) / a["dlam"]).astype(np.int64)
+    m_lo, z_lo = int(grid.m.min()), int(grid.z.min())
+    n_m, n_z = int(grid.m.max()) - m_lo + 1, int(grid.z.max()) - z_lo + 1
+    lut = np.full(n_m * n_z, -1, np.int64)
+    lut[(grid.m.to_numpy() - m_lo) * n_z + (grid.z.to_numpy() - z_lo)] = np.arange(len(grid))
+    mi, zi = m - m_lo, z - z_lo
+    inside = (mi >= 0) & (mi < n_m) & (zi >= 0) & (zi < n_z)
+    out = np.full(len(m), -1, np.int64)
+    out[inside] = lut[mi[inside] * n_z + zi[inside]]
+    return out

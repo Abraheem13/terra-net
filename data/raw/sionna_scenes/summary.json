@@ -1,0 +1,454 @@
+[
+  {
+    "city": "amsterdam",
+    "lat0": 52.3676,
+    "lon0": 4.9041,
+    "size_m": 3000.0,
+    "epsg": 32631,
+    "bbox_wsen": [
+      4.881508458923965,
+      52.35376510917218,
+      4.926704928551233,
+      52.381431098179846
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        4.880755638004822,
+        52.35330388089471,
+        4.927458656843678,
+        52.38189206940003
+      ],
+      "n_buildings": 21135,
+      "footprint_sources": {
+        "OpenStreetMap": 21074,
+        "Microsoft ML Buildings": 61
+      },
+      "frac_with_height": 0.8311331913886918,
+      "frac_with_levels": 0.06505796072864917
+    },
+    "n_building_parts_meshed": 18378,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 21135,
+      "frac_height_tag": 0.8311331913886918,
+      "frac_levels": 0.01745919091554294,
+      "frac_imputed": 0.15140761769576533,
+      "median_height_m": 15.5
+    }
+  },
+  {
+    "city": "berlin",
+    "lat0": 52.52,
+    "lon0": 13.405,
+    "size_m": 3000.0,
+    "epsg": 32633,
+    "bbox_wsen": [
+      13.382406653847562,
+      52.50622018451121,
+      13.427579829451739,
+      52.53377594520554
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        13.381653309406182,
+        52.50576079074206,
+        13.428332257761197,
+        52.53423507665545
+      ],
+      "n_buildings": 6036,
+      "footprint_sources": {
+        "OpenStreetMap": 5958,
+        "Microsoft ML Buildings": 78
+      },
+      "frac_with_height": 0.14910536779324055,
+      "frac_with_levels": 0.7456925115970842
+    },
+    "n_building_parts_meshed": 5329,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 6036,
+      "frac_height_tag": 0.14910536779324055,
+      "frac_levels": 0.629555997349238,
+      "frac_imputed": 0.22133863485752153,
+      "median_height_m": 16.0
+    }
+  },
+  {
+    "city": "hamburg",
+    "lat0": 53.5511,
+    "lon0": 9.9937,
+    "size_m": 3000.0,
+    "epsg": 32632,
+    "bbox_wsen": [
+      9.97075418222791,
+      53.53742898583779,
+      10.01666020198646,
+      53.56476688249249
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        9.969989569234302,
+        53.53697321428174,
+        10.017425789910144,
+        53.56522237401313
+      ],
+      "n_buildings": 4335,
+      "footprint_sources": {
+        "OpenStreetMap": 4206,
+        "Microsoft ML Buildings": 129
+      },
+      "frac_with_height": 0.17024221453287197,
+      "frac_with_levels": 0.508881199538639
+    },
+    "n_building_parts_meshed": 4023,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 4335,
+      "frac_height_tag": 0.17024221453287197,
+      "frac_levels": 0.4244521337946944,
+      "frac_imputed": 0.40530565167243365,
+      "median_height_m": 16.0
+    }
+  },
+  {
+    "city": "munich",
+    "lat0": 48.1351,
+    "lon0": 11.582,
+    "size_m": 3000.0,
+    "epsg": 32632,
+    "bbox_wsen": [
+      11.561188223032788,
+      48.12116392814612,
+      11.602822300577765,
+      48.1490329325997
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        11.560494678294713,
+        48.12069933840937,
+        11.603516558582765,
+        48.14949730956475
+      ],
+      "n_buildings": 8616,
+      "footprint_sources": {
+        "OpenStreetMap": 8521,
+        "Microsoft ML Buildings": 95
+      },
+      "frac_with_height": 0.08658310120705665,
+      "frac_with_levels": 0.5230965645311049
+    },
+    "n_building_parts_meshed": 7577,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 8616,
+      "frac_height_tag": 0.08658310120705665,
+      "frac_levels": 0.489322191272052,
+      "frac_imputed": 0.42409470752089135,
+      "median_height_m": 12.8
+    }
+  },
+  {
+    "city": "london",
+    "lat0": 51.5074,
+    "lon0": -0.1278,
+    "size_m": 3000.0,
+    "epsg": 32630,
+    "bbox_wsen": [
+      -0.15022750058069378,
+      51.49339866254913,
+      -0.10535980085066708,
+      51.52139783529535
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        -0.15097486533475793,
+        51.49293189105047,
+        -0.10461157541586218,
+        51.521864369425685
+      ],
+      "n_buildings": 11891,
+      "footprint_sources": {
+        "OpenStreetMap": 11818,
+        "Microsoft ML Buildings": 73
+      },
+      "frac_with_height": 0.07568749474392397,
+      "frac_with_levels": 0.4471448995038264
+    },
+    "n_building_parts_meshed": 9903,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 11891,
+      "frac_height_tag": 0.07568749474392397,
+      "frac_levels": 0.4201496930451602,
+      "frac_imputed": 0.5041628122109159,
+      "median_height_m": 12.8
+    }
+  },
+  {
+    "city": "paris",
+    "lat0": 48.8566,
+    "lon0": 2.3522,
+    "size_m": 3000.0,
+    "epsg": 32631,
+    "bbox_wsen": [
+      2.331572439960531,
+      48.84299043940894,
+      2.3728165703785535,
+      48.8702060107648
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        2.330884665267056,
+        48.8425367263129,
+        2.3735036002172376,
+        48.87065948326148
+      ],
+      "n_buildings": 14383,
+      "footprint_sources": {
+        "OpenStreetMap": 14270,
+        "Microsoft ML Buildings": 113
+      },
+      "frac_with_height": 0.03469373566015435,
+      "frac_with_levels": 0.6609191406521588
+    },
+    "n_building_parts_meshed": 13061,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 14383,
+      "frac_height_tag": 0.03469373566015435,
+      "frac_levels": 0.6397830772439685,
+      "frac_imputed": 0.3255231870958771,
+      "median_height_m": 19.200000000000003
+    }
+  },
+  {
+    "city": "prague",
+    "lat0": 50.0755,
+    "lon0": 14.4378,
+    "size_m": 3000.0,
+    "epsg": 32633,
+    "bbox_wsen": [
+      14.41667442566395,
+      50.061906370763204,
+      14.458913812842308,
+      50.08908990902421
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        14.415970037192373,
+        50.06145318578092,
+        14.459617404145982,
+        50.089542841858716
+      ],
+      "n_buildings": 9907,
+      "footprint_sources": {
+        "OpenStreetMap": 9713,
+        "Microsoft ML Buildings": 194
+      },
+      "frac_with_height": 0.01130513778136671,
+      "frac_with_levels": 0.7054607853033209
+    },
+    "n_building_parts_meshed": 9268,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 9907,
+      "frac_height_tag": 0.01130513778136671,
+      "frac_levels": 0.7028363783183608,
+      "frac_imputed": 0.2858584839002725,
+      "median_height_m": 16.0
+    }
+  },
+  {
+    "city": "vienna",
+    "lat0": 48.2082,
+    "lon0": 16.3738,
+    "size_m": 3000.0,
+    "epsg": 32633,
+    "bbox_wsen": [
+      16.353260392826687,
+      48.194465691078065,
+      16.39435020366098,
+      48.221930959593756
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        16.35257592166418,
+        48.19400782315544,
+        16.395035393029865,
+        48.22238860050634
+      ],
+      "n_buildings": 7082,
+      "footprint_sources": {
+        "OpenStreetMap": 7006,
+        "Microsoft ML Buildings": 76
+      },
+      "frac_with_height": 0.2632024851736798,
+      "frac_with_levels": 0.7763343688223666
+    },
+    "n_building_parts_meshed": 6290,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 7082,
+      "frac_height_tag": 0.2632024851736798,
+      "frac_levels": 0.599689353290031,
+      "frac_imputed": 0.13710816153628919,
+      "median_height_m": 16.0
+    }
+  },
+  {
+    "city": "barcelona",
+    "lat0": 41.3851,
+    "lon0": 2.1734,
+    "size_m": 3000.0,
+    "epsg": 32631,
+    "bbox_wsen": [
+      2.1552866396204684,
+      41.37145973826486,
+      2.191505935840279,
+      41.39873755495808
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        2.154682733017163,
+        41.37100501630295,
+        2.192109339224815,
+        41.399192093460634
+      ],
+      "n_buildings": 12337,
+      "footprint_sources": {
+        "OpenStreetMap": 12220,
+        "Instituto Geogr\u00e1fico Nacional (Espa\u00f1a)": 80,
+        "Microsoft ML Buildings": 37
+      },
+      "frac_with_height": 0.12434141201264488,
+      "frac_with_levels": 0.7271621950231012
+    },
+    "n_building_parts_meshed": 11474,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 12337,
+      "frac_height_tag": 0.12434141201264488,
+      "frac_levels": 0.6414849639296425,
+      "frac_imputed": 0.23417362405771258,
+      "median_height_m": 19.200000000000003
+    }
+  },
+  {
+    "city": "newyork",
+    "lat0": 40.758,
+    "lon0": -73.9855,
+    "size_m": 3000.0,
+    "epsg": 32618,
+    "bbox_wsen": [
+      -74.00346977652349,
+      40.74433168660362,
+      -73.96752303113865,
+      40.771665693885
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        -74.00406864526067,
+        40.74387603108834,
+        -73.9669236749208,
+        40.77212117185561
+      ],
+      "n_buildings": 7126,
+      "footprint_sources": {
+        "OpenStreetMap": 7114,
+        "Microsoft ML Buildings": 12
+      },
+      "frac_with_height": 0.9789503227617177,
+      "frac_with_levels": 0.1383665450463093
+    },
+    "n_building_parts_meshed": 6478,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 7126,
+      "frac_height_tag": 0.9789503227617177,
+      "frac_levels": 0.005753578445130508,
+      "frac_imputed": 0.015296098793151839,
+      "median_height_m": 18.6
+    }
+  },
+  {
+    "city": "chicago",
+    "lat0": 41.8781,
+    "lon0": -87.6298,
+    "size_m": 3000.0,
+    "epsg": 32616,
+    "bbox_wsen": [
+      -87.64801298584838,
+      41.86449000412588,
+      -87.61159462736019,
+      41.89170721205444
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        -87.64862021655215,
+        41.864036289699925,
+        -87.61098791266278,
+        41.89216073779927
+      ],
+      "n_buildings": 2952,
+      "footprint_sources": {
+        "OpenStreetMap": 2911,
+        "Microsoft ML Buildings": 41
+      },
+      "frac_with_height": 0.7015582655826558,
+      "frac_with_levels": 0.44478319783197834
+    },
+    "n_building_parts_meshed": 2696,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 2952,
+      "frac_height_tag": 0.7015582655826558,
+      "frac_levels": 0.04403794037940379,
+      "frac_imputed": 0.2544037940379404,
+      "median_height_m": 15.9
+    }
+  }
+]

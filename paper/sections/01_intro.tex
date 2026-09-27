@@ -1,0 +1,83 @@
+%% ===================================================================
+\section{Introduction}
+\label{sec:intro}
+
+Network planning with a digital twin requires a propagation model for places
+where no measurement has been taken yet: coverage, interference and site
+selection must be assessed before a campaign exists in the target
+region~\cite{khan2022dt,alkhateeb2023dt}. Ray tracing resolves the geometry
+but must be rerun for every change of layout and needs detailed 3-D
+data~\cite{yun2015raytracing,hoydis2023sionna}; empirical formulas such as
+Okumura--Hata or 3GPP TR~38.901 are cheap but apply one parameter set to a
+whole environment class~\cite{hata1980,tr38901}. Tile-based models sit
+between the two: the twin is partitioned into tiles, each tile carries the
+two parameters $(\gamma,P_{L_0})$ of a log-distance law, and parameters
+learned where measurements exist are transferred to unmeasured tiles by
+environmental similarity~\cite{ozyurt2020maple,ozyurt2026}. The transported
+quantity is small and physically interpretable, and a planning tool can
+evaluate it for any site layout.
+
+Whether such transfer works \emph{across cities}, and what its errors cost a
+network planner, has not been established. The descriptor-based framework
+of~\cite{ozyurt2026}, which transfers tile parameters with a Gaussian kernel
+over a descriptor space, was evaluated on two urban datasets that are not
+public. Three questions remain open. First, how reliable are the tile labels
+themselves, given that a tile of \SI{100}{\metre} sees its serving sites over
+a narrow range of distances and that neighbouring receivers share
+propagation paths? Second, how does kernel transfer behave when the target
+city differs from every source city, which is exactly when transfer is
+needed, and how does it compare with learned regressors under one protocol?
+Third, what do parameter errors mean for the quantities a planner uses:
+path loss, serving cell, SINR, coverage, cell edges and the choice of sites,
+is the tile parameter the right quantity to transfer at all, and how much
+coverage can an operator promise from a transferred model?
+
+This paper answers these questions on a public benchmark. Our contributions
+are the following.
+\begin{enumerate}
+\item \textbf{Reproducible multi-city, multi-band corpora.} Eleven
+geo-referenced city scenes built from a pinned release of open building data
+are ray traced from \nSites{} rooftop sites at \SI{\freqGHz}{\giga\hertz}
+(\nSamples{} links, \nTiles{} labelled tiles) and at
+\SI{\freqTwoGHz}{\giga\hertz} in the upper mid-band, with a ray-budget study,
+a physical consistency check of the solver output, a replicate with random
+rooftop siting and an external test on independently modelled scenes. Every
+number in this paper is regenerated from the released data by one command.
+\item \textbf{Tile labels with honest precision.} We show that the per-tile
+fit is ill-conditioned (Proposition~\ref{prop:identify}), replace ad-hoc
+regularisation by empirical-Bayes shrinkage whose risk is bounded whatever
+the tile geometry (Proposition~\ref{prop:eb}) with a small-sample (CR2)
+cluster-robust variance, and show that the labels depend on the serving
+sites, the tile size and the dynamic range of the data.
+\item \textbf{An analysis of kernel transfer.} We prove that the Gaussian
+kernel operator has two limiting regimes (Theorem~\ref{thm:regimes}),
+measure where the tuned operator lies on every held-out city, and show that
+learning its metric removes most of its disadvantage.
+\item \textbf{A leave-one-city-out benchmark with city-level inference.}
+Standard-model, label-averaging, Gaussian-process, linear, tree, neural and
+domain-adaptation operators are compared under one tuning protocol with five
+seeds, with and without surveyed tiles (random, contiguous or designed), and
+every claim is tested at the level of cities with bootstrap intervals,
+Wilcoxon tests and Holm correction.
+\item \textbf{Network-level evaluation and site-aware link transfer.} We
+derive what a tile model can express for cell association and SINR
+(Proposition~\ref{prop:tilemodel}), evaluate every operator through path
+loss, serving cell, SINR, coverage, cell edges, dimensioning and site
+planning scored on the ray-traced truth, and propose a hurdle link model
+conditioned on the obstruction geometry of each link that outperforms even
+the tile model with perfect labels in every held-out city.
+\item \textbf{Survey design and coverage certificates.} We give a survey
+design for MDT-style site calibration with a $(1-1/e)$ guarantee
+(Proposition~\ref{prop:survey}) and a distribution-free, city-level coverage
+certificate from leave-one-city-out residuals
+(Proposition~\ref{prop:certify}), and measure what each transfer model can
+promise at a stated risk.
+\end{enumerate}
+
+Section~\ref{sec:related} reviews related work, Section~\ref{sec:model}
+formalises the network model and the transfer problem,
+Section~\ref{sec:methods} describes the corpus, labels, descriptors,
+operators and evaluation, Section~\ref{sec:results} reports the results,
+Section~\ref{sec:discussion} discusses their implications and limitations,
+and Section~\ref{sec:conclusion} concludes. Proofs are in \ref{app:proofs}
+and the complete city-level comparisons in \ref{app:stats}.

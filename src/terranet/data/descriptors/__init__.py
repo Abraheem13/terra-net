@@ -1,1 +1,1 @@
-from .extractor import DescriptorExtractor, DESCRIPTOR_NAMES
+"""Tile descriptors. `scene_tiles` is the pipeline used for the Sionna corpus."""
