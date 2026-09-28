@@ -10,10 +10,10 @@ modelled external scenes. The tile labels are imprecise: their
 cluster-robust uncertainty is \seRatio{} times the naive one, and they change
 with the serving sites and the dynamic range of the data. Learned regressors
 transfer them better than the source median in most cities, though not
-significantly, yet even perfect tile labels give a path-loss
-error of \SI{\netOracle}{\decibel} and the correct serving site for only
-\assocOracle\% of the pixels, and composing the parameters of the tiles a
-link crosses helps with exact labels but not once they are transferred. A site-aware hurdle model that predicts each
+significantly. Yet even perfect tile labels give a path-loss error of
+\SI{\netOracle}{\decibel} and the correct serving site for only
+\assocOracle\% of the pixels; composing the parameters of the tiles a link
+crosses helps with exact labels, not once they are transferred. A site-aware hurdle model that predicts each
 link, and whether it exists, from its obstruction and diffraction geometry
 reduces the error on unseen cities to \SI{\netLink}{\decibel}, raises
 serving-site accuracy to \assocLink\% and cuts the coverage lost when
