@@ -462,15 +462,24 @@ $\widehat{PL}_{\mathrm{serv}}(p)\le L$.
 MAPLE~\cite{ozyurt2020maple}, composes the loss of a link from every tile
 its straight path crosses. We split the horizontal segment from each site to
 each pixel at the tile borders (sampled every \SI{10}{\metre}), so that tile
-$t$ holds a length $L_t$ of it, and evaluate two compositions: the sum of
-the published framework, $\PL=\sum_t[A_t+10\gamma_t\log_{10}L_t]$ with $L_t$
-in metres, in which every crossed tile adds its own log-distance loss; and
-path-averaged parameters,
-$\PL=\sum_t (L_t/d_h)\,[A_t+\gamma_t x]$ with the horizontal length $d_h$,
-which reduces to Eq.~\eqref{eq:logdist} when the whole path lies in one
-tile. Both are linear in the tile parameters, which are fitted jointly to
-all links of a city by least squares with a weak ridge penalty
-($\lambda=10$) towards the best city-wide pair. The labels of the tiles
+$t$ holds a length $L_t$ of it, between the distances $d_t^{\mathrm{in}}$
+and $d_t^{\mathrm{out}}$ from the site, and evaluate three compositions. The
+first is the sum as written in the published framework,
+$\PL=\sum_t[A_t+10\gamma_t\log_{10}L_t]$ with $L_t$ in metres, in which every
+crossed tile adds its own log-distance loss. The second reads the same
+algorithm as a multi-slope law along the path,
+$\PL=A_{s}+\sum_t 10\gamma_t\log_{10}\big(\max(d_t^{\mathrm{out}},d_0)/
+\max(d_t^{\mathrm{in}},d_0)\big)$, with the intercept of the site's tile $s$
+and, over each stretch of distance, the exponent of the tile it lies in
+(piecewise). The third averages the parameters along the path,
+$\PL=\sum_t (L_t/d_h)\,[A_t+\gamma_t x]$ with the horizontal length $d_h$.
+The piecewise and path-averaged compositions reduce to
+Eq.~\eqref{eq:logdist} when the whole path lies in one tile. All three are
+linear in the tile parameters, which are fitted jointly to all links of a
+city by least squares with a weak ridge penalty ($\lambda=10$) towards the
+best city-wide pair; they are evaluated with tiles of \SI{100}{\metre} and,
+as in~\cite{ozyurt2026}, of \SI{200}{\metre}, \SI{500}{\metre} and
+\SI{1000}{\metre}, always on the pixels of the main corpus. The labels of the tiles
 crossed by at least 30 links are transferred with the source median, kernel
 transfer and GBDT under the protocol of Section~\ref{sec:protocol} (one
 seed), and the predicted maps are scored as in Section~\ref{sec:neteval}.

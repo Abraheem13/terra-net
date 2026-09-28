@@ -119,7 +119,9 @@ median number of boosting rounds for $\gamma$ over the five seeds.}
 
 Tables~\ref{tab:tilesize}--\ref{tab:density} give the full results of the
 tile-size, cut-off and network-size studies summarised in
-Section~\ref{sec:res-robust}.
+Section~\ref{sec:res-robust}, and Table~\ref{tab:mixedsize} the mixed-path
+compositions of Section~\ref{sec:res-mixed} at the tile sizes
+of~\cite{ozyurt2026}.
 
 \begin{table}[H]
 \centering
@@ -153,6 +155,21 @@ RMSE; serv.: serving-site accuracy; SINR: mean absolute error; regret: $K=5$.}
 \label{tab:density}
 \small
 \input{generated/tab_density}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Mixed-path compositions of the tile model for tile sizes $G_s$ of
+\SI{100}{\metre} (the corpus) and \SI{200}{\metre}, \SI{500}{\metre} and
+\SI{1000}{\metre} (the range of~\cite{ozyurt2026}), on the pixels of the main
+corpus (mean over held-out cities). Tiles: tiles per city crossed by at
+least 30 links; labels: parameters fitted to the held-out city itself; GBDT:
+transferred from the training cities. PL: path-loss RMSE (dB); serv.:
+serving-site accuracy (\%). Link transfer: \SI{\netLink}{\decibel},
+\assocLink\%.}
+\label{tab:mixedsize}
+\small\setlength{\tabcolsep}{4pt}
+\input{generated/tab_mixed_size}
 \end{table}
 
 \section{Complete city-level comparisons}

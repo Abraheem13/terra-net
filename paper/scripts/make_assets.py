@@ -1062,6 +1062,11 @@ def mixed(T, G, N):
                                              ("median", "Source median"),
                                              ("kernel", "Kernel (NW)"), ("gbdt", "GBDT")],
                mxf.xs("average", level="model")),
+              ("Mixed path, piecewise (multi-slope)", [("oracle", "Tile labels (oracle)"),
+                                                       ("median", "Source median"),
+                                                       ("kernel", "Kernel (NW)"),
+                                                       ("gbdt", "GBDT")],
+               mxf.xs("piecewise", level="model")),
               (r"Mixed path, summed as in~\cite{ozyurt2026}", [("oracle", "Tile labels (oracle)"),
                                                 ("median", "Source median"),
                                                 ("kernel", "Kernel (NW)"), ("gbdt", "GBDT")],
@@ -1079,7 +1084,7 @@ def mixed(T, G, N):
         r"\begin{tabular}{lrrrrr}", r"\toprule",
         r"Predictor & PL (dB) & serv.\ (\%) & SINR (dB) & edge (m) & regret (\%) \\",
         r"\midrule", *rows, r"\bottomrule", r"\end{tabular}"]) + "\n")
-    for model, mk in (("average", "Avg"), ("sum", "Sum")):
+    for model, mk in (("average", "Avg"), ("sum", "Sum"), ("piecewise", "Pw")):
         m = mxf.xs(model, level="model").groupby(level="operator").mean()
         for o, ok in (("oracle", "Oracle"), ("median", "Median"), ("kernel", "Kernel"),
                       ("gbdt", "Gbdt")):
@@ -1094,13 +1099,83 @@ def mixed(T, G, N):
     # link transfer against the path-averaged model with exact labels, per city
     lk = rtf.xs("link", level="operator")
     ao = mxf.xs(("average", "oracle"), level=("model", "operator"))
-    better = [int((lk.pl_rmse_db < ao.pl_rmse_db.reindex(lk.index)).sum()),
-              int((lk.assoc_acc > ao.assoc_acc.reindex(lk.index)).sum()),
-              int((lk.regret <= ao.regret.reindex(lk.index)).sum())]
-    assert better == [len(lk)] * 3, "text: link beats the exact path-averaged model in every city"
+    for model in ("average", "piecewise", "sum"):
+        ao = mxf.xs((model, "oracle"), level=("model", "operator"))
+        better = [int((lk.pl_rmse_db < ao.pl_rmse_db.reindex(lk.index)).sum()),
+                  int((lk.assoc_acc > ao.assoc_acc.reindex(lk.index)).sum()),
+                  int((lk.regret <= ao.regret.reindex(lk.index)).sum())]
+        assert better == [len(lk)] * 3, f"text: link beats exact {model} labels in every city"
     ag = mxf.xs(("average", "gbdt"), level=("model", "operator"))
     rg = rtf.xs("gbdt", level="operator")
     N["mixAvgBetterRecvAssoc"] = int((ag.assoc_acc > rg.assoc_acc.reindex(ag.index)).sum())
+
+
+MIX_SIZES = (100, 200, 500, 1000)
+
+
+def mixed_sizes(T, G, N):
+    """Mixed-path compositions at the tile sizes of the base study."""
+    rows = []
+    stats = {}
+    for gs in MIX_SIZES:
+        tag = "" if gs == 100 else f"_G{gs}"
+        mx = pd.read_csv(T / f"mixed_path{tag}.csv")
+        pl = pd.read_csv(T / f"mixed_path_plan{tag}.csv")
+        fit = pd.read_csv(T / f"mixed_path_labels{tag}.csv")
+        per = mx.groupby(["model", "operator", "fold"])[["pl_rmse_db", "assoc_acc"]].mean()
+        per["regret"] = pl[pl.K == 5].groupby(["model", "operator", "fold"]).regret.mean()
+        m = per.groupby(level=["model", "operator"]).mean()
+        tiles = fit.groupby("model").tiles.mean()
+        stats[gs] = m
+        r = [f"{gs}", f"{tiles['average']:.0f}"]
+        for model in ("sum", "piecewise", "average"):
+            for o in ("oracle", "gbdt"):
+                r += [f"{m.loc[(model, o), 'pl_rmse_db']:.1f}",
+                      pct(m.loc[(model, o), "assoc_acc"])]
+        rows.append(" & ".join(r) + r" \\")
+    save_table(G, "tab_mixed_size", "\n".join([
+        r"\begin{tabular}{rrrrrrrrrrrrrr}", r"\toprule",
+        r"& & \multicolumn{4}{c}{Summed as in~\cite{ozyurt2026}} & "
+        r"\multicolumn{4}{c}{Piecewise} & "
+        r"\multicolumn{4}{c}{Path-averaged} \\",
+        r"\cmidrule(lr){3-6}\cmidrule(lr){7-10}\cmidrule(lr){11-14}",
+        r"& & \multicolumn{2}{c}{labels} & \multicolumn{2}{c}{GBDT} & "
+        r"\multicolumn{2}{c}{labels} & \multicolumn{2}{c}{GBDT} & "
+        r"\multicolumn{2}{c}{labels} & \multicolumn{2}{c}{GBDT} \\",
+        r"\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}"
+        r"\cmidrule(lr){11-12}\cmidrule(lr){13-14}",
+        r"$G_s$ (m) & tiles & PL & serv. & PL & serv. & PL & serv. & PL & serv. & PL & serv. & "
+        r"PL & serv. \\",
+        r"\midrule", *rows, r"\bottomrule", r"\end{tabular}"]) + "\n")
+    big = [g for g in MIX_SIZES if g > 100]
+    so = [stats[g].loc[("sum", "oracle"), "pl_rmse_db"] for g in big]
+    sg = [stats[g].loc[("sum", "gbdt"), "pl_rmse_db"] for g in big]
+    ao = [stats[g].loc[("average", "oracle"), "pl_rmse_db"] for g in big]
+    ag = [stats[g].loc[("average", "gbdt"), "pl_rmse_db"] for g in big]
+    aa = [stats[g].loc[("average", "oracle"), "assoc_acc"] for g in big]
+    N["mixSizeSumOracleMin"], N["mixSizeSumOracleMax"] = f(min(so), 1), f(max(so), 1)
+    N["mixSizeSumGbdtMin"], N["mixSizeSumGbdtMax"] = f(min(sg), 1), f(max(sg), 1)
+    N["mixSizeAvgOracleMin"], N["mixSizeAvgOracleMax"] = f(min(ao), 1), f(max(ao), 1)
+    N["mixSizeAvgGbdtMin"], N["mixSizeAvgGbdtMax"] = f(min(ag), 1), f(max(ag), 1)
+    N["mixSizeAvgAssocMin"], N["mixSizeAvgAssocMax"] = pct(min(aa)), pct(max(aa))
+    po = [stats[g].loc[("piecewise", "oracle"), "pl_rmse_db"] for g in big]
+    N["mixSizePwOracleMin"], N["mixSizePwOracleMax"] = f(min(po), 1), f(max(po), 1)
+    best = min(stats[g].loc[(mo, "oracle"), "pl_rmse_db"] for g in MIX_SIZES
+               for mo in ("sum", "piecewise", "average"))
+    bassoc = max(stats[g].loc[(mo, "oracle"), "assoc_acc"] for g in MIX_SIZES
+                 for mo in ("sum", "piecewise", "average"))
+    N["mixSizeBestNet"], N["mixSizeBestAssoc"] = f(best, 1), pct(bassoc)
+    link = pd.concat([pd.read_csv(T / "network_metrics.csv"),
+                      pd.read_csv(T / "network_link.csv")])
+    link = link[(link.sites == link.sites.max()) & (link.operator == "link")]
+    lm = link.groupby("fold")[["pl_rmse_db", "assoc_acc"]].mean().mean()
+    assert best > lm.pl_rmse_db and bassoc < lm.assoc_acc, \
+        "text: no composition at any tile size reaches link transfer"
+    assert min(so) > stats[100].loc[("sum", "oracle"), "pl_rmse_db"], \
+        "text: the summed composition is worse with the larger tiles"
+    for g, k in ((500, "FiveHundred"), (1000, "Thousand")):
+        N[f"mixSumOracle{k}"] = f(stats[g].loc[("sum", "oracle"), "pl_rmse_db"], 1)
+        N[f"mixSumGbdt{k}"] = f(stats[g].loc[("sum", "gbdt"), "pl_rmse_db"], 1)
 
 
 def outliers(T, N):
@@ -1316,6 +1391,7 @@ def main():
     outliers(T, N)
     external(T, G, N)
     mixed(T, G, N)
+    mixed_sizes(T, G, N)
     ext = __import__("importlib").util.spec_from_file_location(
         "ext", repo / "scripts" / "17_external_scenes.py")
     mod = __import__("importlib").util.module_from_spec(ext)

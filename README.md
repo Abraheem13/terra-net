@@ -73,7 +73,7 @@ make test               # unit tests + an end-to-end run on a synthetic corpus
 | path-loss cut-off | `14_censoring.py` | `censoring.csv` |
 | siting policy | `15_siting.py` | `siting.csv` |
 | external scenes (Sionna RT Munich, Etoile, Florence) | `17_external_scenes.py` | `external.csv` |
-| mixed-path composition (sum as published, path-averaged) | `18_mixed_path.py` | `mixed_path.csv`, `mixed_path_plan.csv`, `mixed_path_labels.csv` |
+| mixed-path composition (summed as published, piecewise, path-averaged; tiles of 100, 200, 500, 1000 m) | `18_mixed_path.py [--tile-size G]` | `mixed_path[_G<size>].csv`, `mixed_path_plan[_G<size>].csv`, `mixed_path_labels[_G<size>].csv` |
 | second band (7.5 GHz) | `02`, `04`, `09`, `11` with `configs/data/sionna_7p5.yaml`, then `16_band.py` | `outputs/sionna_7p5/tables/*`, `band_labels.csv`, `band_transfer.csv` |
 | statistics | `10_stats.py` | `stats.csv` |
 | manuscript | `paper/scripts/make_assets.py`, LaTeX | `paper/generated/*`, `paper/figures/*`, `paper/highlights.txt`, `paper/main.pdf` |
