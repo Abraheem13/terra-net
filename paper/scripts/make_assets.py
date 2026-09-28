@@ -1158,6 +1158,21 @@ def mixed_sizes(T, G, N):
     N["mixSizeAvgOracleMin"], N["mixSizeAvgOracleMax"] = f(min(ao), 1), f(max(ao), 1)
     N["mixSizeAvgGbdtMin"], N["mixSizeAvgGbdtMax"] = f(min(ag), 1), f(max(ag), 1)
     N["mixSizeAvgAssocMin"], N["mixSizeAvgAssocMax"] = pct(min(aa)), pct(max(aa))
+    po = [stats[g].loc[("piecewise", "oracle"), "pl_rmse_db"] for g in big]
+    N["mixSizePwOracleMin"], N["mixSizePwOracleMax"] = f(min(po), 1), f(max(po), 1)
+    best = min(stats[g].loc[(mo, "oracle"), "pl_rmse_db"] for g in MIX_SIZES
+               for mo in ("sum", "piecewise", "average"))
+    bassoc = max(stats[g].loc[(mo, "oracle"), "assoc_acc"] for g in MIX_SIZES
+                 for mo in ("sum", "piecewise", "average"))
+    N["mixSizeBestNet"], N["mixSizeBestAssoc"] = f(best, 1), pct(bassoc)
+    link = pd.concat([pd.read_csv(T / "network_metrics.csv"),
+                      pd.read_csv(T / "network_link.csv")])
+    link = link[(link.sites == link.sites.max()) & (link.operator == "link")]
+    lm = link.groupby("fold")[["pl_rmse_db", "assoc_acc"]].mean().mean()
+    assert best > lm.pl_rmse_db and bassoc < lm.assoc_acc, \
+        "text: no composition at any tile size reaches link transfer"
+    assert min(so) > stats[100].loc[("sum", "oracle"), "pl_rmse_db"], \
+        "text: the summed composition is worse with the larger tiles"
     for g, k in ((500, "FiveHundred"), (1000, "Thousand")):
         N[f"mixSumOracle{k}"] = f(stats[g].loc[("sum", "oracle"), "pl_rmse_db"], 1)
         N[f"mixSumGbdt{k}"] = f(stats[g].loc[("sum", "gbdt"), "pl_rmse_db"], 1)

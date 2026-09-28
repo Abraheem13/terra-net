@@ -354,20 +354,34 @@ transferred by GBDT the path-averaged composition has a path-loss error of
 transfer errors of all the tiles it crosses, and these errors decide which
 site appears strongest. Only its planning regret improves, to
 \mixAvgRegretGbdt\% against \regretGbdt\%, still far above the
-\regretLink\% of link transfer. The summed composition of~\cite{ozyurt2026} does not
-describe the ray-traced links even with parameters fitted to the city
-itself (\SI{\mixSumFitMin}{\decibel} to \SI{\mixSumFitMax}{\decibel}): every
-crossed tile adds its own loss $A_t+10\gamma_t\log_{10}L_t$, so the loss grows
-with the number of tiles crossed rather than with the logarithm of the
-distance. With the tiles of \SI{200}{\metre} to \SI{1000}{\metre}
-of~\cite{ozyurt2026} and short links, fewer tiles are crossed and the effect
-should be smaller; with \SI{100}{\metre} tiles on city-scale links it
-dominates, and the transferred parameters give errors of \mixSumTransMin{} to
-\SI{\mixSumTransMax}{\decibel}. Site-aware
-link transfer is better than the path-averaged composition with exact labels
-in path loss and serving site, and at least as good in planning regret, in
-every held-out city: the limitation lies in describing a link by
-tile parameters, however they are combined.
+\regretLink\% of link transfer. The piecewise composition gains nothing
+over the receiver tile even with exact labels
+(\SI{\mixPwNetOracle}{\decibel}, \mixPwAssocOracle\%), and with transferred
+exponents it is the worst of the three (GBDT \SI{\mixPwNetGbdt}{\decibel},
+\mixPwAssocGbdt\%): an error in the exponent of one tile shifts the loss of
+every link that passes through it. The summed composition
+of~\cite{ozyurt2026} does not describe the ray-traced links even with
+parameters fitted to the city itself (\SI{\mixSumFitMin}{\decibel} to
+\SI{\mixSumFitMax}{\decibel}): every crossed tile adds its own loss
+$A_t+10\gamma_t\log_{10}L_t$, so the loss grows with the number of tiles
+crossed rather than with the logarithm of the distance, and the transferred
+parameters give errors of \mixSumTransMin{} to
+\SI{\mixSumTransMax}{\decibel}. Larger tiles, as in~\cite{ozyurt2026}, do not
+change the picture (Table~\ref{tab:mixedsize}, Appendix~\ref{app:robust}):
+with tiles of \SI{200}{\metre} to \SI{1000}{\metre} the summed composition
+with exact labels has errors of \mixSizeSumOracleMin{} to
+\SI{\mixSizeSumOracleMax}{\decibel}, larger than with \SI{100}{\metre}
+tiles, because fewer tile parameters must absorb the same mismatch, and the
+path-averaged and piecewise compositions lose accuracy as the tiles grow
+(\mixSizeAvgOracleMin{} to \SI{\mixSizeAvgOracleMax}{\decibel} and
+\mixSizePwOracleMin{} to \SI{\mixSizePwOracleMax}{\decibel} with exact
+labels). Over all compositions and tile sizes, the best tile model with exact
+labels reaches \SI{\mixSizeBestNet}{\decibel} and \mixSizeBestAssoc\% of the
+serving sites; site-aware link transfer is better than every composition
+with exact labels in path loss and serving site, and at least as good in
+planning regret, in every held-out city. The limitation lies in describing a
+link by tile parameters, however they are combined and whatever the tile
+size.
 
 \begin{table}[!t]
 \centering

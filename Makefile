@@ -40,6 +40,9 @@ analysis:
 	$(PY) scripts/15_siting.py         --config $(DATA) --rand $(RAND)
 	$(PY) scripts/17_external_scenes.py --config $(DATA)
 	$(PY) scripts/18_mixed_path.py      --config $(DATA)
+	$(PY) scripts/18_mixed_path.py      --config $(DATA) --tile-size 200
+	$(PY) scripts/18_mixed_path.py      --config $(DATA) --tile-size 500
+	$(PY) scripts/18_mixed_path.py      --config $(DATA) --tile-size 1000
 
 # second band: the same protocol at 7.5 GHz, then cross-band transfer
 band:
