@@ -26,7 +26,7 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 from omegaconf import OmegaConf  # noqa: E402
 
-NICE = {"newyork": "New York"}
+NICE = {"newyork": "New York", "etoile": "\\'Etoile"}
 OPS = ["median", "uma_los", "uma_nlos", "cost231", "kernel", "gp_ard", "knn", "ridge", "coral",
        "mlp", "encoder", "gbdt", "gbdt_iw"]
 OP_NAME = {"median": "Source median", "uma_los": "3GPP UMa LoS", "uma_nlos": "3GPP UMa NLoS",
@@ -39,8 +39,9 @@ OP_NAME = {"median": "Source median", "uma_los": "3GPP UMa LoS", "uma_nlos": "3G
            "link": "Link transfer (ours)", "link+k10": "Link + 10 tiles (ours)",
            "link_reg": "Link, regressor only",
            "link+k10d": "Link + 10 designed tiles (ours)",
-           "link+k25": "Link + 25 tiles", "link+k25d": "Link + 25 designed tiles",
+           "link+k25d": "Link + 25 designed tiles",
            "link+k50": "Link + 50 tiles", "link+k50d": "Link + 50 designed tiles (ours)",
+           "link+k25": "Link + 25 tiles (ours)",
            "link_x_phys": r"Link, 3.5\,GHz model (ours)",
            "link_x_fs": r"Link, 3.5\,GHz model, offset only",
            "oracle_rand": "Tile labels of this network", "oracle_main": "Tile labels, main siting"}
@@ -306,6 +307,8 @@ def loco(T, G, N, fig_dir):
     hard = g.drop(columns=[c for c in const if c in g]).min(axis=1)
     N["hardCity"] = nice(hard.idxmax())
     N["hardCityBest"] = f(hard.max())
+    hc = g.drop(columns=[c for c in const if c in g]).loc[hard.idxmax()]
+    assert hc.idxmin() == "median", "text: at the hardest city the source median is best"
     N["worstLearned"] = OP_NAME[worst.idxmax()]
     N["sigmaMin"], N["sigmaMax"] = f"{hp.sigma.min():g}", f"{hp.sigma.max():g}"
     N["hBsMedian"] = f(hp.h_bs_m.median(), 0)
@@ -327,7 +330,8 @@ def loco(T, G, N, fig_dir):
 
     # figure: per-fold dot plot
     fig, ax = plt.subplots(figsize=(W1, 2.4))
-    show = [o for o in ["median", "kernel", "knn", "ridge", "mlp", "encoder", "gbdt"] if o in ops]
+    show = [o for o in ["median", "kernel", "gp_ard", "knn", "ridge", "mlp", "encoder", "gbdt"]
+            if o in ops]
     order = g["median"].sort_values().index
     for i, o in enumerate(show):
         ax.plot(g.loc[order, o].to_numpy(), np.arange(len(order)) + (i - len(show) / 2) * 0.09,
@@ -348,9 +352,12 @@ SHARE_METRICS = {"assoc_acc", "regret", "cov_acc_130"}
 
 
 def scaled(metric, *vals):
-    """Differences of shares in percentage points (1 decimal), others to 3 decimals."""
+    """Differences of shares in percentage points (1 decimal), of dB quantities to
+    2 decimals, of exponent errors to 3 decimals."""
     if metric in SHARE_METRICS:
         return tuple(fs(100 * v, 1) for v in vals)
+    if metric.endswith("_db"):
+        return tuple(fs(v, 2) for v in vals)
     return tuple(fs(v, 3) for v in vals)
 
 
@@ -791,23 +798,28 @@ def certified(T, G, N):
     c = pd.read_csv(T / "certified.csv")
     n = int(c.n_cities.max())
     N["certLevel"] = f"{n - 1}/{n}"
+    N["certLevelTwo"] = f"{n - 2}/{n}"
     N["certLevelPct"] = pct((n - 1) / n, 0)
     show = [o for o in ["oracle", "median", "uma_nlos", "kernel", "ridge", "gbdt", "link",
                         "link_reg"] if o in set(c.operator)]
     rows = []
-    for a, L in ((0.10, 140.0), (0.05, 140.0)):
-        sub = c[(c.alpha == a) & (c.level == L)]
+    for a, L, j in ((0.10, 140.0, 1), (0.10, 140.0, 2), (0.05, 140.0, 1)):
+        sub = c[(c.alpha == a) & (c.level == L) & (c["rank"] == j)]
         per = sub.groupby(["operator", "city"]).mean(numeric_only=True)
         mean = per.groupby("operator").mean()
         valid = sub.groupby(["operator", "city"]).valid.mean().groupby("operator").sum()
-        head = rf"$\alpha={a:g}$, $L=\SI{{{L:g}}}{{\decibel}}$"
+        head = (rf"$\alpha={a:g}$, $L=\SI{{{L:g}}}{{\decibel}}$, bound holding with "
+                rf"probability $\ge {n - j}/{n}$")
         rows.append(rf"\multicolumn{{9}}{{l}}{{\emph{{{head}}}}} \\")
         for o in show:
             m = mean.loc[o]
             rows.append(f"{OP_NAME[o]} & {m.qhat:.1f} & {valid.loc[o]:g} & {pct(m.resid_cov)} & "
                         f"{pct(m.claimed)} & {pct(m.false_claim, 2)} & {pct(m.naive_claimed)} & "
                         f"{pct(m.naive_false, 2)} & {pct(m.true_cov)} \\\\")
-            if a == 0.10:
+            if a == 0.10 and j == 2 and o in ("link", "gbdt"):
+                N[f"certClaimTwo{'Link' if o == 'link' else 'Gbdt'}"] = pct(m.claimed)
+                N[f"certValidTwo{'Link' if o == 'link' else 'Gbdt'}"] = f"{valid.loc[o]:g}"
+            if a == 0.10 and j == 1:
                 k = {"oracle": "Oracle", "median": "Median", "uma_nlos": "UmaNlos",
                      "kernel": "Kernel", "ridge": "Ridge", "gbdt": "Gbdt", "link": "Link",
                      "link_reg": "LinkReg"}[o]
@@ -818,7 +830,7 @@ def certified(T, G, N):
                 N[f"certNaiveClaim{k}"] = pct(m.naive_claimed)
                 N[f"certValid{k}"] = f"{valid.loc[o]:g}"
                 N[f"certCov{k}"] = pct(m.resid_cov)
-        if a == 0.10:
+        if a == 0.10 and j == 1:
             N["certTrueCov"] = pct(mean.loc["link"].true_cov)
             N["certMaxFalse"] = pct(mean.false_claim.max(), 2)
     save_table(G, "tab_certified", "\n".join([
@@ -834,6 +846,13 @@ def tile_size(T, G, N):
     d = pd.read_csv(T / "tile_size.csv")
     per = d.groupby(["G", "operator", "fold"]).mean(numeric_only=True)
     m = per.groupby(["G", "operator"]).mean()
+    # standard errors pooled over all tiles (RMS weighted by tiles), as in Table 4
+    o_ = per.xs("oracle", level="operator")
+    for c in ("se_iid", "se_cl"):
+        num = (o_.n_tiles * o_[c] ** 2).groupby(level="G").sum()
+        pooled = num / o_.n_tiles.groupby(level="G").sum()
+        for g, v in np.sqrt(pooled).items():
+            m.loc[(g, "oracle"), c] = v
     rows = []
     for g in sorted(d.G.unique()):
         o = m.loc[g]
@@ -851,7 +870,8 @@ def tile_size(T, G, N):
         r"$G_s$ (m) & tiles/city & med.\ $w_t$ & iid & cluster & median & GBDT & oracle & GBDT & "
         r"serv.\ (\%) \\", r"\midrule", *rows, r"\bottomrule", r"\end{tabular}"]) + "\n")
     acc = [m.loc[(g, "oracle"), "assoc_acc"] for g in sorted(d.G.unique())]
-    N["tsAssocMin"], N["tsAssocMax"] = pct(min(acc)), pct(max(acc))
+    lo_, hi_ = pct(min(acc)), pct(max(acc))
+    N["tsAssocRange"] = lo_ if lo_ == hi_ else f"{lo_}--{hi_}"
     for g, key in ((50.0, "Fifty"), (100.0, "Hundred"), (200.0, "TwoHundred")):
         N[f"tsOracle{key}"] = f(m.loc[(g, "oracle"), "pl_rmse_db"], 1)
         N[f"tsGbdt{key}"] = f(m.loc[(g, "gbdt"), "pl_rmse_db"], 1)
@@ -964,45 +984,130 @@ def band(T, T2, G, N, f2):
 
 def external(T, G, N):
     e = pd.read_csv(T / "external.csv")
-    ops = ["oracle", "median", "ridge", "gbdt", "link"]
+    e = e.groupby(["scene", "operator"], sort=False).mean(numeric_only=True).reset_index()
+    ops = ["oracle", "median", "ridge", "gbdt", "link", "link+k25", "link+k25d"]
     rows = []
     for sc, g in e.groupby("scene", sort=False):
         g = g.set_index("operator")
-        rows.append(rf"\multicolumn{{6}}{{l}}{{\emph{{{nice(sc)}}} ({thou(g.links.iloc[0])} links, "
-                    rf"{g.sites.iloc[0]} sites, {g.tiles.iloc[0]} tiles)}} \\")
+        rows.append(rf"\multicolumn{{7}}{{l}}{{\emph{{{nice(sc)}}} ({thou(g.links.iloc[0])} links, "
+                    rf"{g.sites.iloc[0]:.0f} sites, {g.tiles.iloc[0]:.0f} tiles)}} \\")
         for o in ops:
             r = g.loc[o]
-            rows.append(f"{OP_NAME[o]} & {r.pl_rmse_db:.2f} & {pct(r.assoc_acc)} & "
-                        f"{r.sinr_mae_db:.2f} & {r.edge_disp_m:.0f} & {pct(r.regret5)} \\\\")
-    m = e.groupby("operator")[["pl_rmse_db", "assoc_acc", "sinr_mae_db", "regret5"]].mean()
+            rows.append(f"{OP_NAME[o]} & {r.pl_rmse_db:.2f} & {fs(r.pl_bias_db, 1)} & "
+                        f"{pct(r.assoc_acc)} & {r.sinr_mae_db:.2f} & {r.edge_disp_m:.0f} & "
+                        f"{pct(r.regret5)} \\\\")
+    m = e.groupby("operator")[["pl_rmse_db", "pl_bias_db", "assoc_acc", "sinr_mae_db",
+                               "edge_disp_m", "regret5"]].mean()
     rows.append(r"\midrule")
-    rows.append(r"\multicolumn{6}{l}{\emph{Mean over scenes}} \\")
+    rows.append(r"\multicolumn{7}{l}{\emph{Mean over scenes}} \\")
     for o in ops:
         r = m.loc[o]
-        rows.append(f"{OP_NAME[o]} & {r.pl_rmse_db:.2f} & {pct(r.assoc_acc)} & "
-                    f"{r.sinr_mae_db:.2f} & & {pct(r.regret5)} \\\\")
+        rows.append(f"{OP_NAME[o]} & {r.pl_rmse_db:.2f} & {fs(r.pl_bias_db, 1)} & "
+                    f"{pct(r.assoc_acc)} & {r.sinr_mae_db:.2f} & {r.edge_disp_m:.0f} & "
+                    f"{pct(r.regret5)} \\\\")
     save_table(G, "tab_external", "\n".join([
-        r"\begin{tabular}{lrrrrr}", r"\toprule",
-        r"Predictor & PL (dB) & serv.\ (\%) & SINR (dB) & edge (m) & regret (\%) \\",
+        r"\begin{tabular}{lrrrrrr}", r"\toprule",
+        r"Predictor & PL (dB) & bias & serv.\ (\%) & SINR (dB) & edge (m) & regret (\%) \\",
         r"\midrule", *rows, r"\bottomrule", r"\end{tabular}"]) + "\n")
     N["nExtScenes"] = e.scene.nunique()
     N["nExtLinks"] = thou(e.groupby("scene").links.first().sum())
     for o, key in [("oracle", "Oracle"), ("median", "Median"), ("gbdt", "Gbdt"),
-                   ("link", "Link")]:
-        N[f"extNet{key}"] = f(m.loc[o, "pl_rmse_db"], 1)
+                   ("link", "Link"), ("link+k10", "LinkTen"), ("link+k25", "LinkTwentyFive"),
+                   ("link+k25d", "LinkTwentyFiveD")]:
+        N[f"extBias{key}"] = f(abs(m.loc[o, "pl_bias_db"]), 1)
+        N[f"extNet{key}"] = f(m.loc[o, "pl_rmse_db"], 2 if o.startswith(("oracle", "link+")) else 1)
         N[f"extAssoc{key}"] = pct(m.loc[o, "assoc_acc"])
         N[f"extRegret{key}"] = pct(m.loc[o, "regret5"])
+    k25 = e[e.operator == "link+k25"].set_index("scene").pl_rmse_db
+    orc = e[e.operator == "oracle"].set_index("scene").pl_rmse_db
+    N["extKBetterOracle"] = int((k25 < orc.reindex(k25.index)).sum())
     lk = e[e.operator == "link"].set_index("scene").pl_rmse_db
     N["extLinkMin"], N["extLinkMax"] = f(lk.min(), 1), f(lk.max(), 1)
+    gb = e[e.operator == "gbdt"].set_index("scene").pl_rmse_db
+    N["extLinkBetterGbdt"] = int((lk < gb.reindex(lk.index)).sum())
+    bias = e[e.operator == "link"].pl_bias_db
+    assert (bias > 0).all(), "text says the bias is positive"
+    N["extLinkBiasMin"], N["extLinkBiasMax"] = f(bias.min(), 1), f(bias.max(), 1)
+    ed = e.groupby("operator").edge_disp_m.mean()
+    N["extEdgeLink"], N["extEdgeGbdt"] = f"{ed['link']:.0f}", f"{ed['gbdt']:.0f}"
+    N["extSinrLink"] = f(m.loc["link", "sinr_mae_db"], 1)
+    N["extSinrGbdt"] = f(m.loc["gbdt", "sinr_mae_db"], 1)
+    zs = e[~e.operator.str.contains(r"\+")]
+    reg = zs.groupby("scene").regret5.agg(["min", "max"])
+    assert (reg["max"] - reg["min"] < 1e-9).all(), "text: zero-shot regret identical per scene"
     ok = e[e.operator == "oracle"].set_index("scene").pl_rmse_db
     N["extLinkBetterOracle"] = int((lk < ok.reindex(lk.index)).sum())
+
+
+def mixed(T, G, N):
+    """Mixed-path composition of the tile model (scripts/18_mixed_path.py)."""
+    mx = pd.read_csv(T / "mixed_path.csv")
+    mpl = pd.read_csv(T / "mixed_path_plan.csv")
+    fit = pd.read_csv(T / "mixed_path_labels.csv")
+    rt = pd.concat([pd.read_csv(T / "network_metrics.csv"), pd.read_csv(T / "network_link.csv")])
+    rt = rt[rt.sites == rt.sites.max()]
+    rpl = pd.concat([pd.read_csv(T / "planning.csv"), pd.read_csv(T / "planning_link.csv")])
+    rpl = rpl[(rpl.sites == rpl.sites.max()) & (rpl.K == 5)]
+    cols = ["pl_rmse_db", "assoc_acc", "sinr_mae_db", "edge_disp_m"]
+
+    def per_fold(d, pl, keys):
+        a = d.groupby([*keys, "fold"])[cols].mean()
+        a["regret"] = pl[pl.K == 5].groupby([*keys, "fold"]).regret.mean()
+        return a
+    rtf = per_fold(rt, rpl, ["operator"])
+    mxf = per_fold(mx, mpl, ["model", "operator"])
+    groups = [("Receiver tile (Proposition 1)", [("oracle", "Tile labels (oracle)"),
+                                                 ("gbdt", "GBDT")], rtf.loc[:, :]),
+              ("Mixed path, path-averaged", [("oracle", "Tile labels (oracle)"),
+                                             ("median", "Source median"),
+                                             ("kernel", "Kernel (NW)"), ("gbdt", "GBDT")],
+               mxf.xs("average", level="model")),
+              (r"Mixed path, summed as in~\cite{ozyurt2026}", [("oracle", "Tile labels (oracle)"),
+                                                ("median", "Source median"),
+                                                ("kernel", "Kernel (NW)"), ("gbdt", "GBDT")],
+               mxf.xs("sum", level="model")),
+              ("Site-aware link model", [("link", "Link transfer (ours)")], rtf)]
+    rows = []
+    for title, ops, d in groups:
+        rows.append(rf"\multicolumn{{6}}{{l}}{{\emph{{{title}}}}} \\")
+        m = d.groupby(level="operator").mean()
+        for o, name in ops:
+            r = m.loc[o]
+            rows.append(f"{name} & {r.pl_rmse_db:.2f} & {pct(r.assoc_acc)} & "
+                        f"{r.sinr_mae_db:.2f} & {r.edge_disp_m:.0f} & {pct(r.regret)} \\\\")
+    save_table(G, "tab_mixed", "\n".join([
+        r"\begin{tabular}{lrrrrr}", r"\toprule",
+        r"Predictor & PL (dB) & serv.\ (\%) & SINR (dB) & edge (m) & regret (\%) \\",
+        r"\midrule", *rows, r"\bottomrule", r"\end{tabular}"]) + "\n")
+    for model, mk in (("average", "Avg"), ("sum", "Sum")):
+        m = mxf.xs(model, level="model").groupby(level="operator").mean()
+        for o, ok in (("oracle", "Oracle"), ("median", "Median"), ("kernel", "Kernel"),
+                      ("gbdt", "Gbdt")):
+            N[f"mix{mk}Net{ok}"] = f(m.loc[o, "pl_rmse_db"], 1)
+            N[f"mix{mk}Assoc{ok}"] = pct(m.loc[o, "assoc_acc"])
+            N[f"mix{mk}Regret{ok}"] = pct(m.loc[o, "regret"])
+            N[f"mix{mk}Edge{ok}"] = f"{m.loc[o, 'edge_disp_m']:.0f}"
+        tr = m.loc[["median", "kernel", "gbdt"], "pl_rmse_db"]
+        N[f"mix{mk}TransMin"], N[f"mix{mk}TransMax"] = f(tr.min(), 1), f(tr.max(), 1)
+        fr = fit[fit.model == model].fit_rmse_db
+        N[f"mix{mk}FitMin"], N[f"mix{mk}FitMax"] = f(fr.min(), 1), f(fr.max(), 1)
+    # link transfer against the path-averaged model with exact labels, per city
+    lk = rtf.xs("link", level="operator")
+    ao = mxf.xs(("average", "oracle"), level=("model", "operator"))
+    better = [int((lk.pl_rmse_db < ao.pl_rmse_db.reindex(lk.index)).sum()),
+              int((lk.assoc_acc > ao.assoc_acc.reindex(lk.index)).sum()),
+              int((lk.regret <= ao.regret.reindex(lk.index)).sum())]
+    assert better == [len(lk)] * 3, "text: link beats the exact path-averaged model in every city"
+    ag = mxf.xs(("average", "gbdt"), level=("model", "operator"))
+    rg = rtf.xs("gbdt", level="operator")
+    N["mixAvgBetterRecvAssoc"] = int((ag.assoc_acc > rg.assoc_acc.reindex(ag.index)).sum())
 
 
 def outliers(T, N):
     o = pd.read_csv(T / "rt_outliers.csv").set_index("run")
     N["outCity"] = nice(o.city.iloc[0])
-    N["outDiffOn"] = int(o.loc["corpus settings", "below_10db"])
-    N["outDiffOff"] = int(o.loc["diffraction off", "below_10db"])
+    N["outDiffOn"] = int(o.loc["corpus settings", "below_6db"])
+    N["outDiffOff"] = int(o.loc["diffraction off", "below_6db"])
     N["outSixOn"] = int(o.loc["corpus settings", "below_6db"])
     N["outSixOff"] = int(o.loc["diffraction off", "below_6db"])
 
@@ -1016,8 +1121,8 @@ def highlights(N, out):
         f"Open ray-traced corpora: {plain['nCities']} cities, two bands, "
         "siting and external tests",
         "Tile path-loss exponents depend on serving sites, tile size and cut-off",
-        f"Exact tile parameters still give {plain['netOracle']} dB error, "
-        f"{plain['assocOracle']}% serving sites",
+        f"Exact tile labels: {plain['netOracle']} dB, {plain['assocOracle']}% serving sites; "
+        "path-mixing gains vanish in transfer",
         f"Hurdle link transfer: {plain['netLink']} dB, {plain['assocLink']}% serving "
         f"sites, all {plain['nFolds']} cities",
         f"City-level certificate promises {plain['certClaimLink']}% coverage at a "
@@ -1206,15 +1311,11 @@ def main():
     certified(T, G, N)
     tile_size(T, G, N)
     censoring(T, G, N)
-    for name, fn in (("siting", lambda: siting(T, G, N)),
-                     ("band", lambda: band(T, repo / str(cfg2.outputs_dir) / "tables", G, N,
-                                           float(cfg2.freq_ghz))),
-                     ("outliers", lambda: outliers(T, N)),
-                     ("external", lambda: external(T, G, N))):
-        try:
-            fn()
-        except FileNotFoundError as err:      # corpus not generated yet
-            print(f"WARNING: {name} skipped ({err})")
+    siting(T, G, N)
+    band(T, repo / str(cfg2.outputs_dir) / "tables", G, N, float(cfg2.freq_ghz))
+    outliers(T, N)
+    external(T, G, N)
+    mixed(T, G, N)
     ext = __import__("importlib").util.spec_from_file_location(
         "ext", repo / "scripts" / "17_external_scenes.py")
     mod = __import__("importlib").util.module_from_spec(ext)

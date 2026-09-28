@@ -36,14 +36,18 @@ propagation models for regions where no measurements exist yet. MAPLE
 divides 3-D city maps into tiles and estimates mixed-path propagation in a
 new deployment area from the similarity of its tiles to tiles of measured
 areas~\cite{ozyurt2020maple}. The descriptor-based framework
-of~\cite{ozyurt2026} describes each tile by terrain, built-structure,
+of~\cite{ozyurt2026} describes each tile by 116 terrain, built-structure,
 land-cover and climatic descriptors, calibrates log-distance parameters per
-tile from measurements, and transfers them to unmeasured tiles by a
-Gaussian-kernel weighting of descriptor similarity, with a cross-city
-evaluation on two urban datasets. We study the same transfer problem on a
-larger public corpus, analyse the kernel operator, compare it with learned
-regressors under a common protocol, and evaluate the consequences for
-network planning.
+tile from measurements with the mixed-path composition of MAPLE, and
+transfers them to unmeasured tiles by a Gaussian-kernel weighting of
+descriptor similarity. It was evaluated with confidential measurements of an
+industrial partner in two European cities, each serving once as the source
+of the other, with tiles of \SI{200}{\metre} to \SI{1000}{\metre}, by the
+normalised error of the received power, and against empirical models only.
+We study the same transfer problem on a larger public corpus, analyse the
+kernel operator, compare it with learned regressors under a common
+protocol, evaluate both the receiver-tile and the mixed-path composition,
+and measure the consequences for network planning.
 
 \paragraph{Transfer under covariate shift and planning}
 Transfer between domains with different input distributions is covariate

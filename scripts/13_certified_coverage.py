@@ -11,7 +11,9 @@ q_1..q_n are exchangeable. For a new city t the bound
 
 therefore satisfies P(q_t(alpha) <= qhat_t) >= (n - 1) / n: with probability
 at least (n-1)/n over the draw of the city, at least a fraction 1 - alpha of
-its pixels have r_p <= qhat_t. A pixel is CLAIMED covered at level L when
+its pixels have r_p <= qhat_t. More generally, with qhat_t the j-th largest of
+the other n - 1 values the probability is at least (n - j) / n; j = 1 and 2
+are reported (column `rank`). A pixel is CLAIMED covered at level L when
 PLhat_serv(p) + qhat_t <= L; then r_p <= qhat_t implies that the true serving
 path loss is at most L. False claims are thus confined to the pixels with
 r_p > qhat_t.
@@ -51,8 +53,8 @@ def main():
             q = {c: float(np.quantile((by[c].true_serv_pl - by[c].pred_serv_pl)
                                       .to_numpy(np.float64), 1 - a, method="higher"))
                  for c in cities}
-            for t in cities:
-                qhat = max(q[c] for c in cities if c != t)
+            for t, j in [(t, j) for t in cities for j in (1, 2)]:
+                qhat = sorted((q[c] for c in cities if c != t), reverse=True)[j - 1]
                 d = by[t]
                 ps = d.pred_serv_pl.to_numpy(np.float64)
                 ts = d.true_serv_pl.to_numpy(np.float64)
@@ -61,7 +63,8 @@ def main():
                     cov = ts <= L
                     claim, naive = ps + qhat <= L, ps <= L
                     rows.append(dict(
-                        operator=op, seed=seed, city=t, alpha=a, level=L, n_cities=len(cities),
+                        operator=op, seed=seed, city=t, alpha=a, level=L, rank=j,
+                        n_cities=len(cities),
                         q_city=q[t], qhat=qhat, valid=bool(q[t] <= qhat),
                         resid_cov=float((r <= qhat).mean()),
                         true_cov=float(cov.mean()),
@@ -71,7 +74,7 @@ def main():
     df = pd.DataFrame(rows)
     out = Path(base.paths.outputs) / "tables" / "certified.csv"
     df.to_csv(out, index=False)
-    s = df[(df.alpha == 0.10) & (df.level == 140.0)].groupby("operator")[
+    s = df[(df.alpha == 0.10) & (df.level == 140.0) & (df["rank"] == 1)].groupby("operator")[
         ["qhat", "resid_cov", "valid", "claimed", "false_claim", "naive_false", "true_cov"]].mean()
     print(s.round(3))
     log.info(f"wrote {out}")

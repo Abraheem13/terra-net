@@ -20,8 +20,8 @@ evaluate it for any site layout.
 Whether such transfer works \emph{across cities}, and what its errors cost a
 network planner, has not been established. The descriptor-based framework
 of~\cite{ozyurt2026}, which transfers tile parameters with a Gaussian kernel
-over a descriptor space, was evaluated on two urban datasets that are not
-public. Three questions remain open. First, how reliable are the tile labels
+over a descriptor space, was evaluated on confidential measurements from two
+cities, one serving as the source of the other. Three questions remain open. First, how reliable are the tile labels
 themselves, given that a tile of \SI{100}{\metre} sees its serving sites over
 a narrow range of distances and that neighbouring receivers share
 propagation paths? Second, how does kernel transfer behave when the target
@@ -65,7 +65,9 @@ derive what a tile model can express for cell association and SINR
 loss, serving cell, SINR, coverage, cell edges, dimensioning and site
 planning scored on the ray-traced truth, and propose a hurdle link model
 conditioned on the obstruction geometry of each link that outperforms even
-the tile model with perfect labels in every held-out city.
+the tile model with perfect labels, in receiver-tile and in mixed-path
+composition, in every held-out city of the corpus, and
+test it across bands, sitings and independently modelled scenes.
 \item \textbf{Survey design and coverage certificates.} We give a survey
 design for MDT-style site calibration with a $(1-1/e)$ guarantee
 (Proposition~\ref{prop:survey}) and a distribution-free, city-level coverage
@@ -79,5 +81,6 @@ formalises the network model and the transfer problem,
 Section~\ref{sec:methods} describes the corpus, labels, descriptors,
 operators and evaluation, Section~\ref{sec:results} reports the results,
 Section~\ref{sec:discussion} discusses their implications and limitations,
-and Section~\ref{sec:conclusion} concludes. Proofs are in \ref{app:proofs}
-and the complete city-level comparisons in \ref{app:stats}.
+and Section~\ref{sec:conclusion} concludes. Proofs are in \ref{app:proofs},
+further robustness tables in \ref{app:robust} and the complete city-level
+comparisons in \ref{app:stats}.

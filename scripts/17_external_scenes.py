@@ -20,7 +20,9 @@ Phase 1 (--raytrace): for every scene
 Phase 2 (default): tile labels and descriptors at 100 m, then the network
 evaluation of the tile labels (oracle), the source median and GBDT tile
 transfer fitted on all eleven cities, and the site-aware link model (the
-mean of the eleven leave-one-city-out hurdle models, seed 0).
+mean of the eleven leave-one-city-out hurdle models, seed 0), zero-shot and
+with the per-site calibration of 11_link_transfer.py from k surveyed tiles
+(random: ten draws; "d": the survey design).
 
 Output: outputs/tables/external.csv
 """
@@ -42,6 +44,7 @@ from terranet.data.labels import fit_tiles, link_distance_m, load_links, log_dis
 from terranet.data.sionna_gen.geo import LocalFrame
 from terranet.data.tiling import grid_frame, point_tile_index, region_from_points
 from terranet.evaluation.network import City
+from terranet.experiments.calibration import calibrate, design_survey
 from terranet.experiments.common import TARGETS, MaxAbs, fit_gbdt, load_cfg, stack
 from terranet.utils.logging import get_logger
 
@@ -49,6 +52,7 @@ log = get_logger("external")
 SCENES = {"munich": (48.1374, 11.5755), "etoile": (48.8738, 2.2950),
           "florence": (43.7731, 11.2560)}
 SITES, MIN_SEP, MAST, RASTER = 8, 150.0, 6.0, 2.0
+SURVEY_KS, N_DRAWS = (10, 25), 10
 DATASET = "sionna_ext"
 
 
@@ -144,8 +148,9 @@ def raytrace(gen, raw):
             return Polygon(np.c_[lon, lat])
         gpd.GeoDataFrame({"height": heights}, geometry=[to_geo_poly(p) for p in parts],
                          crs="EPSG:4326").to_file(out / "building.geojson", driver="GeoJSON")
-        sx = np.floor(float(bb.max.x - bb.min.x) / float(gen.cell_size_m)) * float(gen.cell_size_m)
-        sy = np.floor(float(bb.max.y - bb.min.y) / float(gen.cell_size_m)) * float(gen.cell_size_m)
+        cs = float(gen.cell_size_m)
+        sx = float(np.floor(float(bb.max.x - bb.min.x) / cs) * cs)
+        sy = float(np.floor(float(bb.max.y - bb.min.y) / cs) * cs)
         sites = rooftop_sites(xs, ys, H, SITES, MIN_SEP, MAST)
         solver = rt.RadioMapSolver()
         prop = dict(max_depth=int(gen.max_depth), los=True, specular_reflection=True,
@@ -209,7 +214,7 @@ def evaluate(cfg, base):
     ridge, _ = fit_ridge(Xtr, Ytr, Xva, Yva)
     med = np.median(np.r_[Ytr, Yva], 0)
     rows = []
-    for name in SCENES:
+    for si, name in enumerate(SCENES):
         d = raw / DATASET / name
         meas, n_qc = load_links(d / "measurements.parquet", cfg)
         meta = json.loads((d / "scene_meta.json").read_text())
@@ -235,7 +240,7 @@ def evaluate(cfg, base):
                 "height_median_m": float(np.median(heights))}
         for op, P in preds.items():
             M = city.predicted_pl(P[:, 0], P[:, 1])
-            r = {**info, "operator": op, **city.evaluate(M)}
+            r = {**info, "operator": op, "draw": 0, **city.evaluate(M)}
             r["regret5"] = next(q["regret"] for q in city.plan(M) if q["K"] == 5)
             if op != "oracle":
                 e = P[ok] - tiles[TARGETS].to_numpy(float)[ok]
@@ -252,10 +257,23 @@ def evaluate(cfg, base):
                 .predict(X).reshape(R.shape)
         R /= len(cfg.cities)
         Pk /= len(cfg.cities)
-        M = np.where(Pk >= 0.5, R, np.inf)
-        r = {**info, "operator": "link", **city.evaluate(M, pl_for_error=R)}
-        r["regret5"] = next(q["regret"] for q in city.plan(M) if q["K"] == 5)
-        rows.append(r)
+        keep = Pk >= 0.5
+        M = np.where(keep, R, np.inf)
+
+        def score(op, M, R, draw=0):
+            r = {**info, "operator": op, "draw": draw, **city.evaluate(M, pl_for_error=R)}
+            r["regret5"] = next(q["regret"] for q in city.plan(M) if q["K"] == 5)
+            rows.append(r)
+        score("link", M, R)
+        # the same per-site calibration from k surveyed tiles as 11_link_transfer.py
+        tile_ids = np.flatnonzero(ok)
+        for k in SURVEY_KS:
+            for draw in range(N_DRAWS):
+                pick = np.random.default_rng([si, k, draw]).choice(len(tile_ids), size=k,
+                                                                   replace=False)
+                score(f"link+k{k}", *calibrate(city, R, keep, tile_ids[pick]), draw=draw)
+            pick = design_survey(city.tile, tile_ids, keep, k)
+            score(f"link+k{k}d", *calibrate(city, R, keep, tile_ids[pick]))
         log.info(f"{name}: " + " ".join(f"{q['operator']}={q['pl_rmse_db']:.2f}"
                                          for q in rows if q["scene"] == name))
     o = out_dir / "tables" / "external.csv"

@@ -74,17 +74,17 @@ separation rule.
 \paragraph{Consistency check}
 The planar radio-map estimator of the solver weights a ray crossing the
 measurement plane by the inverse cosine of its incidence angle, and a
-diffracted ray by an integration weight over the diffraction cone; both
-weights are unbounded, so a cell occasionally receives one overweighted
-contribution. Its path loss can then fall below free space by tens of
+diffracted ray by an integration weight over the diffraction cone; the
+first weight is unbounded and the second can be very large, so a cell
+occasionally receives one overweighted contribution. Its path loss can then fall below free space by tens of
 decibels, which no incoherent sum of a few propagation paths allows. We
 remove every link whose path loss lies more than
 \SI{\qcMargin}{\decibel} below the free-space loss at its 3-D distance:
 \qcRemoved{} links, \qcShare\% of the corpus. For the site with the most
 such links, disabling diffraction reduces the links more than
-\SI{10}{\decibel} below free space from \outDiffOn{} to \outDiffOff{} with
-otherwise identical settings, which identifies the diffraction weights as
-their source.
+\SI{\qcMargin}{\decibel} below free space from \outDiffOn{} to \outDiffOff{}
+with otherwise identical settings, which identifies the diffraction weights
+as their source.
 
 \subsection{Tile labels}
 \label{sec:labels}
@@ -241,8 +241,8 @@ leaves the weights unchanged and avoids numerical underflow.
 \item \emph{GP-ARD}: a Gaussian process with one length scale per
 descriptor (automatic relevance determination)~\cite{rasmussen2006}, i.e.\ a
 kernel operator whose metric is learned; the hyper-parameters maximise the
-marginal likelihood on \num{600} random source tiles and the posterior mean
-uses every source tile.
+marginal likelihood on \num{600} random source tiles (it needs no validation
+city) and the posterior mean uses every source tile.
 \item \emph{$k$-NN}: the mean label of the $k$ nearest source tiles.
 \item \emph{Ridge}, a two-layer \emph{MLP}, gradient-boosted trees
 (\emph{GBDT}, LightGBM~\cite{ke2017lightgbm}) and a \emph{neural encoder}
@@ -255,8 +255,8 @@ classifier, clipped at its 99th percentile~\cite{shimodaira2000}, and
 \emph{CORAL} re-colours the source descriptors with the target covariance
 before ridge regression~\cite{sun2016coral}.
 \end{itemize}
-Each operator's hyper-parameters (bandwidth $\sigma$, $k$, ridge and MLP
-penalties, number of trees, early-stopping epoch) are chosen on the
+Each operator's hyper-parameters (bandwidth $\sigma$, $k$, ridge, CORAL and
+MLP penalties, number of trees, early-stopping epoch) are chosen on the
 validation city of the split by the root-mean-square standardised error over
 both parameters; the chosen values are listed in
 Table~\ref{tab:hparams}. Stochastic operators are run with five seeds.
@@ -319,7 +319,7 @@ ten random draws are made per $k\in\{3,5,10,25,50,100\}$.
 \subsection{Site-aware link transfer}
 \label{sec:link}
 
-Proposition~\ref{prop:tilemodel} shows that any tile model assigns every
+Proposition~\ref{prop:tilemodel} shows that any receiver-tile model assigns every
 pixel to its nearest site and describes interference through the exponent
 alone. As a transfer model free of this restriction we predict the path loss
 of each (pixel, site) link directly. The features are computed from the
@@ -347,7 +347,8 @@ is not received at all; it would predict a finite loss for every link and
 overstate the reach of every site. We therefore use a hurdle model: a
 gradient-boosted classifier~\cite{ke2017lightgbm} of whether a (pixel, site)
 pair lies below the cut-off, trained on \num{120000} pairs of each training
-city including the pairs beyond the cut-off, and a gradient-boosted regressor
+city (all sites and the pixels of its labelled tiles, including the pairs
+beyond the cut-off), and a gradient-boosted regressor
 of the path loss, trained on \num{120000} ray-traced links of each training
 city. A link is predicted beyond the cut-off (zero received power) when the
 classifier gives a probability below one half, and otherwise its path loss
@@ -437,22 +438,42 @@ $c$.
 \label{prop:certify}
 Let the $n$ cities be exchangeable and the training procedure symmetric in
 its source cities (the validation city drawn at random). With $q_c$ computed
-from the leave-one-city-out model of each city $c$, set
-$\hat q_t=\max_{c\ne t}q_c$ for a target city $t$ and claim pixel $p$ as
-covered at level $L$ when $\widehat{PL}_{\mathrm{serv}}(p)+\hat q_t\le L$.
-Then, with probability at least $(n-1)/n$ over the draw of the target city,
+from the leave-one-city-out model of each city $c$, let $\hat q_t$ be the
+$j$-th largest of $\{q_c\}_{c\ne t}$ for a target city $t$, and claim pixel
+$p$ as covered at level $L$ when $\widehat{PL}_{\mathrm{serv}}(p)+\hat q_t\le L$.
+Then, with probability at least $(n-j)/n$ over the draw of the target city,
 at most a fraction $\alpha$ of its pixels are claimed but not covered.
 \end{proposition}
 
 \noindent The guarantee is at the level of cities, the unit of shift, in the
 spirit of conformal prediction~\cite{vovk2005,barber2021}; it needs no model
-of the residuals. We report it for $\alpha\in\{0.05,0.10\}$ and
-$L\in\{130,140\}$\,dB with the claimed and the falsely claimed share of the
-pixels, and compare it with the naive claim $\widehat{PL}_{\mathrm{serv}}(p)\le L$.
+of the residuals. The rank $j$ trades confidence for coverage: $j=1$ (the
+largest margin of the other cities) gives probability $(n-1)/n$, $j=2$ gives
+$(n-2)/n$ with a smaller margin. We report it at $L=\SI{140}{\decibel}$ for
+$\alpha\in\{0.05,0.10\}$ and $j\in\{1,2\}$ (the results at
+\SI{130}{\decibel} are released with the code) with the claimed and the
+falsely claimed share of the pixels, and compare it with the naive claim
+$\widehat{PL}_{\mathrm{serv}}(p)\le L$.
 
 \subsection{Robustness analyses}
 \label{sec:robust}
 
+\emph{Mixed-path composition.} The framework of~\cite{ozyurt2026}, following
+MAPLE~\cite{ozyurt2020maple}, composes the loss of a link from every tile
+its straight path crosses. We split the horizontal segment from each site to
+each pixel at the tile borders (sampled every \SI{10}{\metre}), so that tile
+$t$ holds a length $L_t$ of it, and evaluate two compositions: the sum of
+the published framework, $\PL=\sum_t[A_t+10\gamma_t\log_{10}L_t]$ with $L_t$
+in metres, in which every crossed tile adds its own log-distance loss; and
+path-averaged parameters,
+$\PL=\sum_t (L_t/d_h)\,[A_t+\gamma_t x]$ with the horizontal length $d_h$,
+which reduces to Eq.~\eqref{eq:logdist} when the whole path lies in one
+tile. Both are linear in the tile parameters, which are fitted jointly to
+all links of a city by least squares with a weak ridge penalty
+($\lambda=10$) towards the best city-wide pair. The labels of the tiles
+crossed by at least 30 links are transferred with the source median, kernel
+transfer and GBDT under the protocol of Section~\ref{sec:protocol} (one
+seed), and the predicted maps are scored as in Section~\ref{sec:neteval}.
 \emph{Network size.} Every zero-shot predictor is also scored on the network
 of the first ten sites selected by the siting rule (one site per
 \SI{0.9}{\kilo\metre\squared}, inter-site distance about
@@ -470,7 +491,7 @@ a censored-Gaussian (Tobit) model~\cite{tobin1958} that also uses the
 pipelines are repeated at \SI{\freqTwoGHz}{\giga\hertz}, and the
 \SI{\freqGHz}{\giga\hertz} link models are applied to the second band with
 the free-space offset $20\log_{10}(f_2/f_1)$, their knife-edge feature
-evaluated at the new wavelength. \emph{External scenes.} The Munich, Etoile
+evaluated at the new wavelength. \emph{External scenes.} The Munich, \'Etoile
 and Florence scenes distributed with Sionna~RT were modelled independently
 of our corpus, with detailed meshes and several ITU materials (brick,
 concrete, marble, metal, wood). We derive building footprints and heights
@@ -479,7 +500,9 @@ from their meshes by vertical ray casting on a \SI{2}{\metre} grid, place
 separation \SI{\extMinSep}{\metre}, the scenes being smaller), ray trace them
 with the corpus settings and evaluate, without any retraining, the tile
 labels, the source median and GBDT fitted on all eleven cities, and the mean
-of the eleven leave-one-city-out link models. The San Francisco scene has
+of the eleven leave-one-city-out link models, zero-shot and with the per-site
+calibration of Section~\ref{sec:link} from $k\in\{10,25\}$ surveyed tiles
+(ten random draws, and the design of Proposition~\ref{prop:survey}). The San Francisco scene has
 terrain and would require a terrain-following measurement surface; it is not
 used.
 

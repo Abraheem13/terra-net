@@ -1,0 +1,12 @@
+test,val,n_train_cities
+amsterdam,prague,9
+barcelona,newyork,9
+berlin,munich,9
+chicago,berlin,9
+hamburg,chicago,9
+london,amsterdam,9
+munich,amsterdam,9
+newyork,amsterdam,9
+paris,barcelona,9
+prague,paris,9
+vienna,munich,9

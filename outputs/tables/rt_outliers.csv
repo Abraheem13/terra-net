@@ -1,0 +1,3 @@
+city,site,corpus_links_below_margin,run,rays,cells,below_6db,below_10db,min_excess_db
+chicago,bs06,79,corpus settings,100000000,53963,78,13,-29.54389358376301
+chicago,bs06,79,diffraction off,100000000,49122,0,0,-4.6197262830267505

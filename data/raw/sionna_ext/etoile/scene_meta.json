@@ -1,0 +1,14 @@
+{
+  "lat0": 48.8738,
+  "lon0": 2.295,
+  "size_m": 850.0,
+  "center_local": [
+    0.0,
+    0.0
+  ],
+  "extent_m": [
+    850.0,
+    670.0
+  ],
+  "source": "sionna.rt.scene.etoile"
+}

@@ -1,0 +1,72 @@
+{
+  "source": "sionna_rt",
+  "sionna_version": "2.1.0",
+  "api": "RadioMapSolver",
+  "mitsuba_variant": "llvm_ad_mono_polarized",
+  "freq_ghz": 3.5,
+  "cell_size_m": 10.0,
+  "rt_samples": 100000000,
+  "n_bs": 20,
+  "n_measurements": 151406,
+  "max_pathloss_db": 150.0,
+  "ue_height_m": 1.5,
+  "site_mast_m": 6.0,
+  "seed": 0,
+  "siting": "random",
+  "propagation": {
+    "max_depth": 5,
+    "los": true,
+    "specular_reflection": true,
+    "diffuse_reflection": true,
+    "refraction": true,
+    "diffraction": true,
+    "edge_diffraction": true
+  },
+  "materials": {
+    "buildings": "itu concrete",
+    "ground": "itu medium_dry_ground"
+  },
+  "wall_clock_s": 1341.7,
+  "origin_is_true_geo": true,
+  "scene_meta": {
+    "city": "newyork",
+    "lat0": 40.758,
+    "lon0": -73.9855,
+    "size_m": 3000.0,
+    "epsg": 32618,
+    "bbox_wsen": [
+      -74.00346977652349,
+      40.74433168660362,
+      -73.96752303113865,
+      40.771665693885
+    ],
+    "origin_is_true_geo": true,
+    "building_source": {
+      "provider": "Overture Maps Foundation",
+      "theme": "buildings",
+      "release": "2026-09-23.0",
+      "bbox_wsen": [
+        -74.00406864526067,
+        40.74387603108834,
+        -73.9669236749208,
+        40.77212117185561
+      ],
+      "n_buildings": 7126,
+      "footprint_sources": {
+        "OpenStreetMap": 7114,
+        "Microsoft ML Buildings": 12
+      },
+      "frac_with_height": 0.9789503227617177,
+      "frac_with_levels": 0.1383665450463093
+    },
+    "n_building_parts_meshed": 6478,
+    "n_extrusion_failures": 0,
+    "height_provenance": {
+      "n_buildings": 7126,
+      "frac_height_tag": 0.9789503227617177,
+      "frac_levels": 0.005753578445130508,
+      "frac_imputed": 0.015296098793151839,
+      "median_height_m": 18.6
+    }
+  }
+}

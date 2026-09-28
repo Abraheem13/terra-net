@@ -89,9 +89,10 @@ $\tau_o^{2}n_s/(n_s+\kappa)$.
 \paragraph{Proposition~\ref{prop:certify}}
 Each $q_c$ is a function of city $c$ and of the multiset of the other cities,
 through the same symmetric procedure, so exchangeable cities give an
-exchangeable vector $(q_1,\dots,q_n)$. The event $q_t>\max_{c\ne t}q_c$ means
-that $q_t$ is the strict maximum of the vector, which by exchangeability has
-probability at most $1/n$; hence $\Pr(q_t\le\hat q_t)\ge(n-1)/n$. On this
+exchangeable vector $(q_1,\dots,q_n)$. The event that $q_t$ exceeds the $j$-th
+largest of the other values means that $q_t$ is among the $j$ largest of the
+vector, with no tie at the $j$-th place; by exchangeability its probability is
+at most $j/n$, hence $\Pr(q_t\le\hat q_t)\ge(n-j)/n$. On this
 event, a claimed pixel with $r_p\le\hat q_t$ satisfies
 $PL_{\mathrm{serv}}(p)=\widehat{PL}_{\mathrm{serv}}(p)+r_p\le\widehat{PL}_{\mathrm{serv}}(p)+\hat q_t\le L$,
 so it is covered. Claimed but uncovered pixels therefore have
@@ -99,6 +100,7 @@ $r_p>\hat q_t\ge q_t$, and by the definition of the quantile at most a
 fraction $\alpha$ of the pixels do.
 \hfill$\square$
 
+\onecolumn
 \section{Selected hyper-parameters}
 \label{app:hparams}
 
@@ -112,10 +114,54 @@ median number of boosting rounds for $\gamma$ over the five seeds.}
 \input{generated/tab_hparams}
 \end{table}
 
+\section{Additional robustness results}
+\label{app:robust}
+
+Tables~\ref{tab:tilesize}--\ref{tab:density} give the full results of the
+tile-size, cut-off and network-size studies summarised in
+Section~\ref{sec:res-robust}.
+
+\begin{table}[H]
+\centering
+\caption{Tile size. Tiles per city, median shrinkage weight (mean of the city medians) and standard error
+of the exponent (iid and cluster-robust, RMS over all tiles); zero-shot exponent
+RMSE of the source median and GBDT; network path-loss RMSE of the tile labels
+(oracle) and of GBDT tile transfer; serving-site accuracy of the tile model.
+Means over the held-out cities.}
+\label{tab:tilesize}
+\small
+\input{generated/tab_tilesize}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Path-loss cut-off. Share of (pixel, site) pairs of the labelled
+tiles beyond the \SI{\maxPl}{\decibel} cut-off and of links above
+\SI{140}{\decibel}; median change of the tile exponent when the cut-off is
+lowered to 140 and \SI{130}{\decibel}; for random tiles, median and 90th
+percentile of the Tobit minus the least-squares slope.}
+\label{tab:censoring}
+\small
+\input{generated/tab_censoring}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Network size: the same predictors on the \nSitesPerCity-site and on
+the \nSitesSmall-site network (mean over held-out cities). PL: path-loss
+RMSE; serv.: serving-site accuracy; SINR: mean absolute error; regret: $K=5$.}
+\label{tab:density}
+\small
+\input{generated/tab_density}
+\end{table}
+
 \section{Complete city-level comparisons}
 \label{app:stats}
 
-\begin{table*}[!t]
+Tables~\ref{tab:stats-param} and~\ref{tab:stats-net} list every city-level
+comparison behind the statistical statements of Section~\ref{sec:res-stats}.
+
+\begin{table}[H]
 \centering
 \caption{City-level comparisons of the tile parameters ($n=\nFolds$ held-out
 cities). $\Delta$: mean difference first minus second; CI: 95\% percentile
@@ -125,9 +171,9 @@ correction within the family.}
 \label{tab:stats-param}
 \small
 \input{generated/tab_stats_param}
-\end{table*}
+\end{table}
 
-\begin{table*}[!t]
+\begin{table}[H]
 \centering
 \caption{City-level comparisons at the network level, as in
 Table~\ref{tab:stats-param} ($\Delta$ in percentage points for shares:
@@ -135,4 +181,4 @@ serving site, coverage agreement, regret).}
 \label{tab:stats-net}
 \small
 \input{generated/tab_stats_net}
-\end{table*}
+\end{table}

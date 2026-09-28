@@ -1,5 +1,5 @@
 Open ray-traced corpora: 11 cities, two bands, siting and external tests
 Tile path-loss exponents depend on serving sites, tile size and cut-off
-Exact tile parameters still give 11.6 dB error, 50.1% serving sites
+Exact tile labels: 11.6 dB, 50.1% serving sites; path-mixing gains vanish in transfer
 Hurdle link transfer: 9.3 dB, 68.8% serving sites, all 11 cities
 City-level certificate promises 92.0% coverage at a guaranteed risk

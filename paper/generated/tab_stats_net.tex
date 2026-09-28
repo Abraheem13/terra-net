@@ -4,24 +4,24 @@
 Comparison & Metric & $\Delta$ & 95\% CI & $p$ & better & Holm \\
 \midrule
 \multicolumn{7}{l}{\emph{Network level}} \\
-GBDT vs Source median & path-loss RMSE (dB) & \ensuremath{-}1.716 & [\ensuremath{-}2.264, \ensuremath{-}1.210] & $<$0.001 & 11/11 & yes \\
-Link transfer (ours) vs GBDT & path-loss RMSE (dB) & \ensuremath{-}3.474 & [\ensuremath{-}3.896, \ensuremath{-}3.118] & $<$0.001 & 11/11 & yes \\
-Link transfer (ours) vs Tile labels (oracle) & path-loss RMSE (dB) & \ensuremath{-}2.316 & [\ensuremath{-}2.610, \ensuremath{-}2.075] & $<$0.001 & 11/11 & yes \\
-Link + 10 tiles (ours) vs Link transfer (ours) & path-loss RMSE (dB) & +0.134 & [+0.112, +0.156] & $<$0.001 & 0/11 & yes \\
-Link + 10 designed tiles (ours) vs Link + 10 tiles (ours) & path-loss RMSE (dB) & +0.061 & [\ensuremath{-}0.008, +0.146] & 0.278 & 5/11 & no \\
-Link + 50 designed tiles (ours) vs Link transfer (ours) & path-loss RMSE (dB) & +0.116 & [+0.054, +0.187] & 0.007 & 1/11 & no \\
+GBDT vs Source median & path-loss RMSE (dB) & \ensuremath{-}1.72 & [\ensuremath{-}2.26, \ensuremath{-}1.21] & $<$0.001 & 11/11 & yes \\
+Link transfer (ours) vs GBDT & path-loss RMSE (dB) & \ensuremath{-}3.47 & [\ensuremath{-}3.90, \ensuremath{-}3.12] & $<$0.001 & 11/11 & yes \\
+Link transfer (ours) vs Tile labels (oracle) & path-loss RMSE (dB) & \ensuremath{-}2.32 & [\ensuremath{-}2.61, \ensuremath{-}2.07] & $<$0.001 & 11/11 & yes \\
+Link + 10 tiles (ours) vs Link transfer (ours) & path-loss RMSE (dB) & +0.13 & [+0.11, +0.16] & $<$0.001 & 0/11 & yes \\
+Link + 10 designed tiles (ours) vs Link + 10 tiles (ours) & path-loss RMSE (dB) & +0.06 & [\ensuremath{-}0.01, +0.15] & 0.278 & 5/11 & no \\
+Link + 50 designed tiles (ours) vs Link transfer (ours) & path-loss RMSE (dB) & +0.12 & [+0.05, +0.19] & 0.007 & 1/11 & no \\
 GBDT vs Source median & serving site & +0.0 & [+0.0, +0.0] & 1.000 & 0/11 & no \\
 Link transfer (ours) vs GBDT & serving site & +18.7 & [+15.1, +22.6] & $<$0.001 & 11/11 & yes \\
 Link transfer (ours) vs Tile labels (oracle) & serving site & +18.7 & [+15.3, +22.7] & $<$0.001 & 11/11 & yes \\
 Link + 10 tiles (ours) vs Link transfer (ours) & serving site & \ensuremath{-}2.9 & [\ensuremath{-}4.5, \ensuremath{-}1.7] & $<$0.001 & 0/11 & yes \\
 Link + 10 designed tiles (ours) vs Link + 10 tiles (ours) & serving site & \ensuremath{-}0.2 & [\ensuremath{-}1.4, +1.0] & 0.765 & 6/11 & no \\
 Link + 50 designed tiles (ours) vs Link transfer (ours) & serving site & \ensuremath{-}1.8 & [\ensuremath{-}4.1, \ensuremath{-}0.2] & 0.067 & 4/11 & no \\
-GBDT vs Source median & SINR MAE (dB) & +0.258 & [+0.156, +0.370] & $<$0.001 & 0/11 & yes \\
-Link transfer (ours) vs GBDT & SINR MAE (dB) & \ensuremath{-}2.069 & [\ensuremath{-}2.448, \ensuremath{-}1.745] & $<$0.001 & 11/11 & yes \\
-Link transfer (ours) vs Tile labels (oracle) & SINR MAE (dB) & \ensuremath{-}2.198 & [\ensuremath{-}2.516, \ensuremath{-}1.907] & $<$0.001 & 11/11 & yes \\
-Link + 10 tiles (ours) vs Link transfer (ours) & SINR MAE (dB) & +0.153 & [+0.099, +0.213] & $<$0.001 & 0/11 & yes \\
-Link + 10 designed tiles (ours) vs Link + 10 tiles (ours) & SINR MAE (dB) & +0.136 & [+0.059, +0.218] & 0.014 & 3/11 & no \\
-Link + 50 designed tiles (ours) vs Link transfer (ours) & SINR MAE (dB) & +0.124 & [+0.005, +0.266] & 0.240 & 5/11 & no \\
+GBDT vs Source median & SINR MAE (dB) & +0.26 & [+0.16, +0.37] & $<$0.001 & 0/11 & yes \\
+Link transfer (ours) vs GBDT & SINR MAE (dB) & \ensuremath{-}2.07 & [\ensuremath{-}2.45, \ensuremath{-}1.75] & $<$0.001 & 11/11 & yes \\
+Link transfer (ours) vs Tile labels (oracle) & SINR MAE (dB) & \ensuremath{-}2.20 & [\ensuremath{-}2.52, \ensuremath{-}1.91] & $<$0.001 & 11/11 & yes \\
+Link + 10 tiles (ours) vs Link transfer (ours) & SINR MAE (dB) & +0.15 & [+0.10, +0.21] & $<$0.001 & 0/11 & yes \\
+Link + 10 designed tiles (ours) vs Link + 10 tiles (ours) & SINR MAE (dB) & +0.14 & [+0.06, +0.22] & 0.014 & 3/11 & no \\
+Link + 50 designed tiles (ours) vs Link transfer (ours) & SINR MAE (dB) & +0.12 & [+0.00, +0.27] & 0.240 & 5/11 & no \\
 GBDT vs Source median & coverage agreement & +0.4 & [\ensuremath{-}0.4, +1.5] & 0.898 & 5/11 & no \\
 Link transfer (ours) vs GBDT & coverage agreement & +2.1 & [+1.3, +2.9] & $<$0.001 & 11/11 & yes \\
 Link transfer (ours) vs Tile labels (oracle) & coverage agreement & +0.8 & [+0.3, +1.2] & 0.002 & 10/11 & yes \\
@@ -34,5 +34,21 @@ Link transfer (ours) vs Tile labels (oracle) & regret, $K{=}5$ & \ensuremath{-}8
 Link + 10 tiles (ours) vs Link transfer (ours) & regret, $K{=}5$ & +0.0 & [+0.0, +0.1] & 0.312 & 4/11 & no \\
 Link + 10 designed tiles (ours) vs Link + 10 tiles (ours) & regret, $K{=}5$ & +0.4 & [+0.0, +1.1] & 0.109 & 1/11 & no \\
 Link + 50 designed tiles (ours) vs Link transfer (ours) & regret, $K{=}5$ & +0.0 & [+0.0, +0.1] & 0.250 & 0/11 & no \\
+\multicolumn{7}{l}{\emph{Network level, second band}} \\
+Link transfer (ours) vs GBDT & path-loss RMSE (dB) & \ensuremath{-}3.43 & [\ensuremath{-}3.85, \ensuremath{-}3.10] & $<$0.001 & 11/11 & yes \\
+Link transfer (ours) vs Tile labels (oracle) & path-loss RMSE (dB) & \ensuremath{-}2.40 & [\ensuremath{-}2.69, \ensuremath{-}2.16] & $<$0.001 & 11/11 & yes \\
+Link, 3.5\,GHz model (ours) vs Link transfer (ours) & path-loss RMSE (dB) & +0.56 & [+0.42, +0.70] & $<$0.001 & 0/11 & yes \\
+Link transfer (ours) vs GBDT & serving site & +17.8 & [+14.6, +21.5] & $<$0.001 & 11/11 & yes \\
+Link transfer (ours) vs Tile labels (oracle) & serving site & +17.9 & [+14.8, +21.6] & $<$0.001 & 11/11 & yes \\
+Link, 3.5\,GHz model (ours) vs Link transfer (ours) & serving site & +1.4 & [+1.0, +1.7] & $<$0.001 & 11/11 & yes \\
+Link transfer (ours) vs GBDT & SINR MAE (dB) & \ensuremath{-}2.00 & [\ensuremath{-}2.28, \ensuremath{-}1.73] & $<$0.001 & 11/11 & yes \\
+Link transfer (ours) vs Tile labels (oracle) & SINR MAE (dB) & \ensuremath{-}2.20 & [\ensuremath{-}2.48, \ensuremath{-}1.96] & $<$0.001 & 11/11 & yes \\
+Link, 3.5\,GHz model (ours) vs Link transfer (ours) & SINR MAE (dB) & \ensuremath{-}0.34 & [\ensuremath{-}0.46, \ensuremath{-}0.23] & $<$0.001 & 11/11 & yes \\
+Link transfer (ours) vs GBDT & coverage agreement & +6.8 & [+4.8, +9.1] & $<$0.001 & 11/11 & yes \\
+Link transfer (ours) vs Tile labels (oracle) & coverage agreement & +5.3 & [+3.7, +7.2] & $<$0.001 & 11/11 & yes \\
+Link, 3.5\,GHz model (ours) vs Link transfer (ours) & coverage agreement & \ensuremath{-}3.7 & [\ensuremath{-}4.9, \ensuremath{-}2.8] & $<$0.001 & 0/11 & yes \\
+Link transfer (ours) vs GBDT & regret, $K{=}5$ & \ensuremath{-}21.7 & [\ensuremath{-}28.5, \ensuremath{-}15.9] & $<$0.001 & 11/11 & yes \\
+Link transfer (ours) vs Tile labels (oracle) & regret, $K{=}5$ & \ensuremath{-}6.7 & [\ensuremath{-}9.5, \ensuremath{-}4.3] & $<$0.001 & 11/11 & yes \\
+Link, 3.5\,GHz model (ours) vs Link transfer (ours) & regret, $K{=}5$ & +0.2 & [\ensuremath{-}0.2, +0.5] & 0.461 & 4/11 & no \\
 \bottomrule
 \end{tabular}

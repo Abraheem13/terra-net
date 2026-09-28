@@ -32,14 +32,18 @@ The repository reproduces every number, table and figure of the manuscript
   (pixel, site) link from obstruction and diffraction features
   (`src/terranet/data/link_features.py`, `scripts/11_link_transfer.py`), with
   per-site calibration from random or designed MDT-style surveys.
+* **Mixed-path composition.** The tile model is also evaluated with the
+  loss composed from every tile a link crosses, as in the descriptor-based
+  framework it tests (`src/terranet/evaluation/mixed_path.py`).
 * **Network-level evaluation.** Path loss, serving cell, SINR, coverage,
   spectral efficiency, cell-edge displacement, greedy site planning and the
   sites needed for 90 % coverage, all scored on the ray-traced truth, on the
   20-site and on a 10-site network (`src/terranet/evaluation/network.py`).
 * **Certified coverage.** City-level coverage certificates from the
   leave-one-city-out residuals (`scripts/13_certified_coverage.py`).
-* **Robustness.** Tile size, the path-loss cut-off (Tobit refits), the siting
-  policy and the second band, including cross-band transfer.
+* **Robustness.** Tile size, the path-loss cut-off (Tobit refits), network
+  size, the siting policy, the second band including cross-band transfer, and
+  an external test on the independently modelled city scenes of Sionna RT.
 * **Statistics** at the city level (bootstrap CIs, exact Wilcoxon, Holm).
 
 ## Reproduce
@@ -68,6 +72,8 @@ make test               # unit tests + an end-to-end run on a synthetic corpus
 | tile size | `12_tile_size.py` | `tile_size.csv` |
 | path-loss cut-off | `14_censoring.py` | `censoring.csv` |
 | siting policy | `15_siting.py` | `siting.csv` |
+| external scenes (Sionna RT Munich, Etoile, Florence) | `17_external_scenes.py` | `external.csv` |
+| mixed-path composition (sum as published, path-averaged) | `18_mixed_path.py` | `mixed_path.csv`, `mixed_path_plan.csv`, `mixed_path_labels.csv` |
 | second band (7.5 GHz) | `02`, `04`, `09`, `11` with `configs/data/sionna_7p5.yaml`, then `16_band.py` | `outputs/sionna_7p5/tables/*`, `band_labels.csv`, `band_transfer.csv` |
 | statistics | `10_stats.py` | `stats.csv` |
 | manuscript | `paper/scripts/make_assets.py`, LaTeX | `paper/generated/*`, `paper/figures/*`, `paper/highlights.txt`, `paper/main.pdf` |
@@ -89,7 +95,7 @@ src/terranet/
   experiments/      shared LOCO protocol and transfer operators
   evaluation/       network evaluation, metrics and statistics
   models/           neural encoder/head, heteroscedastic loss, placement
-scripts/            numbered pipeline (01-16)
+scripts/            numbered pipeline (01-18)
 paper/              manuscript sources, asset generator, generated assets
 tests/              unit tests and the synthetic end-to-end test
 ```

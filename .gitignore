@@ -28,3 +28,4 @@ paper/*.bbl
 paper/*.toc
 paper/*.fls
 paper/*.fdb_latexmk
+logs/

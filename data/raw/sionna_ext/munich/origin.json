@@ -1,0 +1,30 @@
+{
+  "source": "sionna_rt",
+  "scene": "sionna.rt.scene.munich",
+  "sionna_version": "2.1.0",
+  "mitsuba_variant": "llvm_ad_mono_polarized",
+  "freq_ghz": 3.5,
+  "cell_size_m": 10.0,
+  "rt_samples": 100000000,
+  "n_bs": 8,
+  "propagation": {
+    "max_depth": 5,
+    "los": true,
+    "specular_reflection": true,
+    "diffuse_reflection": true,
+    "refraction": true,
+    "diffraction": true,
+    "edge_diffraction": true
+  },
+  "max_pathloss_db": 150.0,
+  "min_sep_m": 150.0,
+  "materials": [
+    "brick",
+    "concrete",
+    "marble",
+    "metal",
+    "wood"
+  ],
+  "n_footprints": 148,
+  "wall_clock_s": 459.3
+}

@@ -45,7 +45,7 @@ network planning: a planning tool that knows $\btheta_t$ for every tile and
 the site positions can evaluate Eq.~\eqref{eq:sinr} anywhere without ray
 tracing. Two structural consequences of the tile model are used later.
 
-\begin{proposition}[What a tile model can express]
+\begin{proposition}[What a receiver-tile model can express]
 \label{prop:tilemodel}
 Let every link seen from pixel $p$ use the parameters of the tile containing
 $p$, with $\gamma_t>0$. Then (i) the predicted serving site is the nearest
@@ -62,10 +62,14 @@ coverage at level $L$ depends on both parameters.
 \end{proposition}
 
 \noindent The proof is immediate from Eqs.~\eqref{eq:sinr}
-and~\eqref{eq:logdist}. Part~(i) bounds what any tile-parameter predictor
+and~\eqref{eq:logdist}. Part~(i) bounds what any receiver-tile predictor
 can achieve in cell association: the metric is identical for every transfer
 operator and measures the tile model itself. Part~(ii) identifies which
-parameter errors matter for which planning quantity.
+parameter errors matter for which planning quantity. Mixed-path
+compositions~\cite{ozyurt2020maple,ozyurt2026}, which combine the
+parameters of every tile a link crosses, are not bound by
+Proposition~\ref{prop:tilemodel} and are evaluated in
+Section~\ref{sec:res-mixed}.
 
 \subsection{The transfer problem}
 \label{sec:transfer}

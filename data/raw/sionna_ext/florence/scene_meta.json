@@ -1,0 +1,14 @@
+{
+  "lat0": 43.7731,
+  "lon0": 11.256,
+  "size_m": 1100.0,
+  "center_local": [
+    21.291259765625,
+    0.0
+  ],
+  "extent_m": [
+    1000.0,
+    1100.0
+  ],
+  "source": "sionna.rt.scene.florence"
+}

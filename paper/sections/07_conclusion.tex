@@ -9,12 +9,15 @@ ill-conditioned and, once their correlated errors are accounted for,
 imprecise: the cluster-robust standard error of the exponent is \seRatio{}
 times the naive one, and the exponent depends on the serving sites, the tile
 size and the cut-off of the data. Transferring tile parameters with learned
-regressors improves on the source median; kernel transfer does not improve
-on it significantly, and our analysis of its limiting regimes and the gain
+regressors improves on the source median in \nGbdtMedian{} of \nFolds{}
+cities, although not significantly after correction for multiple
+comparisons; kernel transfer improves on it less, and our analysis of its limiting regimes and the gain
 from learning its metric locate its weakness in the isotropic distance. At
 the network level, even perfect tile parameters leave a path-loss error of
 \SI{\netOracle}{\decibel}, assign only \assocOracle\% of the pixels to the
-correct site and misplace cell edges by \SI{\edgeOracle}{\metre}. Site-aware
+correct site and misplace cell edges by \SI{\edgeOracle}{\metre}; composing
+the parameters of the tiles along each path improves on this with exact
+labels, but not in path loss or serving site once they are transferred. Site-aware
 hurdle link transfer, which predicts each link and whether it exists from its
 obstruction geometry, reduces the path-loss error to \SI{\netLink}{\decibel},
 raises serving-site accuracy to \assocLink\% and lowers the planning regret in

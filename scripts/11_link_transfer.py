@@ -50,6 +50,7 @@ import pandas as pd
 from terranet.data.descriptors.scene_tiles import DESCRIPTOR_COLUMNS
 from terranet.data.link_features import LINK_FEATURES, city_link_matrix
 from terranet.evaluation.network import load_city
+from terranet.experiments.calibration import calibrate, design_survey
 from terranet.experiments.common import (
     _LGB_EVAL_XY,
     LINK_KAPPA,
@@ -83,47 +84,6 @@ def city_data(cfg, base, name, cache_dir):
         cache_dir.mkdir(parents=True, exist_ok=True)
         np.save(f, X)
     return city, X
-
-
-def design_survey(tile_of_pixel, tile_ids, pred_obs, k):
-    """Greedy maximisation of F(T) = sum_s n_s(T) / (n_s(T) + KAPPA)."""
-    S = pred_obs.shape[1]
-    counts = np.zeros((len(tile_ids), S))
-    pos = {t: i for i, t in enumerate(tile_ids)}
-    rows = np.array([pos.get(t, -1) for t in tile_of_pixel])
-    ok = rows >= 0
-    np.add.at(counts, rows[ok], pred_obs[ok].astype(float))
-    n = np.zeros(S)
-    chosen = []
-    for _ in range(k):
-        f0 = (n / (n + KAPPA)).sum()
-        gain = ((n + counts) / (n + counts + KAPPA)).sum(1) - f0
-        gain[chosen] = -np.inf
-        j = int(np.argmax(gain))
-        chosen.append(j)
-        n += counts[j]
-    return np.array(chosen)
-
-
-def calibrate(city, PLr, keep, surveyed_tiles):
-    """Per-site offsets from the links observed in the surveyed tiles.
-
-    PLr: regression map; keep: hurdle decision (predicted below the cut-off).
-    Returns (network map, calibrated regression map). In the surveyed tiles the
-    links are known, including which sites are not received at all."""
-    P, S = PLr.shape
-    surveyed = np.isin(city.tile, surveyed_tiles)
-    obs = np.isfinite(city.true_pl) & surveyed[:, None]
-    res = (city.true_pl - PLr)[obs]
-    site = np.broadcast_to(np.arange(S), (P, S))[obs]
-    rbar = res.mean() if res.size else 0.0
-    n_s = np.bincount(site, minlength=S)
-    sum_s = np.bincount(site, weights=res, minlength=S)
-    off = (sum_s + KAPPA * rbar) / (n_s + KAPPA)
-    R = PLr + off[None, :]
-    M = np.where(keep, R, np.inf)
-    M[surveyed] = city.true_pl[surveyed]            # surveyed links are known
-    return M, R
 
 
 def sample_pairs(city, X, n, rng):
@@ -218,9 +178,9 @@ def main():
                 for draw in range(N_DRAWS):
                     r2 = np.random.default_rng([fi, k, draw, False])
                     pick = r2.choice(len(te), size=k, replace=False)
-                    run(f"link+k{k}", draw, *calibrate(city, PLr, keep, tile_ids[pick]))
-                pick = design_survey(city.tile, tile_ids, keep, k)
-                run(f"link+k{k}d", 0, *calibrate(city, PLr, keep, tile_ids[pick]))
+                    run(f"link+k{k}", draw, *calibrate(city, PLr, keep, tile_ids[pick], KAPPA))
+                pick = design_survey(city.tile, tile_ids, keep, k, KAPPA)
+                run(f"link+k{k}d", 0, *calibrate(city, PLr, keep, tile_ids[pick], KAPPA))
             sub = [r for r in rows if r["fold"] == fold and r["seed"] == seed
                    and r["sites"] == S]
             log.info(f"{fold} seed {seed}: trees={m.best_iteration_} " + " ".join(

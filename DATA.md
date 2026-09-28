@@ -12,6 +12,7 @@ Everything needed to reproduce the paper is in this repository.
 | `data/raw/sionna/<city>/origin.json` | solver version, backend, rays per site, cell size, depth, mechanisms, cut-off, siting policy, run time | `01b_raytrace.py` |
 | `data/raw/sionna_7p5/<city>/…` | the same sites ray traced at 7.5 GHz (`configs/data/sionna_cities_7p5.yaml`) | `01b_raytrace.py` |
 | `data/raw/sionna_randsite/<city>/…` | four cities with sites on randomly chosen rooftops, 3.5 GHz (`configs/data/sionna_cities_randsite.yaml`) | `01b_raytrace.py` |
+| `data/raw/sionna_ext/<scene>/…` | the Munich, Etoile and Florence scenes of Sionna RT: footprints derived from the meshes, 8 rooftop sites, 3.5 GHz links | `17_external_scenes.py --raytrace` |
 | `data/processed/sionna/<city>/tiles.parquet` | tile grid, labels (γ, P_L0), shrinkage weight, iid and CR2 cluster-robust standard errors, 32 descriptors | `02_build_tiles.py` |
 | `data/processed/sionna_7p5/<city>/tiles.parquet` | the same for the second band | `02_build_tiles.py` |
 | `data/splits/loco.json` | leave-one-city-out splits | `03_make_splits.py` |
