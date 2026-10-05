@@ -32,7 +32,7 @@ These concern the original experiments, not the writing or the references:
 1. **Fig. 5:** the legend AUCs (0.920 / 0.880 / 0.860 / 0.840) differ from Table III (0.912 / 0.878 / 0.863 / 0.847).
 2. **Fig. 6(b):** the net benefit reaches about 0.8, but net benefit cannot exceed the 5–7% prevalence.
 3. **Fig. 8(b):** the AUROC at epsilon = 2 is about 0.875, but the text gives a 1.3-point drop.
-4. **Pretraining:** 1.2 million pretraining admissions is more than MIMIC-IV and eICU-CRD hold combined.
+4. **Pretraining:** the impossible "1.2 million admissions" figure was removed. Add the exact count if it is known.
 5. **Baseline identities:**
    - CT-BERT is cited to GatorTron [18].
    - SANet is cited to SAnD [58].
