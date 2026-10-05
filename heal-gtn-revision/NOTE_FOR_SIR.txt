@@ -1,0 +1,21 @@
+Dear Sir,
+
+I have revised the HEAL-GTN manuscript (ID6) for IEEE ICCD-2026 in the IEEE conference template. All original sections, figures, tables and results are kept. The LaTeX source and the compiled PDF are attached, with the Response to Reviewers at the end.
+
+I have verified everything except the code repository:
+- All 13 reviewer comments are addressed (8 from Reviewer 1, 5 from Reviewer 2).
+- All 65 references were checked against their published records. Several in the original list had wrong authors or venues or cited the wrong paper, and one ([25]) did not exist. All are now corrected and listed in CITATION_AUDIT.md.
+- Every number in the text was cross-checked against the tables. I corrected two arithmetic errors: the combined sepsis rate in Table II (5.0% to 5.3%), and the LLM gap (12 to 11 points).
+- I corrected the Fig. 7 axis label to "Time relative to clinical onset", to match its caption.
+
+A few points need your confirmation, because they depend on the original experiments:
+1. Fig. 5 legend AUCs (0.920/0.880/0.860/0.840) differ from Table III.
+2. Fig. 6(b) net benefit (about 0.8) exceeds the sepsis prevalence, which is not possible.
+3. Fig. 8(b) shows AUROC of about 0.875 at epsilon = 2, but the text says the drop is 1.3 points.
+4. 1.2 million pretraining admissions is more than MIMIC-IV and eICU-CRD contain.
+5. Which published works CT-BERT and SANet refer to. They are currently cited to GatorTron and SAnD.
+
+With all content kept, the paper is 10 pages. If the limit is strictly 8, some text will need to be shortened.
+
+Regards,
+Abraheem

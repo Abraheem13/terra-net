@@ -103,5 +103,5 @@
 
 1. **CT-BERT [18].** No published EHR model by this name was found. Reference [18] is GatorTron, which encodes clinical text only. Replace [18] with the correct source if CT-BERT is a different model.
 2. **SANet [58].** No clinical model with this exact name was found. It is cited to SAnD, the closest match. Confirm or replace.
-3. **"SepsisWatch curation" [54].** Sendak et al. describe Duke's Sepsis Watch deployment, not a MIMIC-IV cohort definition. Confirm what curation was applied.
+3. **SepsisWatch [54].** The mis-citation in Section V-A was removed; the MIMIC-IV inclusion criteria are now stated explicitly there. [54] remains as the source for the Sepsis Watch system named in the cohort-sensitivity study (Section VI-N).
 4. **Repository URL.** Make sure `https://github.com/sathishv/heal-gtn` is public.
