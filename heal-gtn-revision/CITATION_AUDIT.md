@@ -65,7 +65,7 @@
 
 | No. | Reference |
 |---|---|
-| [7] | Kamran et al., NEJM AI 2024 |
+| [7] | Kamran et al., NEJM AI 1(3), 2024 |
 | [19] | Hi-BEHRT, IEEE JBHI 2023 |
 | [20] | TransformEHR, Nat. Commun. 2023 |
 | [21] | NYUTron, Nature 2023 |

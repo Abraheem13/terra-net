@@ -214,7 +214,7 @@ MIMIC-IV \cite{johnson2023mimiciv} & 65,366 & 4.7 & 6.8 \\
 eICU-CRD \cite{pollard2018eicu} & 31,470 & 3.9 & 5.5 \\
 PhysioNet 2019 \cite{reyna2020} & 40,336 & 7.3 & n/a \\
 \midrule
-Combined & 137,172 & 5.0 & 6.4 \\
+Combined & 137,172 & 5.3 & 6.4 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -351,7 +351,7 @@ Transferring a model trained on MIMIC-IV to eICU-CRD without fine-tuning yields 
 The deployed pipeline ingests Health Level Seven (HL7) FHIR bundles through a hospital-interface engine, materializes the heterogeneous patient graph inside a Neo4j-compatible in-memory store, and evaluates the model in a side-car service that exposes a FHIR CDS Hooks endpoint. Alert payloads embed the top five contributing features (extracted from the attention trace), a counterfactual explanation of what would have to change for the alert to disappear, and a calibrated probability. An immutable audit log records every alert together with the downstream clinical action and outcome, supporting post-market surveillance consistent with the US FDA Predetermined Change Control Plan guidance for adaptive AI.
 
 \subsection{Comparison with Large Language Models}
-Because large language models are increasingly proposed for clinical risk prediction, we benchmark HEAL-GTN against two zero-shot prompting strategies applied to GPT-4-class clinical LLMs and against a fine-tuned BioGPT classifier \cite{luo2022biogpt}. Zero-shot prompting attains a sepsis AUROC of 0.802, 12 points below HEAL-GTN, and exhibits poor calibration (ECE 0.164). Fine-tuned BioGPT improves to 0.871 but requires two orders of magnitude more compute during inference (320 ms per patient on an A100 GPU). These results support the view that compact, graph-aware architectures remain preferable to general-purpose language models for structured clinical decision support, especially when latency, calibration and privacy constraints are binding.
+Because large language models are increasingly proposed for clinical risk prediction, we benchmark HEAL-GTN against two zero-shot prompting strategies applied to GPT-4-class clinical LLMs and against a fine-tuned BioGPT classifier \cite{luo2022biogpt}. Zero-shot prompting attains a sepsis AUROC of 0.802, 11 points below HEAL-GTN, and exhibits poor calibration (ECE 0.164). Fine-tuned BioGPT improves to 0.871 but requires two orders of magnitude more compute during inference (320 ms per patient on an A100 GPU). These results support the view that compact, graph-aware architectures remain preferable to general-purpose language models for structured clinical decision support, especially when latency, calibration and privacy constraints are binding.
 
 \subsection{Sensitivity to Cohort Construction}
 Clinical machine-learning benchmarks are known to be sensitive to cohort-construction choices \cite{johnson2017mlhc,mcdermott2021,vandewater2024}. We repeat the headline MIMIC-IV evaluation under three alternative cohorts: the SepsisWatch curation \cite{sendak2020}, the Harutyunyan \textit{et al.} benchmark \cite{harutyunyan2019}, and a physician-defined cohort that excludes patients with palliative-care orders. Sepsis AUROC falls within the band 0.908 to 0.917 across the three curations, and the ranking among HEAL-GTN and the top three baselines is preserved in every case. These findings strengthen confidence that the reported gains reflect genuine modeling progress rather than a favorable cohort split.
@@ -376,7 +376,7 @@ The source code, training scripts, federated-learning simulator and a synthetic-
 \bibitem{kdigo2012} Kidney Disease: Improving Global Outcomes (KDIGO) Acute Kidney Injury Work Group, ``KDIGO clinical practice guideline for acute kidney injury,'' \textit{Kidney Int. Suppl.}, vol. 2, no. 1, pp. 1--138, 2012.
 \bibitem{johnson2017mlhc} A. E. W. Johnson, T. J. Pollard, and R. G. Mark, ``Reproducibility in critical care: a mortality prediction case study,'' in \textit{Proc. 2nd Mach. Learn. Healthc. Conf. (MLHC)}, PMLR, vol. 68, 2017, pp. 361--376.
 \bibitem{wong2021} A. Wong \textit{et al.}, ``External validation of a widely implemented proprietary sepsis prediction model in hospitalized patients,'' \textit{JAMA Intern. Med.}, vol. 181, no. 8, pp. 1065--1070, 2021.
-\bibitem{kamran2024} F. Kamran \textit{et al.}, ``Evaluation of sepsis prediction models before onset of treatment,'' \textit{NEJM AI}, 2024.
+\bibitem{kamran2024} F. Kamran \textit{et al.}, ``Evaluation of sepsis prediction models before onset of treatment,'' \textit{NEJM AI}, vol. 1, no. 3, 2024.
 \bibitem{choi2016retain} E. Choi, M. T. Bahadori, J. Sun, J. Kulas, A. Schuetz, and W. Stewart, ``RETAIN: an interpretable predictive model for healthcare using reverse time attention mechanism,'' in \textit{Proc. Adv. Neural Inf. Process. Syst. (NeurIPS)}, vol. 29, 2016.
 \bibitem{shickel2018} B. Shickel, P. J. Tighe, A. Bihorac, and P. Rashidi, ``Deep EHR: a survey of recent advances in deep learning techniques for electronic health record (EHR) analysis,'' \textit{IEEE J. Biomed. Health Inform.}, vol. 22, no. 5, pp. 1589--1604, 2018.
 \bibitem{rajkomar2019} A. Rajkomar, J. Dean, and I. Kohane, ``Machine learning in medicine,'' \textit{N. Engl. J. Med.}, vol. 380, no. 14, pp. 1347--1358, 2019.
@@ -406,7 +406,7 @@ The source code, training scripts, federated-learning simulator and a synthetic-
 \bibitem{zitnik2018} M. Zitnik, M. Agrawal, and J. Leskovec, ``Modeling polypharmacy side effects with graph convolutional networks,'' \textit{Bioinformatics}, vol. 34, no. 13, pp. i457--i466, 2018.
 \bibitem{shang2019gamenet} J. Shang, C. Xiao, T. Ma, H. Li, and J. Sun, ``GAMENet: graph augmented memory networks for recommending medication combination,'' in \textit{Proc. AAAI Conf. Artif. Intell.}, vol. 33, no. 1, 2019, pp. 1126--1133.
 \bibitem{shang2019gbert} J. Shang, T. Ma, C. Xiao, and J. Sun, ``Pre-training of graph augmented transformers for medication recommendation,'' in \textit{Proc. 28th Int. Joint Conf. Artif. Intell. (IJCAI)}, 2019, pp. 5953--5959.
-\bibitem{alsentzer2025shepherd} E. Alsentzer \textit{et al.}, ``Few shot learning for phenotype-driven diagnosis of patients with rare genetic diseases,'' \textit{npj Digit. Med.}, vol. 8, 2025.
+\bibitem{alsentzer2025shepherd} E. Alsentzer \textit{et al.}, ``Few shot learning for phenotype-driven diagnosis of patients with rare genetic diseases,'' \textit{npj Digit. Med.}, vol. 8, Art. no. 380, 2025.
 \bibitem{hosseini2018heteromed} A. Hosseini, T. Chen, W. Wu, Y. Sun, and M. Sarrafzadeh, ``HeteroMed: heterogeneous information network for medical diagnosis,'' in \textit{Proc. 27th ACM Int. Conf. Inf. Knowl. Manage. (CIKM)}, 2018, pp. 763--772.
 \bibitem{mcmahan2017} B. McMahan, E. Moore, D. Ramage, S. Hampson, and B. Ag\"{u}era y Arcas, ``Communication-efficient learning of deep networks from decentralized data,'' in \textit{Proc. 20th Int. Conf. Artif. Intell. Statist. (AISTATS)}, PMLR, vol. 54, 2017, pp. 1273--1282.
 \bibitem{abadi2016} M. Abadi \textit{et al.}, ``Deep learning with differential privacy,'' in \textit{Proc. ACM SIGSAC Conf. Comput. Commun. Secur. (CCS)}, 2016, pp. 308--318.
@@ -430,7 +430,7 @@ The source code, training scripts, federated-learning simulator and a synthetic-
 \bibitem{song2018sand} H. Song, D. Rajan, J. J. Thiagarajan, and A. Spanias, ``Attend and diagnose: clinical time series analysis using attention models,'' in \textit{Proc. AAAI Conf. Artif. Intell.}, vol. 32, 2018, pp. 4091--4098.
 \bibitem{zhang2020hurtful} H. Zhang, A. X. Lu, M. Abdalla, M. McDermott, and M. Ghassemi, ``Hurtful words: quantifying biases in clinical contextual word embeddings,'' in \textit{Proc. ACM Conf. Health Inference Learn. (CHIL)}, 2020.
 \bibitem{yin2018} D. Yin, Y. Chen, K. Ramchandran, and P. Bartlett, ``Byzantine-robust distributed learning: towards optimal statistical rates,'' in \textit{Proc. 35th Int. Conf. Mach. Learn. (ICML)}, PMLR, vol. 80, 2018, pp. 5650--5659.
-\bibitem{yeom2018} S. Yeom, I. Giacomelli, M. Fredrikson, and S. Jha, ``Privacy risk in machine learning: analyzing the connection to overfitting,'' in \textit{Proc. IEEE 31st Comput. Secur. Found. Symp. (CSF)}, 2018.
+\bibitem{yeom2018} S. Yeom, I. Giacomelli, M. Fredrikson, and S. Jha, ``Privacy risk in machine learning: analyzing the connection to overfitting,'' in \textit{Proc. IEEE 31st Comput. Secur. Found. Symp. (CSF)}, 2018, pp. 268--282.
 \bibitem{moor2023} M. Moor \textit{et al.}, ``Predicting sepsis using deep learning across international sites: a retrospective development and validation study,'' \textit{eClinicalMedicine}, vol. 62, Art. no. 102124, 2023.
 \bibitem{mcdermott2021} M. B. A. McDermott, S. Wang, N. Marinsek, R. Ranganath, L. Foschini, and M. Ghassemi, ``Reproducibility in machine learning for health research: still a ways to go,'' \textit{Sci. Transl. Med.}, vol. 13, no. 586, Art. no. eabb1655, 2021.
 \bibitem{vandewater2024} R. van de Water, H. Schmidt, P. Elbers, P. Thoral, B. Arnrich, and P. Rockenschaub, ``Yet another ICU benchmark: a flexible multi-center framework for clinical ML,'' in \textit{Proc. Int. Conf. Learn. Represent. (ICLR)}, 2024.
@@ -448,7 +448,7 @@ The source code, training scripts, federated-learning simulator and a synthetic-
 \subsection*{Reviewer 1}
 \begin{enumerate}
 \item \textit{The first sentence of the abstract should not exceed 25 words.} The first sentence now has 17 words: ``Electronic health records combine clinical notes, laboratory results, physiological signals, medication orders and diagnosis codes for each hospital admission.''
-\item \textit{Quantities above 10 should be written in Arabic numerals.} All quantities above 10 are now written as numerals throughout, for example 16 baselines, 24 hours, 10 to 15 per cent, more than 200 hospitals, 12 points and 15 bins.
+\item \textit{Quantities above 10 should be written in Arabic numerals.} All quantities above 10 are now written as numerals throughout, for example 16 baselines, 24 hours, 10 to 15 per cent, more than 200 hospitals, 11 points and 15 bins.
 \item \textit{Order the abstract as background, research question, significance, methods and results.} The abstract now follows this order: background (sentences 1 and 2), research question (3), significance (4), methods (5 and 6) and results (7 and 8), followed by the availability statement.
 \item \textit{State the shortcomings of previous research in one sentence and remove subjective assertions.} Sentence 2 of the abstract states the shortcomings of previous research in one sentence. The phrase ``among the richest and most difficult streaming data-mining substrates'' and similar evaluative wording were removed.
 \item \textit{Delete the paragraph describing the structure of the paper.} Deleted.

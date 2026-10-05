@@ -23,4 +23,13 @@ Run `pdflatex main.tex` twice. No BibTeX run is needed.
 3. **`% AUTHOR CHECK` comments.** Two places in `main.tex` carry these comments; they do not appear in the PDF:
    - The PMI edge priors must have been computed on the training split only.
    - The model-inversion figure of 0.54 must be a measured result.
-4. **Title in the submission form:** `ID6-HEAL-GTN: Mining Longitudinal Electronic Health Records with a Hierarchical Graph-Temporal Network for Early Sepsis, Acute Kidney Injury and Mortality Prediction`.
+4. **Errors corrected during verification:**
+   - Table II combined sepsis prevalence: 5.0% corrected to 5.3%, the weighted value of the rows above it.
+   - LLM comparison: "12 points below HEAL-GTN" corrected to 11 points (0.912 - 0.802).
+5. **Inconsistencies kept as-is, for the first author to resolve:**
+   - Fig. 5 reports AUCs of 0.920 / 0.880 / 0.860 / 0.840, while Table III gives 0.912 / 0.878 / 0.863 / 0.847.
+   - Fig. 6(b) shows a net benefit of about 0.8, which is impossible at a 5-7% prevalence: net benefit cannot exceed prevalence.
+   - Fig. 8(b) shows an AUROC of about 0.875 at epsilon = 2, while the text says the drop at epsilon = 2 is only 1.3 points.
+   - Fig. 7's x-axis is labelled "relative to ICU admission", while the caption says "before clinical onset".
+   - 1.2 million pretraining admissions exceeds MIMIC-IV and eICU-CRD combined.
+6. **Title in the submission form:** `ID6-HEAL-GTN: Mining Longitudinal Electronic Health Records with a Hierarchical Graph-Temporal Network for Early Sepsis, Acute Kidney Injury and Mortality Prediction`.
