@@ -3,109 +3,105 @@
 ## How the references were checked
 
 - **What was checked:** every reference was checked for:
-  - author list (first author and initials);
+  - authors;
   - title;
   - venue;
   - year;
   - volume, issue and pages or article number;
-  - whether the cited work actually supports the sentence it is cited for.
-- **Sources:** web searches against the publisher or index record, such as PubMed/PMC, ACL Anthology, PMLR, AAAI OJS, NeurIPS proceedings, IEEE Xplore, JAIR, BMJ, Nature, and arXiv for preprints.
-- **Google Scholar:** this environment's network policy blocks it, so it was not queried directly. All the records below are the same records Google Scholar indexes.
-- **Unconfirmed fields:** where a page range could not be confirmed (RETAIN, Yeom et al., DeepHit, the NeurIPS papers, Kamran et al.), it was left out rather than guessed. IEEE style allows this.
-- **Final numbering:** the final list has 59 references, numbered in order of first citation.
+  - whether it supports the sentence that cites it.
+- **Where:** against the publisher or index record, such as PubMed/PMC, ACL Anthology, PMLR, AAAI OJS, NeurIPS proceedings, IEEE Xplore, ACM, JAIR, BMJ, Nature and arXiv.
+- **Google Scholar:** this environment's network policy blocks it, so it was not queried directly. The records above are the same ones Google Scholar indexes.
+- **Unconfirmed fields:** where a page range could not be confirmed (RETAIN, Yeom et al., DeepHit, the NeurIPS papers), it was left out rather than guessed.
+- **Format:** all entries use IEEE style and are numbered in order of first citation, 65 in total.
 
-## A. Original reference list (40 entries): findings
+## A. Original 40 references
 
-| Old | Reference | Finding | Action (new number) |
+| Old | Reference | Finding | Action (new no.) |
 |---|---|---|---|
-| [1] | Jensen et al., Nat. Rev. Genet. 2012 | Correct | Kept [1] |
-| [2] | Miotto et al., Brief. Bioinform. 2018 | Correct | Kept [2] |
-| [3] | Singer et al., JAMA 2016 (Sepsis-3) | Correct | Kept [3] |
-| [4] | "J. A. Kellum et al.", KDIGO AKI guideline | The guideline is authored by the KDIGO AKI Work Group | Author corrected [4] |
-| [5] | Johnson, Pollard, Mark, MLHC 2017 | Correct | Kept; PMLR vol. 68 added [5] |
-| [6] | Choi et al., RETAIN, NeurIPS 2016 | Correct; sources disagree on the page range (3504–3512 vs 3512–3520) | Kept; pages omitted [24] |
-| [7] | Shickel et al., IEEE JBHI 2018 | Correct | Removed to save space |
-| [8] | Alsentzer et al., Clinical NLP Workshop 2019 | Correct | Kept [15] |
-| [9] | Luo et al., BioGPT, Brief. Bioinform. 2022 | Correct | Kept; article no. bbac409 added [26] |
-| [10] | Harutyunyan et al., Sci. Data 2019 | Correct, but the paper's Table I said it benchmarked CNN-LSTM, which it did not | Kept [8]; Table I row corrected to LSTM |
-| [11] | Vaswani et al., NeurIPS 2017 | Correct | Kept [48] |
-| [12] | Zhou et al., Informer, AAAI 2021 | Correct | Kept [49] |
-| [13] | Li et al., BEHRT, Sci. Rep. 2020 | Correct | Kept [11] |
-| [14] | Rasmy et al., Med-BERT, npj Digit. Med. 2021 | Correct | Kept [12] |
-| [15] | "Z. Yang et al.", cited for **CT-BERT** | **Wrong.** This is GatorTron by **X.** Yang et al. It describes no model called CT-BERT. | Now cited as GatorTron [16]; CT-BERT has no citation (see section C) |
-| [16] | Choi et al., GRAM, KDD 2017 | Correct | Kept [18] |
-| [17] | "C. Shang et al.", IJCAI 2019, cited for **SANet** and mortality | **Wrong first author** (J. Shang). The paper is G-BERT for medication recommendation and does not describe SANet or mortality estimation. | Removed. SANet now cited to Song et al., AAAI 2018 [10] (see section C) |
-| [18] | Johnson et al., MIMIC-IV, Sci. Data 2023 | Correct | Kept [45] |
-| [19] | Pollard et al., eICU-CRD, Sci. Data 2018 | Title truncated | Full title restored [46] |
-| [20] | Reyna et al., Crit. Care Med. 2020 | Correct | Kept [57] |
-| [21] | Katzman et al., DeepSurv, 2018 | Correct | Kept [25] |
-| [22] | Ma et al., Dipole, KDD 2017 | Correct | Kept [9] |
-| [23] | "Y. Tatonetti et al.", Sci. Transl. Med. 2012 | **Wrong initials** (N. P. Tatonetti). Not a graph-learning paper, but it was cited for graph-based drug-interaction models. | Removed |
-| [24] | Shang et al., GAMENet, AAAI 2019 | Correct | Removed to save space |
-| [25] | "Y. Wang, F. Wang, Y. Wei, Rare disease prediction ..., IJCAI 2022" | **Could not be found in any index. Appears not to exist.** | Removed; replaced by Choi et al., GCT, AAAI 2020 [19] |
-| [26] | "A. Hosseini, R. Chen, A. Bhatia, A. Tellez, W. Hsu", HeteroMed, CIKM 2018 | **Wrong co-authors.** The correct list is A. Hosseini, T. Chen, W. Wu, Y. Sun, M. Sarrafzadeh. | Corrected [28] |
-| [27] | McMahan et al., AISTATS 2017 | Correct | Kept [31] |
-| [28] | Abadi et al., CCS 2016 | Correct | Kept [32] |
-| [29] | Chen et al., FedHealth, "IEEE Intell. Syst. 35(4)" | The journal version could not be confirmed (arXiv 2019 confirmed). The work uses wearable activity data, but the paper said medical imaging. | Removed |
-| [30] | "L. Zhang et al., FLoP ..., MICCAI 2021" | **Wrong.** FLOP is by Q. Yang, J. Zhang, W. Hao, G. Spell, L. Carin (KDD 2021) and has a different title. | Removed; replaced by Rieke et al., npj Digit. Med. 2020 [33] |
-| [31] | "H. Liu, X. Wang, Z. Lin, FedECG ..., IEEE JBHI 2023" | **Wrong.** FedECG is by Ying et al. in J. King Saud Univ. CIS (2023); no such JBHI paper exists. | Removed; replaced by Dayan et al., Nat. Med. 2021 [34] |
-| [32] | Mironov, Rényi DP, CSF 2017 | Correct | Kept [43] |
-| [33] | Bonawitz et al., CCS 2017 | Correct | Kept [44] |
-| [34] | "J. D. Dernoncourt et al.", JAMIA 2017 | **Wrong initials** (F. Dernoncourt) | Corrected [54] |
-| [35] | Collins et al., TRIPOD, Ann. Intern. Med. 2015 | Correct | Kept [55] |
-| [36] | "Sendak et al., ... evaluation of workflow and acceptance, JAMA Netw. Open 3(3), 2020" | **Wrong title and venue.** The real paper is in JMIR Med. Inform. 8(7), e15182, 2020. The "SepsisWatch curation" of MIMIC-IV it was cited for does not exist. | Removed; cohort now defined by explicit criteria |
-| [37] | Guo et al., ICML 2017 | Correct | Kept [41] |
-| [38] | McDermott et al., Sci. Transl. Med. 2021 | Real, but cited for "Clinical-BERT subgroup gaps of 2.4–3.8 points", which it does not report | Now cited for reproducibility [38]; fairness sentence cites Zhang et al., CHIL 2020 [53] with no invented numbers |
-| [39] | Lee et al., DeepHit, AAAI 2018 | Correct; page range not confirmed | Kept; pages omitted [59] |
-| [40] | Rajkomar et al., NEJM 2019 | Real, but cited for median aggregation and cohort sensitivity, which it does not support | Removed |
+| [1] | Jensen et al. 2012 | Correct | [1] |
+| [2] | Miotto et al. 2018 | Correct | [2] |
+| [3] | Singer et al. 2016 | Correct | [3] |
+| [4] | KDIGO guideline | Author is the KDIGO AKI Work Group, not "J. A. Kellum et al." | Corrected [4] |
+| [5] | Johnson et al., MLHC 2017 | Correct | [5] |
+| [6] | RETAIN, NeurIPS 2016 | Correct. Sources disagree on pages, so they are left out. | [8] |
+| [7] | Shickel et al. 2018 | Correct | [9] |
+| [8] | Alsentzer et al. 2019 | Correct | [11] |
+| [9] | BioGPT 2022 | Correct; article no. added | [12] |
+| [10] | Harutyunyan et al. 2019 | Correct, but the text said it benchmarked CNN-LSTM; it used LSTM and channel-wise LSTM | Text and Table I corrected [13] |
+| [11] | Vaswani et al. 2017 | Correct | [14] |
+| [12] | Informer 2021 | Correct | [15] |
+| [13] | BEHRT 2020 | Correct. Table I said it uses text; it uses coded records. | Table I corrected [16] |
+| [14] | Med-BERT 2021 | Correct. Table I said it uses text; it uses structured codes. | Table I corrected [17] |
+| [15] | "Z. Yang et al.", cited for CT-BERT | Real paper, but the first author is **X.** Yang and the model is **GatorTron**, not CT-BERT | Bibliographic entry corrected [18]; **CT-BERT identity must be confirmed** |
+| [16] | GRAM 2017 | Correct | [22] |
+| [17] | "C. Shang et al.", cited for SANet and mortality | First author is **J.** Shang; the paper is G-BERT (medication recommendation) | Corrected and now cited for medication recommendation [36]. SANet cited to Song et al. [58]; mortality estimation to GCT [23]. |
+| [18] | MIMIC-IV 2023 | Correct | [27] |
+| [19] | eICU-CRD 2018 | Title truncated | Full title [28] |
+| [20] | Reyna et al. 2020 | Correct | [29] |
+| [21] | DeepSurv 2018 | Correct | [30] |
+| [22] | Dipole 2017 | Correct | [31] |
+| [23] | "Y. Tatonetti et al." 2012 | Wrong initials (N. P.); not a graph model, but cited for graph-based drug-interaction models | Replaced by Zitnik et al., Decagon [34] |
+| [24] | GAMENet 2019 | Correct | [35] |
+| [25] | "Wang, Wang, Wei, Rare disease prediction ..., IJCAI 2022" | **Does not exist** in any index | Replaced by SHEPHERD, Alsentzer et al., npj Digit. Med. 2025 [37] |
+| [26] | HeteroMed, CIKM 2018 | **Wrong co-authors** | Corrected to Hosseini, Chen, Wu, Sun, Sarrafzadeh [38] |
+| [27] | McMahan et al. 2017 | Correct | [39] |
+| [28] | Abadi et al. 2016 | Correct | [40] |
+| [29] | FedHealth | Verified on IEEE Xplore (IEEE Intell. Syst. 35(4), 2020). The text said "medical imaging"; the paper uses wearable data. | Text corrected [41] |
+| [30] | "L. Zhang et al., FLoP, MICCAI 2021" | **Wrong.** The real FLOP is by Q. Yang et al., KDD 2021, pp. 3845–3853 | Corrected [42] |
+| [31] | "H. Liu et al., FedECG, IEEE JBHI 2023" | **Wrong.** The real FedECG is by Z. Ying et al., J. King Saud Univ. CIS 35(6):101568, 2023 | Corrected [43] |
+| [32] | Mironov 2017 | Correct | [48] |
+| [33] | Bonawitz et al. 2017 | Correct | [50] |
+| [34] | "J. D. Dernoncourt" | Wrong initials (F.) | Corrected [51] |
+| [35] | TRIPOD 2015 | Correct | [52] |
+| [36] | Sendak et al., "JAMA Netw. Open 2020" | **Wrong title and venue.** The real paper is in JMIR Med. Inform. 8(7):e15182, 2020. | Corrected [54]; see C.3 |
+| [37] | Guo et al. 2017 | Correct | [46] |
+| [38] | McDermott et al. 2021 | Real, but cited for "Clinical-BERT gaps of 2.4–3.8 points", which it does not report | Fairness sentence now cites Zhang et al. [59] without the unsupported numbers; McDermott cited for cohort sensitivity [63] |
+| [39] | DeepHit 2018 | Correct; pages not confirmed | [65] |
+| [40] | Rajkomar et al. 2019 | Real, but cited for median aggregation and cohort sensitivity, which it does not cover | Now cited for deep learning in medicine [10]; median aggregation → Yin et al. [60]; cohort sensitivity → [5], [63], [64] |
 
-## B. References added in the revision, all checked
+## B. Added references (all checked)
 
-**Published from 2023 onwards (13, for Reviewer 1, comment 6):**
+**Published from 2023 onwards (Reviewer 1, comment 6):**
 
-| New | Reference |
+| No. | Reference |
 |---|---|
-| [7] | Kamran et al., NEJM AI 2024 (volume and issue not confirmed, so omitted) |
-| [13] | Li et al., Hi-BEHRT, IEEE JBHI 27(2):1106–1117, 2023 |
-| [14] | Yang et al., TransformEHR, Nat. Commun. 14:7857, 2023 |
-| [17] | Jiang et al., NYUTron, Nature 619:357–362, 2023 |
-| [20] | Jiang et al., GraphCare, ICLR 2024 |
-| [21] | Zhang et al., ICML 2023, PMLR 202:41300–41313 |
-| [23] | Ponomareva et al., JAIR 77:1113–1201, 2023 |
-| [27] | Wornow et al., npj Digit. Med. 6:135, 2023 |
-| [35] | Kapoor and Narayanan, Patterns 4(9):100804, 2023 |
-| [36] | van de Water et al., YAIB, ICLR 2024 |
-| [37] | Moor et al., eClinicalMedicine 62:102124, 2023 |
-| [45] | MIMIC-IV, 2023 (kept from the original list) |
-| [56] | Collins et al., TRIPOD+AI, BMJ 385:e078378, 2024 |
+| [7] | Kamran et al., NEJM AI 2024 |
+| [19] | Hi-BEHRT, IEEE JBHI 2023 |
+| [20] | TransformEHR, Nat. Commun. 2023 |
+| [21] | NYUTron, Nature 2023 |
+| [24] | GraphCare, ICLR 2024 |
+| [26] | Ponomareva et al., JAIR 2023 |
+| [32] | Wornow et al., npj Digit. Med. 2023 |
+| [33] | Zhang et al., ICML 2023 |
+| [37] | SHEPHERD, 2025 |
+| [43] | FedECG, 2023 |
+| [53] | TRIPOD+AI, BMJ 2024 |
+| [55] | Kapoor and Narayanan, Patterns 2023 |
+| [62] | Moor et al., eClinicalMedicine 2023 |
+| [64] | YAIB, ICLR 2024 |
 
 **Other additions:**
 
-| New | Reference |
+| No. | Reference |
 |---|---|
-| [6] | Wong et al., JAMA Intern. Med. 2021 |
-| [10] | Song et al., AAAI 2018, pp. 4091–4098 |
-| [16] | Yang et al., GatorTron, 2022 |
-| [19] | Choi et al., GCT, AAAI 2020, pp. 606–613 |
-| [22] | Van Calster et al., BMC Med. 2019 |
-| [29] | Brody et al., GATv2, ICLR 2022 |
-| [30] | Wang et al., HAN, WWW 2019 |
-| [33] | Rieke et al., 2020 |
-| [34] | Dayan et al., 2021 |
-| [39] | Lin et al., focal loss, ICCV 2017 |
-| [40] | Bergstra et al., NeurIPS 2011 |
-| [42] | Yousefpour et al., Opacus, arXiv:2109.12298 |
-| [47] | Chen and Guestrin, XGBoost, KDD 2016 |
-| [50] | Lim et al., TFT, Int. J. Forecast. 2021 |
-| [51] | Hamilton et al., GraphSAGE, NeurIPS 2017 |
-| [52] | Yeom et al., CSF 2018 |
-| [53] | Zhang et al., Hurtful Words, CHIL 2020 |
-| [58] | Vickers and Elkin, Med. Decis. Making 2006 |
+| [6] | Wong et al., 2021 |
+| [23] | GCT, AAAI 2020 |
+| [25] | Van Calster et al., 2019 |
+| [34] | Zitnik et al., 2018 |
+| [44] | Focal loss, ICCV 2017 |
+| [45] | Bergstra et al., 2011 |
+| [47] | Vickers and Elkin, 2006 |
+| [49] | Opacus, 2021 |
+| [56] | XGBoost, 2016 |
+| [57] | TFT, 2021 |
+| [58] | Song et al., SAnD, AAAI 2018 |
+| [59] | Zhang et al., CHIL 2020 |
+| [60] | Yin et al., ICML 2018 |
+| [61] | Yeom et al., CSF 2018 |
 
-## C. Items the authors must confirm
+## C. Points the first author must confirm
 
-1. **CT-BERT.** No published EHR model with this name could be found; the original citation pointed to GatorTron. The revised paper calls it "a clinical BERT-style transformer" with no citation.
-   - Before submission, add the correct citation and a one-line description of exactly what was run.
-2. **SANet.** No clinical model with this exact name was found. It is now described as "a self-attention model for clinical time series" and cited to SAnD (Song et al., AAAI 2018).
-   - Confirm that this is the model that was run.
-3. **Repository URL** (`https://github.com/sathishv/heal-gtn`). Make sure it is public before submission.
+1. **CT-BERT [18].** No published EHR model by this name was found. Reference [18] is GatorTron, which encodes clinical text only. Replace [18] with the correct source if CT-BERT is a different model.
+2. **SANet [58].** No clinical model with this exact name was found. It is cited to SAnD, the closest match. Confirm or replace.
+3. **"SepsisWatch curation" [54].** Sendak et al. describe Duke's Sepsis Watch deployment, not a MIMIC-IV cohort definition. Confirm what curation was applied.
+4. **Repository URL.** Make sure `https://github.com/sathishv/heal-gtn` is public.
