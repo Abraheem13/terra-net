@@ -36,7 +36,9 @@ def select_variant() -> str:
 def generate_city(scene_dir: Path, out_dir: Path, *, freq_ghz: float, n_bs: int,
                   bs_mast_agl: float, ue_agl: float, cell_size: float,
                   rt_samples: int, max_depth: int, max_pathloss_db: float,
-                  seed: int = 0, siting: str = "tallest") -> dict:
+                  seed: int = 0, siting: str = "tallest", mesh_path: Path | None = None) -> dict:
+    """`mesh_path`: building mesh used for the rooftop siting (default: the
+    scene's buildings.ply; the materials replicate sites on the main mesh)."""
     variant = select_variant()
     import mitsuba as mi
     import sionna.rt as rt
@@ -56,8 +58,8 @@ def generate_city(scene_dir: Path, out_dir: Path, *, freq_ghz: float, n_bs: int,
                 diffuse_reflection=True, refraction=True, diffraction=True,
                 edge_diffraction=True)
 
-    bs = rooftop_sites(scene_dir / "buildings.ply", n_bs, size_m, bs_mast_agl, seed=seed,
-                       policy=siting)
+    bs = rooftop_sites(mesh_path or scene_dir / "buildings.ply", n_bs, size_m, bs_mast_agl,
+                       seed=seed, policy=siting)
     frames, t0 = [], time.time()
     for i, pos in enumerate(bs):
         for name in list(scene.transmitters):
@@ -92,8 +94,9 @@ def generate_city(scene_dir: Path, out_dir: Path, *, freq_ghz: float, n_bs: int,
         "rt_samples": int(rt_samples), "n_bs": int(df.bs_id.nunique()),
         "n_measurements": int(len(df)), "max_pathloss_db": max_pathloss_db,
         "ue_height_m": ue_agl, "site_mast_m": bs_mast_agl, "seed": seed, "siting": siting,
-        "propagation": prop, "materials": {"buildings": "itu concrete",
-                                           "ground": "itu medium_dry_ground"},
+        "propagation": prop,
+        "materials": {"buildings": meta.get("materials", {"concrete": 1.0}),
+                      "ground": "itu medium_dry_ground"},
         "wall_clock_s": round(time.time() - t0, 1),
         "origin_is_true_geo": True, "scene_meta": meta,
     }

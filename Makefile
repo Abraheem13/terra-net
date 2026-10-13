@@ -9,7 +9,9 @@ DATA    ?= configs/data/sionna.yaml
 DATA2   ?= configs/data/sionna_7p5.yaml
 CITIES  ?= configs/data/sionna_cities.yaml
 CITIES2 ?= configs/data/sionna_cities_7p5.yaml
-RAND    ?= configs/data/sionna_cities_randsite.yaml
+RAND    ?= configs/data/sionna_cities_randsite.yaml configs/data/sionna_cities_capped.yaml configs/data/sionna_cities_materials.yaml
+CAPPED  ?= configs/data/sionna_cities_capped.yaml
+MAT     ?= configs/data/sionna_cities_materials.yaml
 
 .PHONY: reproduce analysis band stats paper corpus test lint clean
 
@@ -21,10 +23,13 @@ corpus:
 	$(PY) scripts/01a_fetch_buildings.py --config $(CITIES)
 	$(PY) scripts/01_build_scenes.py     --config $(CITIES)
 	$(PY) scripts/01b_raytrace.py        --config $(CITIES)
-	$(PY) scripts/01c_rt_convergence.py  --config $(CITIES)
+	$(PY) scripts/01c_rt_convergence.py  --config $(CITIES) --city amsterdam newyork paris --site 0 10
 	$(PY) scripts/01d_rt_outliers.py     --config $(CITIES)
 	$(PY) scripts/01b_raytrace.py        --config $(CITIES2)
-	$(PY) scripts/01b_raytrace.py        --config $(RAND)
+	$(PY) scripts/01b_raytrace.py        --config configs/data/sionna_cities_randsite.yaml
+	$(PY) scripts/01b_raytrace.py        --config $(CAPPED)
+	$(PY) scripts/01_build_scenes.py     --config $(MAT)
+	$(PY) scripts/01b_raytrace.py        --config $(MAT)
 	$(PY) scripts/17_external_scenes.py  --raytrace
 
 # the analysis steps one by one (same order as scripts/00_reproduce.py)

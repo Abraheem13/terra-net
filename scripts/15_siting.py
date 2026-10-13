@@ -1,18 +1,22 @@
 #!/usr/bin/env python
-"""Robustness to the siting policy: models trained on the main corpus (sites
-on the tallest rooftops) are applied, unchanged, to four cities re-traced with
-sites on randomly chosen rooftops (configs/data/sionna_cities_randsite.yaml).
+"""Robustness to the siting policy and to the building materials: models
+trained on the main corpus (sites on the tallest rooftops, concrete) are
+applied, unchanged, to four cities re-traced with sites on randomly chosen
+rooftops (sionna_cities_randsite.yaml), on mid-rise rooftops
+(sionna_cities_capped.yaml) and with random ITU materials per building
+(sionna_cities_materials.yaml). The geometry is that of the main scenes, so
+descriptors and link features are unchanged; only the ray-traced truth is.
 
-Operators scored on the random-site networks:
-  oracle_rand   tile labels fitted on the random-site links (the tile model
+Operators scored on each replicate network:
+  oracle_rand   tile labels fitted on the replicate's links (the tile model
                 with perfect labels for this network)
-  oracle_main   tile labels of the main corpus (tallest-rooftop sites): the
-                exact labels of the same tiles under a different siting
+  oracle_main   tile labels of the main corpus: the exact labels of the same
+                tiles under the main siting and materials
   median, gbdt  the LOCO tile predictions of 04_fit_baselines.py
   link          the LOCO hurdle link models of 11_link_transfer.py (all seeds)
 Only tiles labelled in both corpora are scored.
 
-Output: outputs/tables/siting.csv
+Output: outputs/tables/siting.csv (column `replicate`: the dataset name)
 """
 import argparse
 import json
@@ -38,14 +42,31 @@ log = get_logger("siting")
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/data/sionna.yaml")
-    ap.add_argument("--rand", default="configs/data/sionna_cities_randsite.yaml")
+    ap.add_argument("--rand", nargs="+", default=["configs/data/sionna_cities_randsite.yaml"],
+                    help="replicate configs (those whose data exist are evaluated)")
     args = ap.parse_args()
     cfg, base = load_cfg(args.config)
-    rcfg = OmegaConf.load(args.rand)
     raw, out = Path(base.paths.raw), Path(base.paths.outputs)
     P = pd.read_parquet(out / "predictions" / "loco.parquet")
     rows = []
+    for rc in args.rand:
+        rcfg = OmegaConf.load(rc)
+        if not any((raw / rcfg.dataset / c / "measurements.parquet").exists()
+                   for c in rcfg.rt_cities):
+            log.warning(f"{rcfg.dataset}: no ray-traced replicate found, skipped")
+            continue
+        rows.extend(replicate(cfg, base, rcfg, P, raw, out))
+    o = out / "tables" / "siting.csv"
+    pd.DataFrame(rows).to_csv(o, index=False)
+    log.info(f"wrote {o}")
+
+
+def replicate(cfg, base, rcfg, P, raw, out):
+    rows = []
     for name in rcfg.rt_cities:
+        if not (raw / rcfg.dataset / name / "measurements.parquet").exists():
+            log.warning(f"{rcfg.dataset}/{name}: missing, skipped")
+            continue
         main_meas, _ = load_links(raw / cfg.dataset / name / "measurements.parquet", cfg)
         meas, n_qc = load_links(raw / rcfg.dataset / name / "measurements.parquet", cfg)
         # the tile grid of the main corpus, so tiles are identical
@@ -68,8 +89,8 @@ def main():
                     LocalFrame.from_center(meta["lat0"], meta["lon0"]))
 
         def score(op, seed, M, R=None):
-            r = {"city": name, "operator": op, "seed": seed, "qc_removed": n_qc,
-                 "tiles": int(both.sum()), "pixels": M.shape[0],
+            r = {"replicate": str(rcfg.dataset), "city": name, "operator": op, "seed": seed,
+                 "qc_removed": n_qc, "tiles": int(both.sum()), "pixels": M.shape[0],
                  "site_h_median": float(np.median(city.sz))}
             r.update(city.evaluate(M, pl_for_error=R))
             r["regret5"] = next(q["regret"] for q in city.plan(M) if q["K"] == 5)
@@ -94,11 +115,9 @@ def main():
             keep = clf.predict(X).reshape(city.true_pl.shape) >= 0.5
             score("link", seed, np.where(keep, R, np.inf), R)
         sub = pd.DataFrame([r for r in rows if r["city"] == name])
-        log.info(f"{name}: " + " ".join(f"{o}={v:.2f}" for o, v in
-                                         sub.groupby("operator").pl_rmse_db.mean().items()))
-    o = out / "tables" / "siting.csv"
-    pd.DataFrame(rows).to_csv(o, index=False)
-    log.info(f"wrote {o}")
+        log.info(f"{rcfg.dataset}/{name}: " + " ".join(
+            f"{o}={v:.2f}" for o, v in sub.groupby("operator").pl_rmse_db.mean().items()))
+    return rows
 
 
 if __name__ == "__main__":

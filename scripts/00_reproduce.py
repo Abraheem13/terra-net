@@ -13,7 +13,8 @@ import time
 from pathlib import Path
 
 DATA, DATA2 = "configs/data/sionna.yaml", "configs/data/sionna_7p5.yaml"
-RAND = "configs/data/sionna_cities_randsite.yaml"
+RAND = ["configs/data/sionna_cities_randsite.yaml", "configs/data/sionna_cities_capped.yaml",
+        "configs/data/sionna_cities_materials.yaml"]
 STEPS = [
     # analysis at 3.5 GHz
     ("02_build_tiles.py", ["--config", DATA]),
@@ -29,7 +30,7 @@ STEPS = [
     ("13_certified_coverage.py", ["--config", DATA]),
     ("12_tile_size.py", ["--config", DATA]),
     ("14_censoring.py", ["--config", DATA]),
-    ("15_siting.py", ["--config", DATA, "--rand", RAND]),
+    ("15_siting.py", ["--config", DATA, "--rand", *RAND]),
     ("17_external_scenes.py", ["--config", DATA]),
     ("18_mixed_path.py", ["--config", DATA]),
     ("18_mixed_path.py", ["--config", DATA, "--tile-size", "200"]),
