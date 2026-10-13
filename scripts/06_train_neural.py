@@ -31,6 +31,7 @@ from terranet.experiments.common import (
     load_cfg,
     load_splits,
 )
+from terranet.experiments.parallel import map_folds, n_jobs
 from terranet.models.encoders.descriptor_mlp import DescriptorEncoder
 from terranet.models.hypernet import ParamHead
 from terranet.models.uq.heteroscedastic import gaussian_nll
@@ -92,40 +93,52 @@ def train(Xtr, Ytr, seed, epochs, Xva=None, Yva=None, patience=PATIENCE):
     return net, best_ep
 
 
+CTX = {}            # corpus and configuration, shared with forked workers
+
+
+def run_fold(sp):
+    cfg, base, data = CTX["cfg"], CTX["base"], CTX["data"]
+    rows, preds = [], []
+    fold, tr_cities = sp["test_cities"][0], sp["train_cities"]
+    Xtr, Ytr = data.pool(tr_cities)
+    Xte, Yte = data.d[fold]
+    norm = MaxAbs().fit(Xtr)
+    Xtr, Xte = norm(Xtr), norm(Xte)
+    te = pd.read_parquet(Path(base.paths.processed) / cfg.dataset / fold / "tiles.parquet")
+    tile_row = np.flatnonzero(np.isfinite(te.gamma.to_numpy()))
+    # inner selection of the number of epochs
+    best = []
+    for tr, va in inner_splits(tr_cities, N_INNER_EXPENSIVE, seed=0):
+        Xa, Ya, Xb, Yb = data.fold(tr, va)
+        best.append(train(Xa, Ya, 0, EPOCHS, Xb, Yb)[1])
+    epochs = max(1, int(np.median(best)))
+    for seed in SEEDS:
+        net, _ = train(Xtr, Ytr, seed, epochs)
+        with torch.no_grad():
+            pred = net(torch.tensor(Xte, dtype=torch.float32, device=DEV))["mean"].cpu().numpy()
+        r = {"fold": fold, "operator": "encoder", "seed": seed, "epochs": epochs}
+        r.update(full_report(pred[:, 0], Yte[:, 0], "gamma_"))
+        r.update(full_report(pred[:, 1], Yte[:, 1], "pl0_"))
+        rows.append(r)
+        preds.append(pd.DataFrame({"fold": fold, "operator": "encoder", "seed": seed,
+                                   "tile_row": tile_row,
+                                   "gamma_hat": pred[:, 0], "pl0_hat": pred[:, 1]}))
+    log.info(f"{fold:10s} epochs={epochs} "
+             f"gamma_rmse={np.mean([r['gamma_rmse'] for r in rows[-5:]]):.3f}")
+    return rows, preds
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/data/sionna.yaml")
+    ap.add_argument("--jobs", type=int, default=n_jobs(), help="folds in parallel")
     args = ap.parse_args()
     cfg, base = load_cfg(args.config)
-    data = CityData(base, cfg, list(cfg.cities))
+    CTX.update(cfg=cfg, base=base, data=CityData(base, cfg, list(cfg.cities)))
     rows, preds = [], []
-    for sp in load_splits():
-        fold, tr_cities = sp["test_cities"][0], sp["train_cities"]
-        Xtr, Ytr = data.pool(tr_cities)
-        Xte, Yte = data.d[fold]
-        norm = MaxAbs().fit(Xtr)
-        Xtr, Xte = norm(Xtr), norm(Xte)
-        te = pd.read_parquet(Path(base.paths.processed) / cfg.dataset / fold / "tiles.parquet")
-        tile_row = np.flatnonzero(np.isfinite(te.gamma.to_numpy()))
-        # inner selection of the number of epochs
-        best = []
-        for tr, va in inner_splits(tr_cities, N_INNER_EXPENSIVE, seed=0):
-            Xa, Ya, Xb, Yb = data.fold(tr, va)
-            best.append(train(Xa, Ya, 0, EPOCHS, Xb, Yb)[1])
-        epochs = max(1, int(np.median(best)))
-        for seed in SEEDS:
-            net, _ = train(Xtr, Ytr, seed, epochs)
-            with torch.no_grad():
-                pred = net(torch.tensor(Xte, dtype=torch.float32, device=DEV))["mean"].cpu().numpy()
-            r = {"fold": fold, "operator": "encoder", "seed": seed, "epochs": epochs}
-            r.update(full_report(pred[:, 0], Yte[:, 0], "gamma_"))
-            r.update(full_report(pred[:, 1], Yte[:, 1], "pl0_"))
-            rows.append(r)
-            preds.append(pd.DataFrame({"fold": fold, "operator": "encoder", "seed": seed,
-                                       "tile_row": tile_row,
-                                       "gamma_hat": pred[:, 0], "pl0_hat": pred[:, 1]}))
-        log.info(f"{fold:10s} epochs={epochs} "
-                 f"gamma_rmse={np.mean([r['gamma_rmse'] for r in rows[-5:]]):.3f}")
+    for r, p in map_folds(run_fold, load_splits(), args.jobs):
+        rows += r
+        preds += p
     out_t = Path(base.paths.outputs) / "tables"
     pd.DataFrame(rows).to_csv(out_t / "neural_metrics.csv", index=False)
     pd.concat(preds, ignore_index=True).to_parquet(

@@ -275,12 +275,14 @@ def fit_mlp_es(Xtr, Ytr, Xva, Yva, alpha, seed, scale, max_epochs=MLP_MAX_EPOCHS
     trained epoch by epoch with early stopping on the validation city.
     Returns (model, best_epoch)."""
     from sklearn.neural_network import MLPRegressor
+    from threadpoolctl import threadpool_limits
     mu, sd = Ytr.mean(0), Ytr.std(0)
     m = MLPRegressor(hidden_layer_sizes=(256, 256), alpha=alpha, max_iter=1,
                      random_state=seed, warm_start=False)
     best, best_ep, best_state, bad = np.inf, 0, None, 0
     for ep in range(1, max_epochs + 1):
-        m.partial_fit(Xtr, (Ytr - mu) / sd)
+        with threadpool_limits(1):      # small matrices: BLAS threads only cost time
+            m.partial_fit(Xtr, (Ytr - mu) / sd)
         e = selection_loss(m.predict(Xva) * sd + mu, Yva, scale)
         if e < best - 1e-6:
             best, best_ep, bad = e, ep, 0
@@ -305,9 +307,11 @@ def fit_mlp(Xtr, Ytr, alpha, epochs, seed):
     """Final MLP fit for a fixed number of epochs."""
     from sklearn.neural_network import MLPRegressor
     mu, sd = Ytr.mean(0), Ytr.std(0)
+    from threadpoolctl import threadpool_limits
     m = MLPRegressor(hidden_layer_sizes=(256, 256), alpha=alpha, max_iter=1, random_state=seed)
-    for _ in range(int(epochs)):
-        m.partial_fit(Xtr, (Ytr - mu) / sd)
+    with threadpool_limits(1):
+        for _ in range(int(epochs)):
+            m.partial_fit(Xtr, (Ytr - mu) / sd)
     return _MlpModel(m, mu, sd)
 
 

@@ -6,6 +6,7 @@ rerun with --only <script name prefix>.
 """
 import argparse
 import csv
+import os
 import platform
 import subprocess
 import sys
@@ -52,7 +53,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default=None, help="run only the steps whose script starts with this")
     ap.add_argument("--from", dest="start", default=None, help="start at this script")
+    ap.add_argument("--jobs", type=int, default=int(os.environ.get("TERRANET_JOBS", 1)),
+                    help="held-out cities evaluated in parallel where a step supports it")
     args = ap.parse_args()
+    os.environ["TERRANET_JOBS"] = str(args.jobs)
     out = Path("outputs/tables/runtime.csv")
     out.parent.mkdir(parents=True, exist_ok=True)
     rows = []
@@ -74,9 +78,10 @@ def main():
         rows = [x for x in rows if not (x["script"] == script and x["args"] == " ".join(extra))]
         rows.append({"script": script, "args": " ".join(extra),
                      "seconds": f"{time.time() - t:.0f}", "machine": platform.machine(),
-                     "cpus": str(__import__("os").cpu_count())})
+                     "cpus": str(os.cpu_count()), "jobs": str(args.jobs)})
         with out.open("w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=["script", "args", "seconds", "machine", "cpus"])
+            w = csv.DictWriter(f, fieldnames=["script", "args", "seconds", "machine", "cpus",
+                                              "jobs"])
             w.writeheader()
             w.writerows(rows)
     print(f"total {sum(float(r['seconds']) for r in rows) / 3600:.1f} h")

@@ -62,80 +62,93 @@ from terranet.experiments.common import (
     xy,
 )
 from terranet.experiments.fewshot import eb_correction, eb_prior, label_se
+from terranet.experiments.parallel import map_folds, n_jobs
 from terranet.utils.logging import get_logger
 
 log = get_logger("network")
 K_FEWSHOT, N_DRAWS = 10, 10
 
 
+CTX = {}            # predictions and configuration, shared with forked workers
+
+
+def run_fold(item):
+    cfg, base, P, ib = CTX["cfg"], CTX["base"], CTX["P"], CTX["ib"]
+    fi, sp = item
+    rows, plans, serving = [], [], []
+    fold = sp["test_cities"][0]
+    tiles = pd.read_parquet(Path(base.paths.processed) / cfg.dataset / fold / "tiles.parquet")
+    city = load_city(cfg, base, fold)
+    log.info(f"{fold}: {city.true_pl.shape[0]:,} pixels ({city.n_unreached:,} unreached) x "
+             f"{city.true_pl.shape[1]} sites, max distance mismatch {city.dist_rel_err:.2e}")
+
+    # the reduced network exists only when the city has more sites than it
+    small = city.subset(np.arange(SITES_SMALL)) if city.true_pl.shape[1] > SITES_SMALL else None
+
+    def run(op, seed, draw, g_t, p_t, zero_shot=False, mask=None):
+        PLh = city.predicted_pl(g_t, p_t)
+        nets = [(city, PLh)] + ([(small, PLh[:, :SITES_SMALL])]
+                                if zero_shot and small is not None else [])
+        for c, M in nets:
+            key = {"fold": fold, "operator": op, "seed": seed, "draw": draw,
+                   "sites": M.shape[1]}
+            rows.append({**key, **c.evaluate(M, mask=mask)})
+            for q in c.plan(M, mask=mask):
+                plans.append({**key, **q})
+        if zero_shot:
+            ps, res, ts = city.serving_residual(PLh)
+            serving.append(pd.DataFrame({"fold": fold, "operator": op, "seed": seed,
+                                         "pred_serv_pl": ps.astype(np.float32),
+                                         "resid": res.astype(np.float32),
+                                         "true_serv_pl": ts.astype(np.float32)}))
+
+    n = len(tiles)
+    run("oracle", 0, 0, tiles.gamma.to_numpy(), tiles.pl0.to_numpy(), zero_shot=True)
+
+    te = load_tiles(base, cfg, fold)
+    Xte, Yte = xy(te)
+    Xte = MaxAbs().fit(xy(stack(base, cfg, sp["train_cities"]))[0])(Xte)
+    se = label_se(te)
+    for (op, seed), g in P[P.fold == fold].groupby(["operator", "seed"]):
+        g = g.set_index("tile_row").loc[te.tile_row]
+        gt, pt = np.full(n, np.nan), np.full(n, np.nan)
+        gt[te.tile_row], pt[te.tile_row] = g.gamma_hat, g.pl0_hat
+        run(op, seed, 0, gt.copy(), pt.copy(), zero_shot=True)
+        if op == "gbdt":
+            bp = g[["gamma_hat", "pl0_hat"]].to_numpy()
+            s2, tau2 = eb_prior(ib, fold, op)
+            designs = [(f"{op}+k10", d, np.random.default_rng([fi, K_FEWSHOT, d, False])
+                        .choice(len(te), size=K_FEWSHOT, replace=False))
+                       for d in range(N_DRAWS)]
+            designs.append((f"{op}+k10d", 0, facility_location(Xte, K_FEWSHOT)))
+            for name, draw, idx in designs:
+                c, _ = eb_correction(Yte[idx] - bp[idx], se[idx], s2, tau2)
+                fp = bp + c
+                gt[te.tile_row], pt[te.tile_row] = fp[:, 0], fp[:, 1]
+                run(name, seed, draw, gt.copy(), pt.copy(),
+                    mask=unsurveyed_mask(city, te.tile_row.to_numpy()[idx]))
+    sub = pd.DataFrame([r for r in rows if r["fold"] == fold
+                        and r["sites"] == city.true_pl.shape[1]])
+    log.info("  " + "  ".join(f"{o}={v:.2f}" for o, v in
+                              sub.groupby("operator").pl_rmse_db.mean().items()))
+    return rows, plans, serving
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/data/sionna.yaml")
+    ap.add_argument("--jobs", type=int, default=n_jobs(), help="folds in parallel")
     args = ap.parse_args()
     cfg, base = load_cfg(args.config)
     out_dir = Path(base.paths.outputs)
     pred = [out_dir / "predictions" / f for f in ("loco.parquet", "neural.parquet")]
-    P = pd.concat([pd.read_parquet(f) for f in pred if f.exists()])
-    ib = pd.read_csv(out_dir / "tables" / "inner_bias.csv")
-
+    CTX.update(cfg=cfg, base=base, P=pd.concat([pd.read_parquet(f) for f in pred if f.exists()]),
+               ib=pd.read_csv(out_dir / "tables" / "inner_bias.csv"))
     rows, plans, serving = [], [], []
-    for fi, sp in enumerate(load_splits()):
-        fold = sp["test_cities"][0]
-        tiles = pd.read_parquet(Path(base.paths.processed) / cfg.dataset / fold / "tiles.parquet")
-        city = load_city(cfg, base, fold)
-        log.info(f"{fold}: {city.true_pl.shape[0]:,} pixels ({city.n_unreached:,} unreached) x "
-                 f"{city.true_pl.shape[1]} sites, max distance mismatch {city.dist_rel_err:.2e}")
-
-        # the reduced network exists only when the city has more sites than it
-        small = city.subset(np.arange(SITES_SMALL)) if city.true_pl.shape[1] > SITES_SMALL else None
-
-        def run(op, seed, draw, g_t, p_t, zero_shot=False, mask=None):
-            PLh = city.predicted_pl(g_t, p_t)
-            nets = [(city, PLh)] + ([(small, PLh[:, :SITES_SMALL])]
-                                    if zero_shot and small is not None else [])
-            for c, M in nets:
-                key = {"fold": fold, "operator": op, "seed": seed, "draw": draw,
-                       "sites": M.shape[1]}
-                rows.append({**key, **c.evaluate(M, mask=mask)})
-                for q in c.plan(M, mask=mask):
-                    plans.append({**key, **q})
-            if zero_shot:
-                ps, res, ts = city.serving_residual(PLh)
-                serving.append(pd.DataFrame({"fold": fold, "operator": op, "seed": seed,
-                                             "pred_serv_pl": ps.astype(np.float32),
-                                             "resid": res.astype(np.float32),
-                                             "true_serv_pl": ts.astype(np.float32)}))
-
-        n = len(tiles)
-        run("oracle", 0, 0, tiles.gamma.to_numpy(), tiles.pl0.to_numpy(), zero_shot=True)
-
-        te = load_tiles(base, cfg, fold)
-        Xte, Yte = xy(te)
-        Xte = MaxAbs().fit(xy(stack(base, cfg, sp["train_cities"]))[0])(Xte)
-        se = label_se(te)
-        for (op, seed), g in P[P.fold == fold].groupby(["operator", "seed"]):
-            g = g.set_index("tile_row").loc[te.tile_row]
-            gt, pt = np.full(n, np.nan), np.full(n, np.nan)
-            gt[te.tile_row], pt[te.tile_row] = g.gamma_hat, g.pl0_hat
-            run(op, seed, 0, gt.copy(), pt.copy(), zero_shot=True)
-            if op == "gbdt":
-                bp = g[["gamma_hat", "pl0_hat"]].to_numpy()
-                s2, tau2 = eb_prior(ib, fold, op)
-                designs = [(f"{op}+k10", d, np.random.default_rng([fi, K_FEWSHOT, d, False])
-                            .choice(len(te), size=K_FEWSHOT, replace=False))
-                           for d in range(N_DRAWS)]
-                designs.append((f"{op}+k10d", 0, facility_location(Xte, K_FEWSHOT)))
-                for name, draw, idx in designs:
-                    c, _ = eb_correction(Yte[idx] - bp[idx], se[idx], s2, tau2)
-                    fp = bp + c
-                    gt[te.tile_row], pt[te.tile_row] = fp[:, 0], fp[:, 1]
-                    run(name, seed, draw, gt.copy(), pt.copy(),
-                        mask=unsurveyed_mask(city, te.tile_row.to_numpy()[idx]))
-        sub = pd.DataFrame([r for r in rows if r["fold"] == fold
-                            and r["sites"] == city.true_pl.shape[1]])
-        log.info("  " + "  ".join(f"{o}={v:.2f}" for o, v in
-                                  sub.groupby("operator").pl_rmse_db.mean().items()))
-
+    for r, q, s in map_folds(run_fold, enumerate(load_splits()), args.jobs):
+        rows += r
+        plans += q
+        serving += s
     pd.DataFrame(rows).to_csv(out_dir / "tables" / "network_metrics.csv", index=False)
     pd.DataFrame(plans).to_csv(out_dir / "tables" / "planning.csv", index=False)
     pd.concat(serving, ignore_index=True).to_parquet(
