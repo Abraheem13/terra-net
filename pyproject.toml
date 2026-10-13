@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "terranet"
-version = "1.0.0"
+version = "2.0.0"
 description = "Cross-city path-loss transfer for digital-twin network planning: ray-traced corpora, tile and link transfer, network-level evaluation"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -30,7 +30,7 @@ dependencies = [
 
 [project.optional-dependencies]
 scenes = ["fsspec>=2024.2", "aiohttp>=3.9", "requests>=2.31"]  # 01a: Overture download
-rt = ["sionna-rt>=1.0"]                     # 01b/01c: ray tracing (GPU or CPU/LLVM)
+rt = ["sionna-rt==2.1.0"]                   # 01b/01c: ray tracing (GPU or CPU/LLVM); the corpus version
 dev = ["pytest>=8.0", "ruff>=0.4"]
 
 [tool.setuptools.packages.find]

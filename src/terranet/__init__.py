@@ -1,2 +1,2 @@
-"""TERRA-Net: transferable, explainable path-loss parameter learning for 6G digital twins."""
-__version__ = "0.1.0"
+"""terranet: cross-city path-loss transfer for digital-twin network planning."""
+__version__ = "2.0.0"

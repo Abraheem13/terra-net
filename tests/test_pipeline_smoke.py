@@ -15,8 +15,9 @@ import synthetic_corpus  # noqa: E402
 REPO = Path(__file__).resolve().parents[1]
 SCRIPTS = ["02_build_tiles.py", "03_make_splits.py", "04_fit_baselines.py",
            "06_train_neural.py", "05_kshot.py", "07_label_noise.py",
-           "08_degeneracy.py", "09_network_eval.py", "11_link_transfer.py",
-           "13_certified_coverage.py", "14_censoring.py", "12_tile_size.py", "10_stats.py"]
+           "08_degeneracy.py", "11_link_transfer.py", "09_network_eval.py",
+           "19_tile_variants.py", "13_certified_coverage.py", "14_censoring.py",
+           "12_tile_size.py", "10_stats.py"]
 
 
 def test_pipeline_runs_end_to_end(tmp_path):
@@ -32,14 +33,20 @@ def test_pipeline_runs_end_to_end(tmp_path):
     assert set(loco.operator) >= {"median", "kernel", "ridge", "gbdt", "mlp", "knn"}
     # k = 0 of the few-shot table reproduces the zero-shot table exactly
     k = pd.read_csv(T / "kshot.csv")
-    k0 = k[(k.k == 0) & (k["mode"] == "bias") & (k.sampling == "random")]
+    k0 = k[(k.k == 0) & (k["mode"] == "eb") & (k.sampling == "random")]
     z = loco.set_index(["fold", "operator", "seed"]).gamma_rmse
     for r in k0.itertuples():
         assert abs(z.loc[(r.fold, r.operator, r.seed)] - r.gamma_rmse) < 1e-12
     net = pd.read_csv(T / "network_metrics.csv")
     assert (net.pl_rmse_db > 0).all() and net.operator.str.contains("k10").any()
+    assert (net.n_unreached >= 0).all() and set(net.columns) >= {"pl_rmse_cens_db", "reach_acc"}
     link = pd.read_csv(T / "network_link.csv")
-    assert (link.pl_rmse_db > 0).all() and set(link.operator) >= {"link", "link+k10"}
+    assert (link.pl_rmse_db > 0).all() and set(link.operator) >= {"link", "link+k10", "link+k10s"}
+    assert link[link.operator == "link+k10"].kappa.gt(0).all()
+    var = pd.read_csv(T / "network_variants.csv")
+    assert set(var.operator) >= {"gbdt+h", "gbdt+los+h", "oracle+los", "fspl_ke", "deygout",
+                                 "uma_geo", "link"}
+    assert set(pd.read_csv(T / "stats.csv").family) >= {"zero_shot", "network", "decomp"}
     cert = pd.read_csv(T / "certified.csv")
     assert set(cert.operator) >= {"link", "gbdt", "oracle"}
     assert (cert.false_claim <= cert.claimed + 1e-12).all()

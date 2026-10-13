@@ -43,7 +43,7 @@ EARTH_RADIUS_M = 6_371_000.0
 def link_distance_m(meas: pd.DataFrame) -> np.ndarray:
     """3-D Tx-Rx distance in metres.
 
-    Uses the solver-provided `dist_m` when present (Sionna, LWM); otherwise
+    Uses the solver-provided `dist_m` when present; otherwise
     horizontal great-circle distance combined with the antenna heights.
     """
     if "dist_m" in meas.columns and meas["dist_m"].notna().all():

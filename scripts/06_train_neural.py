@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 """Neural transfer operator: descriptor encoder + (gamma, PL0) head, LOCO.
 
-Same protocol as 04_fit_baselines.py: train-city normalisation, the split's
-validation city for early stopping (patience 40), held-out city for testing,
-five seeds. The head outputs physically constrained means and log-variances
+Same protocol as 04_fit_baselines.py: train-city normalisation, held-out city
+for testing, five seeds. The number of epochs is chosen on N_INNER_EXPENSIVE
+inner validation cities (fixed draw, seed 0; early stopping with patience 40),
+and the final models are trained on all training cities for the median best
+epoch. The head outputs physically constrained means and log-variances
 trained with the heteroscedastic Gaussian NLL on source-standardised targets.
 
 Outputs
@@ -20,7 +22,15 @@ import torch.nn as nn
 
 from terranet.data.descriptors.scene_tiles import DESCRIPTOR_COLUMNS
 from terranet.evaluation.metrics import full_report
-from terranet.experiments.common import SEEDS, MaxAbs, load_cfg, load_splits, load_tiles, stack, xy
+from terranet.experiments.common import (
+    N_INNER_EXPENSIVE,
+    SEEDS,
+    CityData,
+    MaxAbs,
+    inner_splits,
+    load_cfg,
+    load_splits,
+)
 from terranet.models.encoders.descriptor_mlp import DescriptorEncoder
 from terranet.models.hypernet import ParamHead
 from terranet.models.uq.heteroscedastic import gaussian_nll
@@ -42,17 +52,18 @@ class Net(nn.Module):
         return self.head(self.enc(x))
 
 
-def train_one(Xtr, Ytr, Xva, Yva, seed):
+def train(Xtr, Ytr, seed, epochs, Xva=None, Yva=None, patience=PATIENCE):
+    """Train for `epochs` epochs; with (Xva, Yva) early stopping on the
+    validation city decides the epoch. Returns (net, epochs_run, best_epoch)."""
     seed_everything(seed)
     t = lambda a: torch.tensor(a, dtype=torch.float32, device=DEV)  # noqa: E731
-    Xtr_t, Ytr_t, Xva_t = t(Xtr), t(Ytr), t(Xva)
+    Xtr_t, Ytr_t = t(Xtr), t(Ytr)
     ym, ys = Ytr_t.mean(0), Ytr_t.std(0)
     net = Net().to(DEV)
     opt = torch.optim.AdamW(net.parameters(), lr=LR, weight_decay=WD)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, EPOCHS)
-    best, state, bad, ran = np.inf, None, 0, 0
-    for ep in range(EPOCHS):
-        ran = ep + 1
+    best, state, bad, best_ep = np.inf, None, 0, epochs
+    for ep in range(1, epochs + 1):
         net.train()
         perm = torch.randperm(len(Xtr_t), device=DEV)
         for i in range(0, len(perm), BATCH):
@@ -63,20 +74,22 @@ def train_one(Xtr, Ytr, Xva, Yva, seed):
             loss.backward()
             opt.step()
         sched.step()
-        net.eval()
-        with torch.no_grad():
-            v = net(Xva_t)["mean"].cpu().numpy()
-        err = float(np.sqrt((((v - Yva) / Yva.std(0)) ** 2).mean()))   # both targets
-        if err < best - 1e-5:
-            best, bad = err, 0
-            state = {k: x.detach().clone() for k, x in net.state_dict().items()}
-        else:
-            bad += 1
-            if bad >= PATIENCE:
-                break
-    net.load_state_dict(state)
+        if Xva is not None:
+            net.eval()
+            with torch.no_grad():
+                v = net(t(Xva))["mean"].cpu().numpy()
+            err = float(np.sqrt((((v - Yva) / Ytr.std(0)) ** 2).mean()))
+            if err < best - 1e-5:
+                best, bad, best_ep = err, 0, ep
+                state = {k: x.detach().clone() for k, x in net.state_dict().items()}
+            else:
+                bad += 1
+                if bad >= patience:
+                    break
+    if state is not None:
+        net.load_state_dict(state)
     net.eval()
-    return net, ran
+    return net, best_ep
 
 
 def main():
@@ -84,26 +97,35 @@ def main():
     ap.add_argument("--config", default="configs/data/sionna.yaml")
     args = ap.parse_args()
     cfg, base = load_cfg(args.config)
+    data = CityData(base, cfg, list(cfg.cities))
     rows, preds = [], []
     for sp in load_splits():
-        fold = sp["test_cities"][0]
-        tr, va = stack(base, cfg, sp["train_cities"]), stack(base, cfg, sp["val_cities"])
-        te = load_tiles(base, cfg, fold)
-        (Xtr, Ytr), (Xva, Yva), (Xte, Yte) = xy(tr), xy(va), xy(te)
+        fold, tr_cities = sp["test_cities"][0], sp["train_cities"]
+        Xtr, Ytr = data.pool(tr_cities)
+        Xte, Yte = data.d[fold]
         norm = MaxAbs().fit(Xtr)
-        Xtr, Xva, Xte = norm(Xtr), norm(Xva), norm(Xte)
+        Xtr, Xte = norm(Xtr), norm(Xte)
+        te = pd.read_parquet(Path(base.paths.processed) / cfg.dataset / fold / "tiles.parquet")
+        tile_row = np.flatnonzero(np.isfinite(te.gamma.to_numpy()))
+        # inner selection of the number of epochs
+        best = []
+        for tr, va in inner_splits(tr_cities, N_INNER_EXPENSIVE, seed=0):
+            Xa, Ya, Xb, Yb = data.fold(tr, va)
+            best.append(train(Xa, Ya, 0, EPOCHS, Xb, Yb)[1])
+        epochs = max(1, int(np.median(best)))
         for seed in SEEDS:
-            net, ep = train_one(Xtr, Ytr, Xva, Yva, seed)
+            net, _ = train(Xtr, Ytr, seed, epochs)
             with torch.no_grad():
                 pred = net(torch.tensor(Xte, dtype=torch.float32, device=DEV))["mean"].cpu().numpy()
-            r = {"fold": fold, "operator": "encoder", "seed": seed, "epochs": ep}
+            r = {"fold": fold, "operator": "encoder", "seed": seed, "epochs": epochs}
             r.update(full_report(pred[:, 0], Yte[:, 0], "gamma_"))
             r.update(full_report(pred[:, 1], Yte[:, 1], "pl0_"))
             rows.append(r)
             preds.append(pd.DataFrame({"fold": fold, "operator": "encoder", "seed": seed,
-                                       "tile_row": te.tile_row.to_numpy(),
+                                       "tile_row": tile_row,
                                        "gamma_hat": pred[:, 0], "pl0_hat": pred[:, 1]}))
-        log.info(f"{fold:10s} gamma_rmse={np.mean([r['gamma_rmse'] for r in rows[-5:]]):.3f}")
+        log.info(f"{fold:10s} epochs={epochs} "
+                 f"gamma_rmse={np.mean([r['gamma_rmse'] for r in rows[-5:]]):.3f}")
     out_t = Path(base.paths.outputs) / "tables"
     pd.DataFrame(rows).to_csv(out_t / "neural_metrics.csv", index=False)
     pd.concat(preds, ignore_index=True).to_parquet(

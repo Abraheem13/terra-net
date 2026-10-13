@@ -1,4 +1,4 @@
-"""Spherical geodesy helpers (base paper Appendix A, Eqs. A.1-A.6)."""
+"""Spherical geodesy helpers for the tile grid."""
 from __future__ import annotations
 
 import numpy as np
@@ -7,7 +7,7 @@ EARTH_RADIUS_M = 6_371_000.0
 
 
 def spherical_centroid(lat_rad: np.ndarray, lon_rad: np.ndarray) -> tuple[float, float]:
-    """Centroid of polygon corners on the unit sphere (Eqs. A.1-A.3)."""
+    """Centroid of polygon corners on the unit sphere."""
     x = np.cos(lat_rad) * np.cos(lon_rad)
     y = np.cos(lat_rad) * np.sin(lon_rad)
     z = np.sin(lat_rad)
@@ -18,7 +18,7 @@ def spherical_centroid(lat_rad: np.ndarray, lon_rad: np.ndarray) -> tuple[float,
 
 
 def angular_spans(tile_size_m: float, lat0_rad: float) -> tuple[float, float]:
-    """(dphi, dlambda) in radians for a tile of `tile_size_m` metres (Eqs. A.5-A.6)."""
+    """(dphi, dlambda) in radians for a tile of `tile_size_m` metres."""
     dphi = tile_size_m / EARTH_RADIUS_M
     dlam = tile_size_m / (EARTH_RADIUS_M * abs(np.cos(lat0_rad)))
     return dphi, dlam
