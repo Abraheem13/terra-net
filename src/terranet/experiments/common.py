@@ -393,16 +393,25 @@ def fit_gp_ard(Xtr, Ytr, seed, n_hyper=600, maxiter=50):
         with warnings.catch_warnings():     # length scales at the bounds are
             warnings.simplefilter("ignore", ConvergenceWarning)   # expected (ARD)
             gp.fit(Xtr[sub], Z[sub, j])
-        full = GaussianProcessRegressor(gp.kernel_, optimizer=None, normalize_y=False)
-        full.fit(Xtr, Z[:, j])
-        models.append(full)
+        # posterior mean on all source tiles with the fitted kernel: only the
+        # weights alpha = K^-1 z are kept (the n x n matrices are freed), so a
+        # fold needs one kernel matrix at a time instead of four
+        from scipy.linalg import cho_solve, cholesky
+        K = gp.kernel_(Xtr)                       # includes the white-noise diagonal
+        L = cholesky(K, lower=True, overwrite_a=True, check_finite=False)
+        del K
+        alpha = cho_solve((L, True), Z[:, j], check_finite=False)
+        del L
+        models.append((gp.kernel_, alpha))
         scales.append(gp.kernel_.k1.k2.length_scale)
 
     class _M:
         length_scales = scales
+        kernels = [kern for kern, _ in models]
 
         def predict(self, X):
-            return np.column_stack([m.predict(X) for m in models]) * sd + mu
+            # WhiteKernel contributes nothing between distinct inputs
+            return np.column_stack([kern(X, Xtr) @ a for kern, a in models]) * sd + mu
     return _M()
 
 

@@ -12,6 +12,7 @@ TERRANET_JOBS (scripts/00_reproduce.py sets it), default 1.
 from __future__ import annotations
 
 import os
+from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import get_context
 
 
@@ -38,6 +39,8 @@ def map_folds(fn, items, jobs: int):
     items = list(items)
     if jobs <= 1 or len(items) <= 1:
         return [fn(it) for it in items]
-    ctx = get_context("fork")
-    with ctx.Pool(min(jobs, len(items)), initializer=_init_worker, initargs=(1,)) as pool:
-        return pool.map(fn, items, chunksize=1)
+    # ProcessPoolExecutor raises BrokenProcessPool if a worker dies (e.g. the
+    # kernel's out-of-memory killer) instead of waiting forever like Pool.map
+    with ProcessPoolExecutor(min(jobs, len(items)), mp_context=get_context("fork"),
+                             initializer=_init_worker, initargs=(1,)) as pool:
+        return list(pool.map(fn, items, chunksize=1))
