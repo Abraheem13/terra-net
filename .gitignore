@@ -31,3 +31,5 @@ paper/*.fdb_latexmk
 logs/
 .venv-rt/
 outputs/**/hurdle/
+
+release/
