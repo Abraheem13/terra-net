@@ -17,7 +17,7 @@ authors:
     given-names: Bilgin
 preferred-citation:
   type: article
-  title: "Cross-city path-loss transfer for digital-twin network planning: why tile parameters fall short and how site-aware link models close the gap"
+  title: "Cross-city path-loss transfer for 6G digital-twin network planning: why tile parameters fall short and how site-aware link models close the gap"
   authors:
     - family-names: Rashid
       given-names: Abraheem

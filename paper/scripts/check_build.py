@@ -34,8 +34,31 @@ tex = "".join(p.read_text() for p in (here / "sections").glob("*.tex"))
 tex += (here / "main.tex").read_text()
 defined = re.findall(r"\\newcommand\{\\(\w+)\}", (here / "generated/numbers.tex").read_text())
 unused = [m for m in defined if not re.search(r"\\" + m + r"(?![A-Za-z])", tex)]
+# every generated table must be input exactly once, and every input must exist
+gen = sorted(q.stem for q in (here / "generated").glob("tab_*.tex"))
+inputs = re.findall(r"\\input\{generated/(tab_\w+)\}", tex)
+for g in gen:
+    if inputs.count(g) != 1:
+        problems.append(f"generated/{g}.tex is input {inputs.count(g)} times")
+for i in set(inputs) - set(gen):
+    problems.append(f"generated/{i}.tex is input but was not generated")
+for fig in set(re.findall(r"\\includegraphics\[[^\]]*\]\{([^}]+)\}", tex)):
+    if not (here / fig).exists():
+        problems.append(f"missing figure {fig}")
+# no result digit may be typed by hand: a number followed by a unit or a
+# percent sign in the sections must come from a macro (whitelist below)
+HAND_OK = {"95", "90", "100", "200", "500", "1000", "150", "140", "130", "120", "3.5", "7.5",
+           "10", "25", "50", "30", "1.5", "0.05", "2", "1", "5", "3", "4", "20", "15", "45",
+           "12", "1e9", "99", "0.5", "6", "8", "11", "220", "9", "32", "46", "0", "16", "64"}
+for sec in sorted((here / "sections").glob("*.tex")):
+    body = re.sub(r"%.*", "", sec.read_text())
+    for m in re.finditer(r"(?<![\\\w.])(\d+(?:\.\d+)?)\s*(?:\\%|\\,?\\?dB\b|\\,m\b|\\SI)", body):
+        if m.group(1) not in HAND_OK:
+            problems.append(f"{sec.name}: hand-typed result-like number '{m.group(0).strip()}'")
 if problems:
     print("\n".join(problems))
     sys.exit(1)
-print(f"build clean; {len(defined)} generated macros, {len(unused)} unused"
-      + (f": {', '.join(unused)}" if unused else ""))
+print(f"build clean; {len(defined)} generated macros ({len(unused)} defined but unused), "
+      f"{len(gen)} generated tables")
+if unused:
+    print("unused macros: " + ", ".join(unused))

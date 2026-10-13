@@ -15,20 +15,28 @@ is imputed from the city median ranges from \impMin\% (\impMinCity) to
 The radio-map solver is a Monte-Carlo method: a cell that no ray reaches
 reports zero power, so the set of reached cells and their values depend on
 the ray budget. Table~\ref{tab:convergence} compares budgets with a
-reference run of \convRef{} rays for one site. At the \rtSamples{} rays per
-site used for the corpus, path loss below \SI{120}{\decibel} agrees with the
-reference to \SI{\convRmsOneTwenty}{\decibel} RMS and path loss below
-\SI{140}{\decibel} to \SI{\convRmsOneForty}{\decibel} with a mean difference
-of \SI{\convBiasOneForty}{\decibel}, and the number of cells reached below \SI{140}{\decibel} is
-\convCellsOneForty\% of the reference. The complete corpus
-took \rtHours{}\,h on a \rtBackend{} backend (\rtSecPerSite{}\,s per site).
+reference run of \convRef{} rays for \convNSites{} sites in \convNCities{}
+cities. At the \rtSamples{} rays per site used for the corpus, path loss
+below \SI{120}{\decibel} agrees with the reference to at most
+\SI{\convRmsOneTwentyMax}{\decibel} RMS and path loss below
+\SI{140}{\decibel} to \convRmsOneFortyMin--\SI{\convRmsOneFortyMax}{\decibel},
+with a mean difference of at most \SI{\convBiasOneFortyMax}{\decibel}; the
+number of cells reached below \SI{140}{\decibel} is at least
+\convCellsOneFortyMin\% of the reference, and below the cut-off at least
+\convCellsOneFiftyMin\%. These figures are the noise floor of the truth:
+a model cannot be expected to match the corpus more closely than
+\SIrange{\convRmsOneFortyMin}{\convRmsOneFortyMax}{\decibel} near the
+cut-off, and up to \convRmsOneFiftyMax{}\,dB for the faintest links. The
+complete corpus took \rtHours{}\,h on a \rtBackend{} backend
+(\rtSecPerSite{}\,s per site).
 
 \begin{table*}[!t]
 \centering
 \caption{Corpus. Height source: share of buildings with an explicit height
-attribute, with a floor count, or imputed from the city median. Links: ray-traced
-(pixel, site) pairs below the \SI{\maxPl}{\decibel} cut-off. Tiles: labelled
-tiles ($\ge\minLinks{}$ links).}
+attribute, with a floor count, or imputed from the city median. Site
+height: antenna height above ground of the \nSitesPerCity{} sites. Links:
+ray-traced (pixel, site) pairs below the \SI{\maxPl}{\decibel} cut-off.
+Tiles: labelled tiles ($\ge\minLinks{}$ links).}
 \label{tab:corpus}
 \small
 \input{generated/tab_corpus}
@@ -36,11 +44,11 @@ tiles ($\ge\minLinks{}$ links).}
 
 \begin{table*}[!t]
 \centering
-\caption{Ray-budget convergence for one site (\figCity{}, \SI{\cellSize}{\metre}
-cells). For each path-loss level: number of cells reached below that level,
-relative to the \convRef{}-ray reference (\%; Monte-Carlo noise can exceed
-100\%), and RMS path-loss difference to the reference over the cells reached
-by both (dB). s: solver time.}
+\caption{Ray-budget convergence (\SI{\cellSize}{\metre} cells). For each
+path-loss level: number of cells reached below that level, relative to the
+reference run (\%; Monte-Carlo noise can exceed 100\%), and RMS path-loss
+difference to the reference over the cells reached by both (dB). s: solver
+time.}
 \label{tab:convergence}
 \small
 \input{generated/tab_convergence}
@@ -64,11 +72,15 @@ only \betweenWithinRatio{} times the typical standard deviation of the
 tiles within a city (\withinSdMin--\withinSdMax). Most of the variation of
 the tile exponent is therefore within cities, not between them. The fit
 residual of the log-distance law inside a tile is
-\fitRmseMin--\SI{\fitRmseMax}{\decibel}.
+\fitRmseMin--\SI{\fitRmseMax}{\decibel}. The city-wide exponent of a single
+law over all links is below the free-space value in \nCityGammaBelowTwo{}
+cities (\cityGammaMinCity: \cityGammaMin), the joint effect of high sites
+and of the censoring of far links (Section~\ref{sec:res-robust}); the tile
+labels, fitted inside \SI{100}{\metre}, do not show this artefact.
 
 Without shrinkage, the OLS exponents span \olsMin{} to \olsMax{}, the
-ill-conditioning predicted by Proposition~\ref{prop:identify}; empirical-Bayes
-shrinkage (median weight \shrinkMedian) narrows this to \ebMin{} to \ebMax.
+ill-conditioning of Section~\ref{sec:labels}; empirical-Bayes shrinkage
+(median weight \shrinkMedian) narrows this to \ebMin{} to \ebMax.
 Label precision is the decisive quantity (Table~\ref{tab:noise}). The
 standard error assuming independent residuals is \seIid; the
 cluster-robust error with sites as clusters is \seCluster, \seRatio{} times
@@ -115,33 +127,36 @@ exponent is $r=\topDescR$, for \topDesc.
 \label{sec:res-loco}
 
 Table~\ref{tab:loco} and Fig.~\ref{fig:loco} report the exponent error on
-every held-out city. The source median attains \rmseMedian; kernel transfer
-\rmseKernel; the Gaussian process with learned length scales \rmseGpArd; the
-learned regressors \rmseRidge{} (ridge), \rmseMlp{} (MLP), \rmseEncoder{}
-(neural encoder) and \rmseGbdt{} (GBDT). The domain-adaptation variants do
-not improve on their base learners (CORAL \rmseCoral{} against ridge
-\rmseRidge; GBDT-IW \rmseGbdtIw{} against GBDT \rmseGbdt), and the standard
-models are worse than the median (3GPP UMa \rmseUmaLos{} for line of sight
-and \rmseUmaNlos{} for non-line of sight, COST-231 Hata \rmseCost). The
-lowest mean error is that of the \bestZeroShot, but the learned operators
-differ by less than their spread across cities. For the
-intercept at \SI{\refDist}{\metre} the learned operators reduce the error
-from \SI{\plRmseMedian}{\decibel} (median) to \SI{\plRmseGbdt}{\decibel}
-(GBDT).
+every held-out city under the nested protocol. The source median attains
+\rmseMedian; kernel transfer \rmseKernel; the Gaussian process with learned
+length scales \rmseGpArd; the learned regressors \rmseRidge{} (ridge),
+\rmseMlp{} (MLP), \rmseEncoder{} (neural encoder) and \rmseGbdt{} (GBDT).
+The domain-adaptation variants do not improve on their base learners (CORAL
+\rmseCoral{} against ridge \rmseRidge; GBDT-IW \rmseGbdtIw{} against GBDT
+\rmseGbdt), and the standard models are worse than the median (3GPP UMa
+\rmseUmaLos{} for line of sight and \rmseUmaNlos{} for non-line of sight,
+COST-231 Hata \rmseCost). The lowest mean error is that of the
+\bestZeroShot, but the learned operators differ by less than their spread
+across cities. For the intercept at \SI{\refDist}{\metre} the learned
+operators reduce the error from \SI{\plRmseMedian}{\decibel} (median) to
+\SI{\plRmseGbdt}{\decibel} (GBDT).
 
-At the level of cities (Table~\ref{tab:stats-param}), GBDT improves on the median
-by \dGbdtMedian{} (95\% CI [\loGbdtMedian, \hiGbdtMedian], $p=\pGbdtMedian$,
-better in \nGbdtMedian{} of \nFolds{} cities) and on kernel transfer by
-\dGbdtKernel{} ([\loGbdtKernel, \hiGbdtKernel]); kernel transfer does not
-improve significantly on the median (\dKernelMedian, [\loKernelMedian,
-\hiKernelMedian], $p=\pKernelMedian$), whereas learning the metric of the
-same kernel does: GP-ARD improves on kernel transfer by \dGpKernel{}
-([\loGpKernel, \hiGpKernel], $p=\pGpKernel$, better in \nGpKernel{} of
-\nFolds{} cities), which remains significant after Holm's correction. With
-eleven cities, however, none of the improvements over the source median is
-significant after Holm's correction over its \nZeroShotTotal{} comparisons; the only
-significant differences are deteriorations (\zeroShotSigWorseList). The hardest target is \hardCity, where no transfer operator improves on
-the source median (\hardCityBest).
+At the level of cities (Table~\ref{tab:stats-param}), GBDT changes the
+error against the median by \dGbdtMedian{} (95\% CI [\loGbdtMedian,
+\hiGbdtMedian], $p=\pGbdtMedian$, better in \nGbdtMedian{} of \nFolds{}
+cities) and against kernel transfer by \dGbdtKernel{} ([\loGbdtKernel,
+\hiGbdtKernel]); kernel transfer against the median gives \dKernelMedian{}
+([\loKernelMedian, \hiKernelMedian], $p=\pKernelMedian$), whereas learning
+the metric of the same kernel gives \dGpKernel{} ([\loGpKernel,
+\hiGpKernel], $p=\pGpKernel$, better in \nGpKernel{} of \nFolds{} cities),
+\holmGpKernel{} after Holm's correction. Over the \nZeroShotTotal{}
+comparisons with the source median, \zeroShotSigBetterWord{} of the
+improvements survive Holm's correction at eleven cities
+(\zeroShotSigBetterList), although the learned operators are better than
+the median in \learnedBetterMin{} to \learnedBetterMax{} of \nFolds{}
+cities; the significant differences in the other direction are
+\zeroShotSigWorseList. The hardest target is \hardCity, where the best
+operator (\hardCityBestOp) reaches \hardCityBest.
 
 \begin{table*}[!t]
 \centering
@@ -164,28 +179,30 @@ source median.}
 \label{sec:res-kernel}
 
 Table~\ref{tab:degeneracy} places the tuned kernel operator relative to
-Theorem~\ref{thm:regimes}. The selected bandwidths are
+Proposition~\ref{prop:regimes}. The selected bandwidths are
 $\sigma=\sigmaMin$--$\sigmaMax$ and the median $\epsilon_u$ ranges from
-\epsMedianMin{} to \epsMedianMax: no target tile satisfies the condition of
-part~(a), and the largest single weight has median \wmaxMedian, so the
-operator is not a nearest-neighbour copy either. Where the largest bandwidth
-is selected, however, it averages over up to \neffFracMax\% of the source
-tiles and its predictions spread over as little as \spreadMin{} of the spread of
-the target labels: it approaches the source mean although part~(a) does not
+\epsMedianMin{} to \epsMedianMax: \fracEpsRegime\% of the target tiles
+satisfy the condition of part~(a), and the largest single weight has median
+\wmaxMedian, so the operator is not a nearest-neighbour copy either. Where
+the largest bandwidth is selected (\nSigmaLargest{} of \nFolds{} targets),
+it averages over up to \neffFracMax\% of the source tiles and its
+predictions spread over as little as \spreadMin{} of the spread of the
+target labels: it approaches the source mean although part~(a) does not
 hold. Across the targets the prediction spread is
 \spreadMin--\spreadMax{} of that of the labels. Its disadvantage is the
-noise-transmission term of Proposition~\ref{prop:decomp} combined with an
-isotropic distance in which every descriptor counts equally; the Gaussian
-process, which learns one length scale per descriptor, removes most of the
-gap to the learned regressors (Section~\ref{sec:res-loco}).
+noise-transmission term of Eq.~\eqref{eq:decomp} combined with an isotropic
+distance in which every descriptor counts equally; the Gaussian process,
+which learns one length scale per descriptor, is the kernel operator that
+removes most of the gap to the learned regressors
+(Section~\ref{sec:res-loco}).
 
 \begin{table}[!t]
 \centering
 \caption{Kernel transfer on each held-out city: selected bandwidth; median
 $\epsilon_u=D_u/2\sigma^2$ and share of tiles with $\epsilon_u<1$
-(Theorem~\ref{thm:regimes}a); median effective-neighbourhood fraction; median
-largest weight (Theorem~\ref{thm:regimes}b); standard deviation of the
-predictions over that of the labels.}
+(Proposition~\ref{prop:regimes}a); median effective-neighbourhood fraction;
+median largest weight (Proposition~\ref{prop:regimes}b); standard deviation
+of the predictions over that of the labels.}
 \label{tab:degeneracy}
 \small\setlength{\tabcolsep}{2.5pt}
 \input{generated/tab_degeneracy}
@@ -194,33 +211,38 @@ predictions over that of the labels.}
 \subsection{Few-shot correction of tile parameters}
 \label{sec:res-fewshot}
 
-Surveying target tiles does not help the tile exponent at small $k$
-(Table~\ref{tab:kshot}, Fig.~\ref{fig:kshot}). With ten random tiles the
-residual correction changes the GBDT error from \fsZeroGbdt{} to
-\fsTenGbdt{} and improves it in only \fsImprovedTen{} of \nFolds{} cities;
-for ridge the change is \dFewRidge{} ([\loFewRidge, \hiFewRidge]). The
-anchors' labels carry the site-dependent error of
-Section~\ref{sec:res-labels}, so a correction fitted to ten of them adds
-more variance than it removes. The error falls below the zero-shot value
-only from $k=\fsFirstBetterK$ surveyed tiles on (GBDT \fsFirstBetterGbdt), and
-reaches \fsMaxGbdt{} at $k=\fsKmax$. Contiguous survey areas are
-worse than random tiles at every $k$ (GBDT at $k=10$: \fsGbdtPatchTen{}),
-because neighbouring tiles repeat the same information. The facility-location
-design, which spreads the survey over the descriptor space without any
-measurement, gives \fsGbdtDesignTen{} at $k=10$ (\dFewDesignGbdt{} against
-random tiles, [\loFewDesignGbdt, \hiFewDesignGbdt], better in
-\nFewDesignGbdt{} of \nFolds{} cities); from $k=\fsDesignFirstBetterK$ on it
-beats the zero-shot error. With three or five tiles the design is worse than
-random anchors (Table~\ref{tab:kshot}), and at large $k$ the two converge.
+Surveying target tiles helps the tile exponent little at small $k$
+(Table~\ref{tab:kshot}, Fig.~\ref{fig:kshot}). The plain mean-residual
+correction is worse than the zero-shot model at $k=\fsPlainWorseKs$ (GBDT at
+$k=3$: \fsGbdtBiasThree{} against \fsZeroGbdt{} zero-shot): the anchors'
+labels carry the site-dependent error of Section~\ref{sec:res-labels}, and
+a correction fitted to a few of them adds more variance than it removes.
+The empirical-Bayes correction of Eq.~\eqref{eq:fewshot}, which weights
+the anchors by their precision and shrinks the correction when the inner
+cities show no systematic bias, is worse than the zero-shot model
+\fsEbNeverWorse{} (GBDT at $k=3$: \fsGbdtEbThree; at $k=10$: \fsTenGbdt,
+\dFewEbGbdt{} against the plain correction, [\loFewEbGbdt, \hiFewEbGbdt]);
+with ten random tiles it improves the GBDT error in \fsImprovedTen{} of
+\nFolds{} cities, and the error falls clearly below the zero-shot value only
+from $k=\fsFirstBetterK$ surveyed tiles on (GBDT \fsFirstBetterGbdt),
+reaching \fsMaxGbdt{} at $k=\fsKmax$. The precision-weighted residual
+model on the descriptors gives \fsGbdtResidTen{} at $k=10$. Contiguous
+survey areas are worse than random tiles at every $k$ (GBDT at $k=10$:
+\fsGbdtPatchTen{}), because neighbouring tiles repeat the same information.
+The facility-location design, which spreads the survey over the descriptor
+space without any measurement, gives \fsGbdtDesignTen{} at $k=10$
+(\dFewDesignGbdt{} against random tiles, [\loFewDesignGbdt,
+\hiFewDesignGbdt], better in \nFewDesignGbdt{} of \nFolds{} cities).
 
 \begin{table}[!t]
 \centering
 \caption{Few-shot correction: exponent RMSE on the unsurveyed tiles, mean over
-cities (and ten anchor draws for random and contiguous anchors). Left:
-residual correction with random anchors. Right: GBDT with a bias correction,
-with contiguous anchors and with the facility-location design.}
+cities (and ten anchor draws for random and contiguous anchors). Left: the
+empirical-Bayes correction with random anchors. Right: GBDT with the plain
+bias correction, the precision-weighted residual model, contiguous anchors
+and the facility-location design (all empirical Bayes unless stated).}
 \label{tab:kshot}
-\small\setlength{\tabcolsep}{3.5pt}
+\small\setlength{\tabcolsep}{3pt}
 \input{generated/tab_kshot}
 \end{table}
 
@@ -236,53 +258,59 @@ with contiguous anchors and with the facility-location design.}
 \label{sec:res-network}
 
 Table~\ref{tab:network} and Fig.~\ref{fig:network} evaluate the predictors
-where a planner uses them. The first row is the tile model with the true
-labels (oracle), which isolates the error of the tile model itself. The
-oracle has a path-loss error of \SI{\netOracle}{\decibel}, selects the
-correct serving site for \assocOracle\% of the pixels (the nearest-site rule
-of Proposition~\ref{prop:tilemodel}) and misjudges the SINR by
-\SI{\sinrOracle}{\decibel} on average. Transferred tile parameters
-reduce the path-loss error of the source median from
-\SI{\netMedian}{\decibel} to \SI{\netGbdt}{\decibel} (GBDT; \dNetGbdtMedian{}
-dB, better in \nNetGbdtMedian{} of \nFolds{} cities) but remain above the
-oracle, and a plan of $K=5$ sites made on their map loses \regretGbdt\% of
-the pixels against \regretOracle\% for the oracle.
+where a planner uses them, over the complete receiver grid of the labelled
+tiles. The first row is the tile model with the true labels (oracle), which
+isolates the error of the tile model itself. The oracle has a path-loss error
+of \SI{\netOracle}{\decibel} over the ray-traced links and
+\SI{\censOracle}{\decibel} over all pairs clipped at the cut-off, selects
+the correct serving site for \assocOracle\% of the pixels (the nearest-site
+rule of Section~\ref{sec:netmodel}) and misjudges the SINR by
+\SI{\sinrOracle}{\decibel} on average. Transferred tile parameters reduce
+the path-loss error of the source median from \SI{\netMedian}{\decibel} to
+\SI{\netGbdt}{\decibel} (GBDT; \dNetGbdtMedian{} dB, better in
+\nNetGbdtMedian{} of \nFolds{} cities) but remain above the oracle, and a
+plan of $K=5$ sites made on their map loses \regretGbdt\% of the pixels
+against \regretOracle\% for the oracle.
 
 Site-aware link transfer removes the ceiling of the tile model. Its path-loss
 error is \SI{\netLink}{\decibel} (\linkMin{} to \SI{\linkMax}{\decibel}
-across cities), \SI{\gainLinkGbdt}{\decibel} below tile transfer with GBDT
-(95\% CI [\loNetLinkGbdt, \hiNetLinkGbdt], better in \nNetLinkGbdt{} of
-\nFolds{} cities) and \SI{\gainLinkOracle}{\decibel} below the tile model
-with the \emph{true} labels ([\loNetLinkOracle, \hiNetLinkOracle],
-\nNetLinkOracle{} of \nFolds). It selects the correct serving site for
-\assocLink\% of the pixels (\dNetLinkAssoc{} percentage points against
-GBDT, in \nNetLinkAssoc{} of \nFolds{} cities), misjudges the SINR by
+across cities; Table~\ref{tab:link-city} lists every city),
+\SI{\gainLinkGbdt}{\decibel} below tile transfer with GBDT (95\% CI
+[\loNetLinkGbdt, \hiNetLinkGbdt], better in \nNetLinkGbdt{} of \nFolds{}
+cities) and \SI{\gainLinkOracle}{\decibel} below the tile model with the
+\emph{true} labels ([\loNetLinkOracle, \hiNetLinkOracle], \nNetLinkOracle{}
+of \nFolds). It selects the correct serving site for \assocLink\% of the
+pixels (\dNetLinkAssoc{} percentage points against GBDT, in
+\nNetLinkAssoc{} of \nFolds{} cities), misjudges the SINR by
 \SI{\sinrLink}{\decibel} on average and loses \regretLink\% of the pixels
 when planning $K=5$ sites, against \regretGbdt\% for GBDT tile transfer and
-\regretOracle\% for the true tile labels. The hurdle is what makes the plans
-reliable: the regressor alone, which keeps every link, has the same path-loss
-error but a planning regret of \regretLinkReg\%, because it lets distant,
-obstructed sites cover pixels they do not reach.
+\regretOracle\% for the true tile labels. Its hurdle decides the reach of
+every site: it predicts the reached set of pixels correctly for
+\reachLink\% of them, with a link precision of \linkPrecLink\% and a recall
+of \linkRecLink\% (Table~\ref{tab:hurdle}); the regressor alone, which keeps
+every link, has the same path-loss error over the ray-traced links but a
+censored error of \SI{\censLinkReg}{\decibel} and a planning regret of
+\regretLinkReg\%, because it lets distant, obstructed sites cover pixels
+they do not reach.
 
 \paragraph{Cell edges and dimensioning}
 Table~\ref{tab:mobility} turns the maps into mobility and dimensioning
 quantities. Every tile model draws the nearest-site cell pattern of
-Proposition~\ref{prop:tilemodel}: its cell edges lie
-\SI{\edgeGbdt}{\metre} from the true edges on average (\SI{\edgeOracle}{\metre}
-with the true labels), and their total length is in error by
-\edgeLenGbdt\%: the ray-traced serving pattern is fragmented by buildings and a
-route crosses many more cell edges than the nearest-site pattern suggests.
-Link transfer places the edges \SI{\edgeLink}{\metre} from the truth with an
-edge-length error of \edgeLenLink\%. For dimensioning, the truth needs on
-average \sitesNeedTrue{} of the \nSitesPerCity{} sites to cover
-\covTarget\% of the pixels at \SI{140}{\decibel}. The tile models, which
-cannot represent the obstruction of distant sites, predict that
-\sitesNeedGbdt{} suffices (GBDT; \sitesNeedOracle{} with the true
-labels, averages over the cities), and the sites they choose cover only
-\sitesCovGbdt\% of the pixels in truth. Link transfer chooses
-\sitesNeedLink{} on average, which cover \sitesCovLink\%; it still
-under-dimensions the network, but by far less (the regressor alone:
-\sitesNeedLinkReg{}, \sitesCovLinkReg\%).
+Section~\ref{sec:netmodel}: its cell edges lie \SI{\edgeGbdt}{\metre} from
+the true edges on average (\SI{\edgeOracle}{\metre} with the true labels),
+and their total length is in error by \edgeLenGbdt\%: the ray-traced
+serving pattern is fragmented by buildings and a route crosses many more
+cell edges than the nearest-site pattern suggests. Link transfer places the
+edges \SI{\edgeLink}{\metre} from the truth with an edge-length error of
+\edgeLenLink\%. For dimensioning, the truth needs on average
+\sitesNeedTrue{} of the \nSitesPerCity{} sites to cover \covTarget\% of the
+pixels at \SI{140}{\decibel}. The tile models, which cannot represent the
+obstruction of distant sites, predict that \sitesNeedGbdt{} suffices
+(GBDT; \sitesNeedOracle{} with the true labels, averages over the cities),
+and the sites they choose cover only \sitesCovGbdt\% of the pixels in
+truth. Link transfer chooses \sitesNeedLink{} on average, which cover
+\sitesCovLink\%; it still under-dimensions the network, but by far less
+(the regressor alone: \sitesNeedLinkReg{}, \sitesCovLinkReg\%).
 
 The model relies on the propagation features, which account for
 \linkFeatShare\% of the gain of its trees (Table~\ref{tab:importance}); the
@@ -292,15 +320,18 @@ and the three most important together account for \topThreeLinkShare\%.
 \begin{table*}[!t]
 \centering
 \caption{Network-level evaluation on the held-out cities (mean over cities).
-Oracle: tile model with the true labels. Serving site: share of pixels with the
-correct serving site. Coverage: agreement of covered pixels (serving path loss
-$\le\SI{130}{\decibel}$) and error of the covered share. SINR: mean absolute
-error and Kolmogorov--Smirnov distance of the distributions. SE: error of mean
-spectral efficiency (b/s/Hz). Regret: coverage lost by planning $K=5$ sites on
-the predicted map instead of the true map. True covered share:
-\covTrue\%; true mean spectral efficiency: \seTrue{}\,b/s/Hz.}
+Oracle: tile model with the true labels. Path loss: RMSE and bias over the
+ray-traced links, and RMSE over all pairs with prediction and truth clipped
+at the cut-off (cens.). Serving site: share of reached pixels with the
+correct serving site. Coverage: agreement of covered pixels (serving path
+loss $\le\SI{130}{\decibel}$) and error of the covered share. SINR: mean
+absolute error and Kolmogorov--Smirnov distance of the distributions. SE:
+error of mean spectral efficiency (b/s/Hz). Regret: coverage lost by
+planning $K=5$ sites on the predicted map instead of the true map. True
+covered share: \covTrue\%; true mean spectral efficiency: \seTrue{}\,b/s/Hz.
+Few-shot rows are scored on the unsurveyed pixels.}
 \label{tab:network}
-\small\setlength{\tabcolsep}{4pt}
+\small\setlength{\tabcolsep}{3.5pt}
 \input{generated/tab_network}
 \end{table*}
 
@@ -311,6 +342,26 @@ the predicted map instead of the true map. True covered share:
 the number of selected sites.}
 \label{fig:network}
 \end{figure*}
+
+\begin{table}[!t]
+\centering
+\caption{Link existence. Reach: share of pixels whose reached/unreached
+state is predicted correctly; precision and recall of the predicted links
+below the cut-off; censored RMSE over all pairs. The tile models reach
+every pixel from every site.}
+\label{tab:hurdle}
+\small
+\input{generated/tab_hurdle}
+\end{table}
+
+\begin{table}[!t]
+\centering
+\caption{Per-city results of the tile model with exact labels (oracle),
+GBDT tile transfer and link transfer (mean of five seeds).}
+\label{tab:link-city}
+\footnotesize\setlength{\tabcolsep}{2.5pt}
+\input{generated/tab_link_city}
+\end{table}
 
 \begin{table}[!t]
 \centering
@@ -334,54 +385,128 @@ split gain (mean over folds and seeds).}
 \input{generated/tab_importance}
 \end{table}
 
+\subsection{Where the gap comes from, and physics baselines}
+\label{sec:res-decomp}
+
+Table~\ref{tab:variants} attributes the gap between the tile model and link
+transfer. Giving GBDT tile transfer the hurdle of the link model changes its
+path-loss error from \SI{\varGbdtNet}{\decibel} to \SI{\varGbdtHNet}{\decibel}
+over the ray-traced links, but its censored error from
+\SI{\varGbdtCens}{\decibel} to \SI{\varGbdtHCens}{\decibel} and its planning
+regret from \varGbdtRegret\% to \varGbdtHRegret\% (\dDecHurdleRegret{}
+percentage points, [\loDecHurdleRegret, \hiDecHurdleRegret]): the cut-off,
+not the path-loss accuracy, is what makes the plans of the tile models
+unreliable. The dual-slope label, which gives every tile a line-of-sight and
+an obstructed pair (Table~\ref{tab:los}: \losShareMin--\losShareMax\% of the
+links are in line of sight; median exponents \losGammaMedian{} and
+\nlosGammaMedian), lifts the nearest-site restriction and changes the
+serving-site accuracy of GBDT from \varGbdtAssoc\% to \varGbdtLosAssoc\%
+(\dDecLosAssoc{} points, [\loDecLosAssoc, \hiDecLosAssoc]) and the path-loss
+error to \SI{\varGbdtLosNet}{\decibel}; with both, the tile model reaches
+\SI{\varGbdtLosHNet}{\decibel}, \varGbdtLosHAssoc\% and a regret of
+\varGbdtLosHRegret\%. With exact labels the same two additions bring the
+tile model to \SI{\varOracleLosHNet}{\decibel}, \varOracleLosHAssoc\% and
+\varOracleLosHRegret\%. Link transfer remains better than the best tile
+variant with transferred labels (\varBestTileNet{} in path loss) in
+\nLinkBetterTileNet{} of \nVarFolds{} cities in path loss, in
+\nLinkBetterTileAssoc{} in serving site and in \nLinkBetterTileRegret{} in
+regret (\dDecLinkBestTile{} dB, [\loDecLinkBestTile, \hiDecLinkBestTile]),
+and than the dual-slope hurdle model with \emph{exact} labels by
+\dDecLinkOracleLosH{} dB ([\loDecLinkOracleLosH, \hiDecLinkOracleLosH]) and
+\dDecLinkOracleLosHAssoc{} points of serving site. What remains after the
+cut-off and the line-of-sight state is the geometry of the individual link:
+how far above the line of sight the obstruction rises, how many buildings
+the path crosses and how long it runs over them, which no per-tile summary
+carries.
+
+The non-learned per-link baselines use exactly that geometry. Free space with
+a single knife edge gives \SI{\varKeNet}{\decibel}, the Deygout three-edge
+construction \SI{\varDeygoutNet}{\decibel} and 3GPP UMa with the geometric
+line-of-sight state \SI{\varUmaGeoNet}{\decibel}; the best of them in path
+loss is \varBestPhysNet{} (\varBestPhysNetVal{}\,dB), in serving site
+\varBestPhysAssoc{} (\varBestPhysAssocVal\%) and in planning regret
+\varBestPhysRegret{} (\varBestPhysRegretVal\%). Link transfer is better than
+the best physics baseline in \nLinkBetterPhysNet{} of \nVarFolds{} cities in
+path loss, in \nLinkBetterPhysAssoc{} in serving site and in
+\nLinkBetterPhysRegret{} in regret; against the Deygout model the
+differences are \dDecLinkDeygout{} dB ([\loDecLinkDeygout, \hiDecLinkDeygout]),
+\dDecLinkDeygoutAssoc{} points of serving site and \dDecLinkDeygoutRegret{}
+points of regret, and against UMa with geometric line of sight
+\dDecLinkUma{} dB ([\loDecLinkUma, \hiDecLinkUma]) and \dDecLinkUmaAssoc{}
+points. Of the \nDecompLinkTotal{} comparisons of link transfer with the tile
+variants and the physics baselines, \nDecompLinkAllCities{} hold in every
+city and \nDecompLinkHolm{} survive Holm's correction
+(Table~\ref{tab:stats-net}). The learned link model thus adds to the
+diffraction physics it is built on; it is not the geometry alone that
+explains its advantage over the tile representation.
+
+\begin{table}[!t]
+\centering
+\caption{Decomposition of the gap. Receiver-tile variants of the tile model
+with exact labels, the source median and GBDT transfer, each without and with
+the hurdle of the link model (+hurdle) and with a dual-slope
+line-of-sight/obstructed label; non-learned per-link baselines with the
+deterministic hurdle ``loss $\le$ cut-off''; and link transfer. Means over
+the held-out cities; cens.: censored RMSE; reach: correctly predicted
+reached/unreached pixels; cov.: coverage agreement at \SI{130}{\decibel};
+regret: $K=5$.}
+\label{tab:variants}
+\footnotesize\setlength{\tabcolsep}{2.5pt}
+\input{generated/tab_variants}
+\end{table}
+
+\begin{table}[!t]
+\centering
+\caption{Dual-slope labels. Share of line-of-sight links, tiles with at
+least \minLinks{} links of each kind (the others fall back to the all-link
+pair), and median parameters per kind.}
+\label{tab:los}
+\footnotesize\setlength{\tabcolsep}{2.5pt}
+\input{generated/tab_los}
+\end{table}
+
 \subsection{Mixed-path composition}
 \label{sec:res-mixed}
 
-Composing the tile parameters along each path removes the nearest-site
-restriction of Proposition~\ref{prop:tilemodel}, and with exact labels it
-helps (Table~\ref{tab:mixed}): the path-averaged composition, fitted to the
-links of each city, has a path-loss error of \SI{\mixAvgNetOracle}{\decibel}
-against \SI{\netOracle}{\decibel} for the receiver-tile labels, selects the
-correct serving site for \mixAvgAssocOracle\% of the pixels against
-\assocOracle\%, places the cell edges \SI{\mixAvgEdgeOracle}{\metre} from the
-true ones and loses \mixAvgRegretOracle\% of the pixels when planning five
-sites. Most of the gain does not survive transfer. With parameters
-transferred by GBDT the path-averaged composition has a path-loss error of
-\SI{\mixAvgNetGbdt}{\decibel}, above that of receiver-tile transfer
-(\SI{\netGbdt}{\decibel}), and a serving-site accuracy of
-\mixAvgAssocGbdt\%, below the nearest-site rule in all but
-\mixAvgBetterRecvAssoc{} of \nFolds{} cities: every link now accumulates the
-transfer errors of all the tiles it crosses, and these errors decide which
-site appears strongest. Only its planning regret improves, to
+Composing the tile parameters along each path also lifts the nearest-site
+restriction, and with exact labels it helps (Table~\ref{tab:mixed}): the
+path-averaged composition, fitted to the links of each city, has a
+path-loss error of \SI{\mixAvgNetOracle}{\decibel} against
+\SI{\netOracle}{\decibel} for the receiver-tile labels, selects the correct
+serving site for \mixAvgAssocOracle\% of the pixels against \assocOracle\%,
+places the cell edges \SI{\mixAvgEdgeOracle}{\metre} from the true ones and
+loses \mixAvgRegretOracle\% of the pixels when planning five sites. Most of
+the gain does not survive transfer. With parameters transferred by GBDT the
+path-averaged composition has a path-loss error of
+\SI{\mixAvgNetGbdt}{\decibel} (receiver-tile transfer:
+\SI{\netGbdt}{\decibel}; better in \mixAvgBetterRecvPl{} of \nFolds{}
+cities) and a serving-site accuracy of \mixAvgAssocGbdt\%, above the
+nearest-site rule in \mixAvgBetterRecvAssoc{} of \nFolds{} cities: every
+link now accumulates the transfer errors of all the tiles it crosses, and
+these errors decide which site appears strongest. Its planning regret is
 \mixAvgRegretGbdt\% against \regretGbdt\%, still far above the
-\regretLink\% of link transfer. The piecewise composition gains nothing
-over the receiver tile even with exact labels
-(\SI{\mixPwNetOracle}{\decibel}, \mixPwAssocOracle\%), and with transferred
-exponents it is the worst of the three (GBDT \SI{\mixPwNetGbdt}{\decibel},
-\mixPwAssocGbdt\%): an error in the exponent of one tile shifts the loss of
-every link that passes through it. The summed composition
-of~\cite{ozyurt2026} does not describe the ray-traced links even with
-parameters fitted to the city itself (\SI{\mixSumFitMin}{\decibel} to
-\SI{\mixSumFitMax}{\decibel}): every crossed tile adds its own loss
-$A_t+10\gamma_t\log_{10}L_t$, so the loss grows with the number of tiles
-crossed rather than with the logarithm of the distance, and the transferred
-parameters give errors of \mixSumTransMin{} to
-\SI{\mixSumTransMax}{\decibel}. Larger tiles, as in~\cite{ozyurt2026}, do not
-change the picture (Table~\ref{tab:mixedsize} in \ref{app:robust}):
-with tiles of \SI{200}{\metre} to \SI{1000}{\metre} the summed composition
-with exact labels has errors of \mixSizeSumOracleMin{} to
-\SI{\mixSizeSumOracleMax}{\decibel}, larger than with \SI{100}{\metre}
-tiles, as fewer tile parameters are left to absorb the mismatch, and the
-path-averaged and piecewise compositions lose accuracy as the tiles grow
-(\mixSizeAvgOracleMin{} to \SI{\mixSizeAvgOracleMax}{\decibel} and
-\mixSizePwOracleMin{} to \SI{\mixSizePwOracleMax}{\decibel} with exact
-labels). Over all compositions and tile sizes, the best tile model with exact
-labels reaches \SI{\mixSizeBestNet}{\decibel} and \mixSizeBestAssoc\% of the
-serving sites; site-aware link transfer is better than every composition
-with exact labels in path loss and serving site, and at least as good in
-planning regret, in every held-out city. The limitation lies in describing a
-link by tile parameters, however they are combined and whatever the tile
-size.
+\regretLink\% of link transfer. The piecewise composition gains little over
+the receiver tile even with exact labels (\SI{\mixPwNetOracle}{\decibel},
+\mixPwAssocOracle\%), and with transferred exponents it is the worse of the
+two (GBDT \SI{\mixPwNetGbdt}{\decibel}, \mixPwAssocGbdt\%): an error in the
+exponent of one tile shifts the loss of every link that passes through it.
+Larger tiles, as in~\cite{ozyurt2026}, do not change the picture
+(Table~\ref{tab:mixedsize} in \ref{app:robust}): with tiles of
+\SI{200}{\metre} to \SI{1000}{\metre} the path-averaged and piecewise
+compositions have errors of \mixSizeAvgOracleMin{} to
+\SI{\mixSizeAvgOracleMax}{\decibel} and \mixSizePwOracleMin{} to
+\SI{\mixSizePwOracleMax}{\decibel} with exact labels, and
+\mixSizeAvgGbdtMin{} to \SI{\mixSizeAvgGbdtMax}{\decibel} and
+\mixSizePwGbdtMin{} to \SI{\mixSizePwGbdtMax}{\decibel} with GBDT. Over
+all compositions and tile sizes, the best tile model with exact labels
+reaches \SI{\mixSizeBestNet}{\decibel} and \mixSizeBestAssoc\% of the
+serving sites, and link transfer is \mixSizeLinkBetterBest{} than it in
+both; against the path-averaged composition with exact labels, link
+transfer is better in \mixAvgLinkBetterPl{} of \nFolds{} cities in path
+loss and in \mixAvgLinkBetterAssoc{} in serving site, and at least as good
+in planning regret in \mixAvgLinkBetterRegret. The limitation lies in
+describing a link by tile parameters, however they are combined and
+whatever the tile size.
 
 \begin{table}[!t]
 \centering
@@ -400,35 +525,42 @@ displacement; regret: $K=5$.}
 \label{sec:res-survey}
 
 Calibrating the per-site offsets of the link model from surveyed tiles
-barely changes it on the corpus (Table~\ref{tab:survey}). With ten random
-tiles the path-loss error rises from \SI{\svPlZero}{\decibel} to \SI{\svPlRTen}{\decibel}
-(\dNetLinkTen{} dB, worse in every city); only fifty random tiles improve
-it, marginally, to \SI{\svPlRFifty}{\decibel} with \svAssocRFifty\% of
-the serving sites correct, and with fifty designed tiles it is
-\SI{\svPlDFifty}{\decibel}; the design of Proposition~\ref{prop:survey},
-which maximises the variance reduction of the offsets, is not better than
-random tiles. This indicates that the zero-shot link model has little
-systematic per-site error left for a survey of this size to remove, while an
-offset estimated from the links of a few tiles transmits their local
-residuals to the whole cell. Calibration pays off where a systematic error
-exists: on the external scenes of Section~\ref{sec:res-robust}, whose
-materials shift the path loss, it removes the bias. The design is worse
-than random surveys there as well, and its offsets are biased
-(Table~\ref{tab:external}): maximising the variance reduction favours tiles
-that see many sites, which need not be representative of the city, so an
-unbiased (random or stratified) survey is preferable.
+changes it little on the corpus (Table~\ref{tab:survey}, scored on the
+unsurveyed pixels). With 25 random tiles and the empirical-Bayes $\kappa$
+the path-loss error goes from \SI{\svPlZero}{\decibel} to
+\SI{\svPlRTwentyFive}{\decibel} (\dNetLinkTwentyFive{} dB,
+[\loNetLinkTwentyFive, \hiNetLinkTwentyFive], better in
+\nNetLinkTwentyFive{} of \nFolds{} cities) and the serving-site accuracy
+from \svAssocZero\% to \svAssocRTwentyFive\%, with the regret unchanged at
+\svRegRTwentyFive\%; the estimated $\kappa$ has a median of
+\kappaMedianTwentyFive{} links and reaches its ceiling, which switches the
+per-site offsets off, in \kappaShareLargeTwentyFive\% of the draws. The
+fixed $\kappa=\kappaLink{}$ links gives \SI{\svPlFTwentyFive}{\decibel}
+(\dNetFixedKappa{} dB against the empirical-Bayes value, [\loNetFixedKappa,
+\hiNetFixedKappa]). The variance design of Proposition~\ref{prop:survey}
+gives \SI{\svPlDTwentyFive}{\decibel} (\dNetDesignVar{} dB against random
+tiles, [\loNetDesignVar, \hiNetDesignVar]) and the stratified design
+\SI{\svPlSTwentyFive}{\decibel} (\dNetDesignStrat{} dB, [\loNetDesignStrat,
+\hiNetDesignStrat]); the best of the four variants at $k=25$ is
+\svBestTwentyFive. The zero-shot link model has little systematic per-site
+error on this corpus for a survey of this size to remove. Calibration pays
+off where a systematic error exists: on the external scenes of
+Section~\ref{sec:res-robust}, whose materials shift the path loss, it
+removes the bias.
 
-\begin{table}[!t]
+\begin{table*}[!t]
 \centering
-\caption{Per-site calibration of the link model from $k$ surveyed tiles:
-random tiles (mean of ten draws) and the survey design of
-Proposition~\ref{prop:survey}. PL: path-loss RMSE; serv.: serving-site
-accuracy; regret: $K=5$. Means over the held-out cities. Zero-shot link
-model: \SI{\svPlZero}{\decibel}, \svAssocZero\%, \svRegZero\%.}
+\caption{Per-site calibration of the link model from $k$ surveyed tiles,
+scored on the unsurveyed pixels: random tiles (mean of ten draws) with the
+empirical-Bayes $\kappa$ and with the fixed $\kappa=\kappaLink{}$, the
+variance design of Proposition~\ref{prop:survey} and the stratified design.
+PL: path-loss RMSE (dB); serv.: serving-site accuracy (\%); regret: $K=5$
+(\%). Means over the held-out cities. Zero-shot link model:
+\SI{\svPlZero}{\decibel}, \svAssocZero\%, \svRegZero\%.}
 \label{tab:survey}
-\footnotesize\setlength{\tabcolsep}{2.5pt}
+\small\setlength{\tabcolsep}{3pt}
 \input{generated/tab_survey}
-\end{table}
+\end{table*}
 
 \subsection{Certified coverage}
 \label{sec:res-certified}
@@ -440,7 +572,7 @@ of rank $j$ fails exactly in the $j$ cities with the largest $q_c$) and is a
 consistency check, not evidence; the guarantee concerns a new city drawn
 exchangeably with the eleven. At
 $\alpha=0.1$ and \SI{140}{\decibel}, the certificate of link transfer needs a
-margin of only \SI{\certQLink}{\decibel} and certifies \certClaimLink\% of
+margin of \SI{\certQLink}{\decibel} and certifies \certClaimLink\% of
 the pixels, with \certFalseLink\% falsely claimed; the true covered share is
 \certTrueCov\%. Tile transfer needs larger margins and certifies less: GBDT
 \certClaimGbdt\% (margin \SI{\certQGbdt}{\decibel}), the source median
@@ -452,9 +584,9 @@ lowers the confidence to \certLevelTwo{} and raises the certified share of
 link transfer to \certClaimTwoLink\% (GBDT \certClaimTwoGbdt\%); the bound
 then holds in \certValidTwoLink{} of \nFolds{} cities.
 The falsely claimed shares stay far below $\alpha$ because the margin must
-cover the worst city; the value of the certificate is the guarantee itself.
-The accuracy of a transfer model thus translates directly
-into the coverage an operator can promise at a stated risk.
+cover the worst city; the value of the certificate is the guarantee itself,
+and with eleven cities its resolution is coarse: a 95\% level would need
+twenty cities.
 
 \begin{table*}[!t]
 \centering
@@ -477,13 +609,12 @@ $G_s\in\{50,100,200\}$\,m; $G_s=\SI{100}{\metre}$ reproduces the main
 results exactly. Larger tiles give more precise labels (cluster-robust
 standard error \tsSeFifty, \tsSeHundred{} and \tsSeTwoHundred) and a smaller
 exponent error (GBDT \tsGammaFifty, \tsGammaHundred{} and \tsGammaTwoHundred),
-but a coarser map: the path-loss error of the oracle grows from
+but a coarser map: the path-loss error of the oracle goes from
 \SI{\tsOracleFifty}{\decibel} to \SI{\tsOracleTwoHundred}{\decibel}, and that
-of GBDT tile transfer stays between \SI{\tsGbdtFifty}{\decibel} and
+of GBDT tile transfer from \SI{\tsGbdtFifty}{\decibel} to
 \SI{\tsGbdtTwoHundred}{\decibel}. The serving-site accuracy of the tile model
-is \tsAssocRange\% at every size, as
-Proposition~\ref{prop:tilemodel} implies. No tile size approaches link
-transfer.
+is \tsAssocRange\% at every size, as the nearest-site rule implies. No tile
+size approaches link transfer.
 
 \paragraph{Path-loss cut-off}
 Between \censMin\% and \censMax\% of the (pixel, site) pairs of the labelled
@@ -504,16 +635,30 @@ the ranking is unchanged: the oracle has a path-loss error of
 and link transfer \SI{\smallNetLink}{\decibel}, with serving-site accuracies
 of \smallAssocOracle\%, \smallAssocGbdt\% and \smallAssocLink\%.
 
-\paragraph{Siting policy}
-On the \nRandCities{} cities re-traced with sites on random rooftops (median
-site height \SI{\siteHRand}{\metre}; Table~\ref{tab:siting}), the link models
-trained on the tallest-rooftop corpus reach a path-loss error of
-\SI{\rsNetLink}{\decibel}, against \SI{\rsNetOracleRand}{\decibel} for the
-tile model with the exact labels of the new network, and a planning regret
-of \rsRegretLink\% against \rsRegretOracleRand\%. The tile labels of the same
-tiles fitted under the original siting give \SI{\rsNetOracleMain}{\decibel}:
-the labels of a tile do not carry over to other sites, as the dependence of
-the exponent on the serving sites (Section~\ref{sec:res-labels}) implies.
+\paragraph{Siting and materials}
+Table~\ref{tab:siting} applies the models of the main corpus, unchanged, to
+the \nReplicates{} replicates (\repList) of \nRandCities{} cities
+(\randCities). With sites on random rooftops (median site height
+\SI{\siteHRand}{\metre} against \SI{\rsSiteHMain}{\metre} on the main
+corpus) the link models reach a path-loss error of
+\SI{\rsRandNetLink}{\decibel}, against \SI{\rsRandNetOracleRand}{\decibel}
+for the tile model with the exact labels of the new network, with a planning
+regret of \rsRandRegretLink\% against \rsRandRegretOracleRand\%. With sites
+on mid-rise rooftops (median \SI{\siteHCapped}{\metre}, the 3GPP
+urban-macro range) they reach \SI{\rsCappedNetLink}{\decibel} against
+\SI{\rsCappedNetOracleRand}{\decibel} for the exact labels, with a regret of
+\rsCappedRegretLink\% against \rsCappedRegretOracleRand\%; the link model
+trained on tall sites is therefore not tied to them. With random building
+materials the truth shifts by \rsMatBiasLink{}\,dB relative to the
+concrete-trained link models, whose error is \SI{\rsMatNetLink}{\decibel}
+against \SI{\rsMatNetOracleRand}{\decibel} for the exact labels of that
+network and \SI{\rsMatNetGbdt}{\decibel} for GBDT tile transfer. The tile
+labels of the same tiles fitted under the main corpus give
+\SI{\rsRandNetOracleMain}{\decibel}, \SI{\rsCappedNetOracleMain}{\decibel}
+and \SI{\rsMatNetOracleMain}{\decibel} on the three replicates: the labels
+of a tile do not carry over to other sites or materials, as the dependence
+of the exponent on the serving sites (Section~\ref{sec:res-labels})
+implies.
 
 \paragraph{Second band}
 At \SI{\freqTwoGHz}{\giga\hertz} the corpus has \nSamplesTwo{} links below the
@@ -544,29 +689,35 @@ GBDT, in \extLinkBetterGbdt{} of \nExtScenes{} scenes), serving site
 against \SI{\extSinrGbdt}{\decibel}) and cell edges (\SI{\extEdgeLink}{\metre}
 against \SI{\extEdgeGbdt}{\metre}), but its path-loss error is above that of
 the tile model with the exact labels of these scenes
-(\SI{\extNetOracle}{\decibel}) and it has a positive bias of \extLinkBiasMin{}
-to \SI{\extLinkBiasMax}{\decibel}, consistent with the different materials
-of these scenes (brick, marble, metal and wood, against the single concrete
-model of the training corpus). This is the systematic shift that the
-per-site calibration of Section~\ref{sec:link} is for: with 25 randomly
+(\SI{\extNetOracle}{\decibel}) and it has a bias of \extLinkBiasMin{}
+to \SI{\extLinkBiasMax}{\decibel} (positive in \extLinkBiasAllPositive),
+consistent with the different materials of these scenes against the single
+concrete model of the training corpus. This is the systematic shift that
+the per-site calibration of Section~\ref{sec:link} is for: with 25 randomly
 surveyed tiles the bias falls to \SI{\extBiasLinkTwentyFive}{\decibel} on
-average and the path-loss error to \SI{\extNetLinkTwentyFive}{\decibel},
-equal to that of the exact tile labels (lower in \extKBetterOracle{} of
-\nExtScenes{} scenes), while the serving-site accuracy rises to
-\extAssocLinkTwentyFive\% against \extAssocOracle\% for the tile labels. The
-designed survey of 25 tiles reaches only \SI{\extNetLinkTwentyFiveD}{\decibel}.
-With \nExtSites{} sites on these smaller scenes, five sites cover almost every
-pixel, and the zero-shot predictors all have the same planning regret.
+average and the path-loss error to \SI{\extNetLinkTwentyFive}{\decibel}
+on the unsurveyed pixels, against \SI{\extNetOracle}{\decibel} for the exact
+tile labels (lower in \extKBetterOracle{} of \nExtScenes{} scenes), while
+the serving-site accuracy becomes \extAssocLinkTwentyFive\% against
+\extAssocOracle\% for the tile labels. The variance design of 25 tiles
+reaches \SI{\extNetLinkTwentyFiveD}{\decibel} and the stratified design
+\SI{\extNetLinkTwentyFiveS}{\decibel}. With \nExtSites{} sites on these
+smaller scenes, five sites cover almost every pixel, and the zero-shot
+predictors have \extRegretSame{} planning regrets
+(\extRegretMin--\extRegretMax\%).
 
 \begin{table*}[!t]
 \centering
-\caption{Siting policy: models of the main corpus applied to \nRandCities{}
-cities (\randCities) re-traced with sites on random rooftops. Left: the same
-predictors on the tallest-rooftop networks of these cities. Tile labels of
-this network: fitted on the random-site links; main siting: the labels of
-the same tiles in the main corpus. Means over cities (and seeds).}
+\caption{Siting and materials replicates: models of the main corpus applied
+to \nRandCities{} cities (\randCities) re-traced with sites on random
+rooftops, with sites on mid-rise rooftops (\cappedLo--\SI{\cappedHi}{\metre})
+and with random ITU materials per building. Left: the same predictors on the
+main corpus of these cities. Tile labels of this network: fitted on the
+replicate's links; main corpus: the labels of the same tiles in the main
+corpus. PL: path-loss RMSE (dB); serv.: serving-site accuracy (\%); regret:
+$K=5$ (\%). Means over cities (and seeds).}
 \label{tab:siting}
-\small
+\small\setlength{\tabcolsep}{3pt}
 \input{generated/tab_siting}
 \end{table*}
 
@@ -584,27 +735,31 @@ with the knife-edge feature at the new wavelength or unchanged.}
 \begin{table*}[!t]
 \centering
 \caption{External scenes of Sionna~RT (no retraining). PL: path-loss RMSE;
-bias: mean path-loss error, predicted minus true (dB); serv.: serving-site accuracy; SINR: mean absolute error; edge: cell-edge
-displacement; regret: $K=5$. Tile labels: fitted on the scene itself;
-median, ridge and GBDT: fitted on the eleven cities; link: mean of the
-eleven leave-one-city-out link models, zero-shot and calibrated from 25 surveyed tiles
-(random: mean of ten draws; designed).}
+bias: mean path-loss error, predicted minus true (dB); serv.: serving-site
+accuracy; SINR: mean absolute error; edge: cell-edge displacement; regret:
+$K=5$. Tile labels: fitted on the scene itself; median, ridge and GBDT:
+fitted on the eleven cities; link: mean of the eleven leave-one-city-out
+link models, zero-shot and calibrated from 25 surveyed tiles (random: mean
+of ten draws; the variance design; the stratified design), scored on the
+unsurveyed pixels.}
 \label{tab:external}
 \small
 \input{generated/tab_external}
 \end{table*}
 
-
 \subsection{Statistical summary}
 \label{sec:res-stats}
 
 Tables~\ref{tab:stats-param} and~\ref{tab:stats-net} (\ref{app:stats}) list
-all \nStatsRows{} city-level comparisons. Link transfer improves on GBDT tile
-transfer in path loss, serving site, coverage agreement and planning regret
-in all \nFolds{} cities, and on the tile model with the true labels in path
-loss, serving site and planning regret in all \nFolds{} cities; these
-comparisons remain significant after Holm's correction. At the parameter
-level the evidence is weaker: of the \nZeroShotTotal{} comparisons of a
-transfer operator with the source median, no improvement survives Holm's
-correction at eleven cities, whereas the gain of GP-ARD over kernel transfer
-does.
+all \nStatsRows{} city-level comparisons. Link transfer improves on GBDT
+tile transfer in path loss in \nNetLinkGbdt{}, in serving site in
+\nNetLinkAssoc{}, in SINR in \nNetLinkSinr{} and in planning regret in
+\nNetLinkRegret{} of \nFolds{} cities, and on the tile model with the true
+labels in path loss in \nNetLinkOracle{}, in serving site in
+\nNetLinkOracleAssoc{} and in planning regret in \nNetLinkOracleRegret{}
+of \nFolds{} cities; these comparisons are \holmNetLinkGbdt{} after Holm's
+correction. At the parameter level the evidence is weaker: of the
+\nZeroShotTotal{} comparisons of a transfer operator with the source
+median, \nZeroShotSigBetter{} improvements survive Holm's correction at
+eleven cities, whereas the gain of GP-ARD over kernel transfer is
+\holmGpKernel.

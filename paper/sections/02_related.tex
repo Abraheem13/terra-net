@@ -6,14 +6,19 @@
 Empirical models such as Okumura--Hata~\cite{hata1980} and the 3GPP
 TR~38.901 formulas~\cite{tr38901} express path loss through a small number
 of parameters fitted to measurement campaigns and applied uniformly over an
-environment class. Measurement studies showed early that the path-loss
-exponent is itself a random quantity that changes from cell to
-cell~\cite{erceg1999}, which is the variability a tile-level model tries to
-capture. Deterministic ray tracing resolves the geometry
-explicitly~\cite{yun2015raytracing}; differentiable ray tracers such as
-Sionna~RT make city-scale simulation and calibration against measurements
-practical~\cite{hoydis2023sionna,hoydis2024learning}. We use ray tracing to
-produce ground truth for many cities, not as the run-time predictor.
+environment class; TR~38.901 distinguishes a line-of-sight and a
+non-line-of-sight law, which a digital twin can select per link from its
+geometry. Measurement studies showed early that the path-loss exponent is
+itself a random quantity that changes from cell to cell~\cite{erceg1999},
+which is the variability a tile-level model tries to capture. Diffraction
+over the buildings along a link is described by the knife-edge and
+multiple-edge constructions of ITU-R P.526~\cite{itup526}, which we use as
+non-learned per-link baselines. Deterministic ray tracing resolves the
+geometry explicitly~\cite{yun2015raytracing}; differentiable ray tracers
+such as Sionna~RT make city-scale simulation and calibration against
+measurements practical~\cite{hoydis2023sionna,hoydis2024learning}. We use
+ray tracing to produce ground truth for many cities, not as the run-time
+predictor.
 
 \paragraph{Learned radio maps and path-loss regression}
 Convolutional~\cite{levie2021radiounet}, autoencoder~\cite{teganya2022},
@@ -28,11 +33,14 @@ across several cities with obstruction-height maps~\cite{dempsey2025}, and is
 surveyed in~\cite{seretis2022}. These methods predict path loss or maps
 directly; the tile-parameter approach studied here predicts a compact,
 physically interpretable pair per tile that a planning tool can evaluate
-for any site layout.
+for any site layout. Our link model belongs to the feature-regression family
+of~\cite{thrane2020,dempsey2025}; its purpose here is to serve as a strong,
+simple and interpretable reference against which the tile representation is
+measured.
 
 \paragraph{Tile-based transfer and digital twins}
-Digital twins of wireless networks~\cite{khan2022dt,alkhateeb2023dt} need
-propagation models for regions where no measurements exist yet. MAPLE
+Digital twins of wireless networks~\cite{khan2022dt,alkhateeb2023dt,ituy3090}
+need propagation models for regions where no measurements exist yet. MAPLE
 divides 3-D city maps into tiles and estimates mixed-path propagation in a
 new deployment area from the similarity of its tiles to tiles of measured
 areas~\cite{ozyurt2020maple}. The descriptor-based framework
@@ -44,10 +52,11 @@ descriptor similarity. It was evaluated with confidential measurements of an
 industrial partner in two European cities, each serving once as the source
 of the other, with tiles of \SI{200}{\metre} to \SI{1000}{\metre}, by the
 normalised error of the received power, and against empirical models only.
-We study the same transfer problem on a larger public corpus, analyse the
-kernel operator, compare it with learned regressors under a common
-protocol, evaluate both the receiver-tile and the mixed-path composition,
-and measure the consequences for network planning.
+We study the same transfer problem on a larger public corpus with a
+re-implementation of its operator on the built-structure descriptors,
+analyse the kernel operator, compare it with learned regressors under a
+common protocol, evaluate both the receiver-tile and the mixed-path
+composition, and measure the consequences for network planning.
 
 \paragraph{Transfer under covariate shift and planning}
 Transfer between domains with different input distributions is covariate
@@ -70,4 +79,6 @@ jackknife+ reuse every training point for calibration~\cite{barber2021}; we
 apply the exchangeability argument at the level of cities, the unit of
 shift. Measurements with a detection floor are censored, for which the
 Tobit model is the classical treatment~\cite{tobin1958}; received-power
-data beyond a receiver's sensitivity are censored in exactly this sense.
+data beyond a receiver's sensitivity are censored in exactly this sense, and
+a hurdle model that first predicts whether a link exists is the natural
+counterpart for prediction.

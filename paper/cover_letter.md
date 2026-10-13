@@ -1,6 +1,6 @@
 Dear Editor,
 
-We submit the manuscript **"Cross-city path-loss transfer for digital-twin
+We submit the manuscript **"Cross-city path-loss transfer for 6G digital-twin
 network planning: why tile parameters fall short and how site-aware link
 models close the gap"** for consideration as a research article in
 *Computer Communications*.

@@ -19,7 +19,9 @@ P_{pb}=P_{\mathrm{tx}}-\PL(p,b),\qquad s(p)=\argmax_{b\in\mathcal{B}}P_{pb},\\
 \end{gathered}
 \label{eq:sinr}
 \end{equation}
-A pixel is \emph{covered} at coupling-loss level $L$ if
+A link whose path loss exceeds the coupling-loss cut-off $L_{\max}$ of the
+receiver is not received at all; a pixel that no site reaches is an outage
+pixel. A pixel is \emph{covered} at coupling-loss level $L$ if
 $\PL(p,s(p))\le L$, and its spectral efficiency is obtained from the SINR with
 the attenuated and truncated Shannon mapping used in 3GPP system
 evaluations~\cite{tr36942}.
@@ -43,33 +45,30 @@ $\mathbf{A}_t=[\mathbf{x}\;\mathbf{1}]$.
 Equation~\eqref{eq:logdist} is the interface between the digital twin and
 network planning: a planning tool that knows $\btheta_t$ for every tile and
 the site positions can evaluate Eq.~\eqref{eq:sinr} anywhere without ray
-tracing. Two structural consequences of the tile model are used later.
-
-\begin{proposition}[What a receiver-tile model can express]
-\label{prop:tilemodel}
-Let every link seen from pixel $p$ use the parameters of the tile containing
-$p$, with $\gamma_t>0$. Then (i) the predicted serving site is the nearest
-site, $s(p)=\argmin_b d_{pb}$, whatever $\btheta_t$; and (ii) the predicted SINR
-is
+tracing. Two structural consequences of the receiver-tile model are used
+later. With the parameters of the receiver's tile applied to every site and
+$\gamma_t>0$, received power decreases with distance, so (i)~the predicted
+serving site is the nearest site, $s(p)=\argmin_b d_{pb}$, whatever
+$\btheta_t$, and (ii)~the predicted SINR is
 \begin{equation}
 \mathrm{SINR}(p)=\frac{(d_{ps}/d_0)^{-\gamma_t}}
 {\sum_{b\neq s}(d_{pb}/d_0)^{-\gamma_t}
 +10^{(N-P_{\mathrm{tx}}+P_{L_0,t})/10}},
 \label{eq:sinrtile}
 \end{equation}
-so in the interference-limited regime it depends on the exponent only, while
-coverage at level $L$ depends on both parameters.
-\end{proposition}
-
-\noindent The proof is immediate from Eqs.~\eqref{eq:sinr}
-and~\eqref{eq:logdist}. Part~(i) bounds what any receiver-tile predictor
-can achieve in cell association: the metric is identical for every transfer
-operator and measures the tile model itself. Part~(ii) identifies which
-parameter errors matter for which planning quantity. Mixed-path
-compositions~\cite{ozyurt2020maple,ozyurt2026}, which combine the
-parameters of every tile a link crosses, are not bound by
-Proposition~\ref{prop:tilemodel} and are evaluated in
-Section~\ref{sec:res-mixed}.
+which in the interference-limited regime depends on the exponent only, while
+coverage at level $L$ depends on both parameters. Property~(i) bounds what
+any receiver-tile predictor can achieve in cell association: the metric is
+identical for every transfer operator and measures the tile model itself.
+A receiver-tile model also has no notion of a link that is not received:
+every site reaches every pixel with a finite loss. Both limitations can be
+relaxed without leaving the tile representation, by a \emph{hurdle} that
+removes the links a classifier predicts beyond $L_{\max}$ and by a
+\emph{dual-slope} label with one pair for line-of-sight and one for
+obstructed links; Section~\ref{sec:res-decomp} measures what each buys.
+Mixed-path compositions~\cite{ozyurt2020maple,ozyurt2026}, which combine the
+parameters of every tile a link crosses, are not bound by property~(i) and
+are evaluated in Section~\ref{sec:res-mixed}.
 
 \subsection{The transfer problem}
 \label{sec:transfer}
@@ -97,32 +96,27 @@ parameters and compared with the ray-traced network.
 Many transfer operators, including the Gaussian-kernel operator
 of~\cite{ozyurt2026} and $k$-nearest-neighbour averaging, predict a convex
 combination of source labels, $\hat\btheta_u=\sum_j w_j(\bv_u)\btheta_j$ with
-$w_j\ge0$, $\sum_j w_j=1$ and weights that depend on descriptors only.
-
-\begin{proposition}[Risk decomposition]
-\label{prop:decomp}
-Let the source labels be $\btheta_j=\btheta^{\star}(\bv_j)+\boldsymbol\eta_j$,
+$w_j\ge0$, $\sum_j w_j=1$ and weights that depend on descriptors only. Let
+the source labels be $\btheta_j=\btheta^{\star}(\bv_j)+\boldsymbol\eta_j$,
 with $\btheta^{\star}(\bv)$ the conditional mean parameter and
 $\boldsymbol\eta_j$ zero-mean label noise of covariance $\Sigma_\eta$,
-independent across $j$ and of the descriptors. For a label-averaging
-operator the target risk
-$R=\E_{\bv}\lVert\hat\btheta(\bv)-\btheta^{\star}(\bv)\rVert^{2}$ is
+independent across $j$ and of the descriptors. The target risk
+$R=\E_{\bv}\lVert\hat\btheta(\bv)-\btheta^{\star}(\bv)\rVert^{2}$ then splits
+into a smoothing bias and a noise-transmission term,
 \begin{equation}
 R=\underbrace{\E_{\bv}\Bigl\lVert\textstyle\sum_j w_j(\bv)\btheta^{\star}(\bv_j)-\btheta^{\star}(\bv)\Bigr\rVert^{2}}_{\text{smoothing bias}}
-+\underbrace{\tr(\Sigma_\eta)\,\E_{\bv}\textstyle\sum_j w_j(\bv)^{2}}_{\text{noise transmission}} .
++\underbrace{\tr(\Sigma_\eta)\,\E_{\bv}\textstyle\sum_j w_j(\bv)^{2}}_{\text{noise transmission}} ,
 \label{eq:decomp}
 \end{equation}
-\end{proposition}
-
-\noindent The second term equals $\tr(\Sigma_\eta)\,\E[1/n_{\mathrm{eff}}]$ with
-the effective neighbourhood size
-$n_{\mathrm{eff}}(\bv)=1/\sum_j w_j(\bv)^2$. Concentrated weights lower the
-bias and raise the noise transmission; diffuse weights do the opposite.
-Under covariate shift the bias term grows, because the source set may
-contain no tile whose conditional mean resembles the target's; with noisy
-labels the second term matters as well.
-Ridge regression is also linear in the labels, and so is a regression tree
-once its partition is fixed; the difference is that their weights are not
-confined to the probability simplex and are shaped by the descriptor--label
-relation rather than fixed by an isotropic distance, which is the
-distinction that matters below.
+because the cross term has zero expectation (\ref{app:proofs}). The second
+term equals $\tr(\Sigma_\eta)\,\E[1/n_{\mathrm{eff}}]$ with the effective
+neighbourhood size $n_{\mathrm{eff}}(\bv)=1/\sum_j w_j(\bv)^2$. Concentrated
+weights lower the bias and raise the noise transmission; diffuse weights do
+the opposite. Under covariate shift the bias term grows, because the source
+set may contain no tile whose conditional mean resembles the target's; with
+noisy labels the second term matters as well. Ridge regression is also
+linear in the labels, and so is a regression tree once its partition is
+fixed; the difference is that their weights are not confined to the
+probability simplex and are shaped by the descriptor--label relation rather
+than fixed by an isotropic distance, which is the distinction that matters
+below.
