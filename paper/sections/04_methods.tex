@@ -1,5 +1,5 @@
 %% ===================================================================
-\section{Methods}
+\section{Corpus, models and evaluation methodology}
 \label{sec:methods}
 
 Figure~\ref{fig:pipeline} summarises the pipeline. Every stage is implemented
@@ -93,9 +93,9 @@ diffracted ray by an integration weight over the diffraction cone; the
 first weight is unbounded and the second can be very large, so a cell
 occasionally receives one overweighted contribution. Its path loss can then
 fall below free space by tens of decibels, which no incoherent sum of a few
-propagation paths allows. We remove every link whose path loss lies more
-than \SI{\qcMargin}{\decibel} below the free-space loss at its 3-D distance:
-\qcRemoved{} links, \qcShare\% of the corpus. For the site with the most
+propagation paths allows. Every link whose path loss lies more
+than \SI{\qcMargin}{\decibel} below the free-space loss at its 3-D distance
+is removed: \qcRemoved{} links, \qcShare\% of the corpus. For the site with the most
 such links, disabling diffraction reduces the links more than
 \SI{\qcMargin}{\decibel} below free space from \outDiffOn{} to \outDiffOff{}
 with otherwise identical settings, which identifies the diffraction weights
@@ -114,8 +114,8 @@ $\Var(\hat\gamma_{\mathrm{OLS}})=\sigma_\varepsilon^{2}/(n\Var(x))$, which
 diverges as the intra-tile spread of $x$ vanishes. A receiver at distance
 $d$ from its site sees a tile of side $G_s$ span only
 $\Delta x\approx10\log_{10}(1+G_s/d)$, which is \SI{0.41}{\decibel} for
-$G_s=\SI{100}{\metre}$ and $d=\SI{1}{\kilo\metre}$. We therefore shrink the
-slope towards the city-wide mean with weights set by the data (empirical
+$G_s=\SI{100}{\metre}$ and $d=\SI{1}{\kilo\metre}$. The slope is therefore
+shrunk towards the city-wide mean with weights set by the data (empirical
 Bayes~\cite{morris1983}).
 
 \begin{proposition}[Empirical-Bayes shrinkage]
@@ -137,14 +137,14 @@ bounded by $\tau^{2}$ however degenerate the tile geometry.
 
 \noindent Radio-map cells served by the same site share propagation paths,
 so the independent-residual variance $s_t^{2}/S_{xx,t}$ understates $v_t$.
-We therefore use the cluster-robust variance of Eq.~\eqref{eq:cr} (below)
-of the OLS slope, with the serving sites as clusters, never below the
+The cluster-robust variance of Eq.~\eqref{eq:cr} (below) of the OLS slope
+is therefore used, with the serving sites as clusters, never below the
 independent value; a tile served by a single site uses the independent
 value multiplied by the median ratio of the two over the city (its design
-effect). We estimate $(\mu,\tau^{2})$ per city with the
+effect). The pair $(\mu,\tau^{2})$ is estimated per city with the
 DerSimonian--Laird moment estimator~\cite{dersimonian1986} over the tiles
-with a non-degenerate span, set
-$\hat\gamma_t=(1-w_t)b_t+w_t\hat\mu$, and leave the intercept unpenalised:
+with a non-degenerate span, $\hat\gamma_t=(1-w_t)b_t+w_t\hat\mu$ is set, and
+the intercept is left unpenalised:
 $\hat P_{L_0,t}=\bar y_t-\hat\gamma_t\bar x_t$. A tile with no span takes
 $\hat\gamma_t=\hat\mu$. The shrinkage weight $w_t$ is published with every
 label. Algorithm~\ref{alg:labels} states the procedure; it is vectorised
@@ -228,8 +228,8 @@ of the target.
 \subsection{Transfer operators}
 \label{sec:operators}
 
-We compare constant predictors, label-averaging operators and learned
-regressors.
+Constant predictors, label-averaging operators and learned regressors are
+compared.
 \begin{itemize}
 \item \emph{Source median}: the median source label, the no-information
 reference.
@@ -312,8 +312,8 @@ $g_u\gg2\sigma^{2}\ln N$.
 \noindent The minimum distance cancels from Eq.~\eqref{eq:nw}; a target
 far from every source tile is therefore \emph{not} by itself pushed to
 either regime. Which regime applies is decided by the selected bandwidth
-relative to the spread $D_u$ and the gap $g_u$, and we measure it
-(Section~\ref{sec:res-kernel}) rather than assume it. Both regimes carry a
+relative to the spread $D_u$ and the gap $g_u$; it is measured
+(Section~\ref{sec:res-kernel}) rather than assumed. Both regimes carry a
 failure mode under shift: the flat regime returns the source mean and
 ignores the target descriptor; the nearest-neighbour regime copies one
 source tile and transmits its label noise undamped
@@ -340,7 +340,7 @@ between-city variance of its zero-shot bias, both estimated on the inner
 validation cities of the fold (no target information). When the inner
 cities show no systematic bias, $\tau_b^{2}\to0$ and the correction
 vanishes; when they do, the correction is the precision-weighted mean
-residual. We compare it with the plain mean residual (\emph{bias}) and with a
+residual. It is compared with the plain mean residual (\emph{bias}) and with a
 precision-weighted ridge model of the residual on the descriptors
 (\emph{residual}, penalty $10$ on normalised descriptors). Anchors are drawn
 uniformly at random, as the $k$ tiles closest to a random tile
@@ -357,8 +357,8 @@ ten random draws are made per $k\in\{3,5,10,25,50,100\}$.
 \subsection{Site-aware link transfer and per-link baselines}
 \label{sec:link}
 
-As a transfer model free of the receiver-tile restrictions we predict the
-path loss of each (pixel, site) link directly. The features are computed
+As a transfer model free of the receiver-tile restrictions, the path loss
+of each (pixel, site) link is predicted directly. The features are computed
 from the scene geometry only, so they are available for a city without any
 measurement. The building heights are rasterised at \SI{2}{\metre} and the
 straight segment from the site to the pixel is sampled at $96$ interior
@@ -380,7 +380,7 @@ tile are appended.
 The ray tracer reports only links below the cut-off, so a regressor trained
 on them never learns that a distant, obstructed site is not received at all;
 it would predict a finite loss for every link and overstate the reach of
-every site. We therefore use a hurdle model: a gradient-boosted
+every site. A hurdle model is therefore used: a gradient-boosted
 classifier~\cite{ke2017lightgbm} of whether a (pixel, site) pair lies below
 the cut-off, trained on \num{120000} pairs of each training city (all sites
 and the pixels of its labelled tiles, including the pairs beyond the
@@ -426,8 +426,8 @@ residual of a link of site $s$ as $o_s+\varepsilon$, with independent site
 offsets $o_s$ of prior mean $\bar o$ and variance $\tau_o^{2}$ and link noise of
 variance $\sigma_\varepsilon^{2}$, and let $\kappa=\sigma_\varepsilon^{2}/\tau_o^{2}$.
 With $n_s$ observed links of site $s$ and mean residual $\bar r_s$, the
-posterior mean of $o_s$ is $(n_s\bar r_s+\kappa\bar o)/(n_s+\kappa)$, which we
-use with $\bar o$ the mean residual of all observed links; $\kappa$ is
+posterior mean of $o_s$ is $(n_s\bar r_s+\kappa\bar o)/(n_s+\kappa)$, which is
+used with $\bar o$ the mean residual of all observed links; $\kappa$ is
 estimated from the surveyed links themselves by the DerSimonian--Laird
 moment estimator over the site means (empirical Bayes), so that a survey
 whose site means scatter no more than their sampling error applies the
@@ -468,8 +468,8 @@ cell of the solver grid inside a labelled tile, with pairs beyond the
 cut-off treated as zero received power and cells no site reaches as outage
 pixels (\unreachedShare\% of the pixels, \unreachedMin--\unreachedMax\%
 across cities). With $P_{\mathrm{tx}}=\SI{46}{dBm}$, \SI{20}{\mega\hertz}
-bandwidth and a \SI{7}{\decibel} noise figure ($N=\SI{-94.0}{dBm}$) we
-compute the path-loss error over all ray-traced links, the censored error
+bandwidth and a \SI{7}{\decibel} noise figure
+($P_{\mathrm{N}}=\SI{-94.0}{dBm}$), the evaluation computes the path-loss error over all ray-traced links, the censored error
 over all pairs, the precision and recall of the predicted link existence,
 the serving site over the pixels the truth reaches (a pixel a predictor does
 not reach counts as wrong), coverage at $L\in\{120,130,140\}$\,dB, the SINR
@@ -491,13 +491,13 @@ Selecting $K$ of the $|\mathcal{B}|$ sites to maximise the number of covered
 pixels is a monotone submodular maximisation, for which the greedy algorithm
 attains a $(1-1/e)$ approximation of the optimum of the function it is
 given~\cite{nemhauser1978}; site selection with propagation models is a
-classical planning task~\cite{amaldi2003}. We run the greedy on the
-\emph{predicted} coverage at \SI{140}{\decibel} and score the selected sites
+classical planning task~\cite{amaldi2003}. The greedy algorithm is run on
+the \emph{predicted} coverage at \SI{140}{\decibel} and score the selected sites
 on the \emph{true} coverage. The regret is the true coverage of the greedy
 plan computed on the true map minus that of the plan computed on the
-predicted map. For dimensioning, we also count the sites that the greedy
-order on the predicted map needs to cover \covTarget\% of the pixels, and
-the true coverage those sites achieve.
+predicted map. For dimensioning, the sites that the greedy order on the
+predicted map needs to cover \covTarget\% of the pixels are also counted,
+together with the true coverage those sites achieve.
 
 \paragraph{Certified coverage}
 A planner must decide which pixels to \emph{promise} as covered. For a
@@ -526,7 +526,8 @@ spirit of conformal prediction~\cite{vovk2005,barber2021}; it needs no model
 of the residuals, and the nested selection of Section~\ref{sec:operators}
 provides the required symmetry. The rank $j$ trades confidence for
 coverage: $j=1$ (the largest margin of the other cities) gives probability
-$(n-1)/n$, $j=2$ gives $(n-2)/n$ with a smaller margin. We report it at
+$(n-1)/n$, $j=2$ gives $(n-2)/n$ with a smaller margin. The certificate is
+reported at
 $L=\SI{140}{\decibel}$ for $\alpha\in\{0.05,0.10\}$ and $j\in\{1,2\}$ (the
 results at \SI{130}{\decibel} are released with the code) with the claimed
 and the falsely claimed share of the pixels, and compare it with the naive
@@ -537,11 +538,11 @@ claim $\widehat{PL}_{\mathrm{serv}}(p)\le L$.
 
 \emph{Mixed-path composition.} The framework of~\cite{ozyurt2026}, following
 MAPLE~\cite{ozyurt2020maple}, composes the loss of a link from every tile
-its straight path crosses. We split the horizontal segment from each site to
-each pixel at the tile borders (sampled every \SI{10}{\metre}), so that tile
-$t$ holds a length $L_t$ of it, between the distances $d_t^{\mathrm{in}}$
-and $d_t^{\mathrm{out}}$ from the site, and evaluate two readings of the
-composition as a propagation law. The \emph{piecewise} reading is a
+its straight path crosses. The horizontal segment from each site to each
+pixel is split at the tile borders (sampled every \SI{10}{\metre}), so that
+tile $t$ holds a length $L_t$ of it, between the distances
+$d_t^{\mathrm{in}}$ and $d_t^{\mathrm{out}}$ from the site, and two readings
+of the composition are evaluated as a propagation law. The \emph{piecewise} reading is a
 multi-slope law along the path,
 $\PL=A_{s}+\sum_t 10\gamma_t\log_{10}\big(\max(d_t^{\mathrm{out}},d_0)/
 \max(d_t^{\mathrm{in}},d_0)\big)$, with the intercept of the site's tile $s$
@@ -569,8 +570,9 @@ labels of the same tiles from the main corpus. \emph{Tile size.} Labels,
 descriptors, zero-shot transfer (median, ridge, GBDT) and the network
 evaluation are repeated for $G_s\in\{50,100,200\}$\,m. \emph{Censoring.}
 Links beyond the cut-off are missing, which can bias a least-squares slope.
-We refit the labels with the cut lowered to $140$ and \SI{130}{\decibel}
-and, for \num{300} random tiles per city, compare the least-squares slope
+The labels are refitted with the cut lowered to $140$ and
+\SI{130}{\decibel} and, for \num{300} random tiles per city, the
+least-squares slope is compared
 with that of a censored-Gaussian (Tobit) model~\cite{tobin1958} that also
 uses the (pixel, site) pairs beyond the cut. \emph{Second band.} The tile
 and link pipelines are repeated at \SI{\freqTwoGHz}{\giga\hertz}, and the
@@ -578,12 +580,14 @@ and link pipelines are repeated at \SI{\freqTwoGHz}{\giga\hertz}, and the
 the free-space offset $20\log_{10}(f_2/f_1)$, their knife-edge feature
 evaluated at the new wavelength. \emph{External scenes.} The Munich,
 \'Etoile and Florence scenes distributed with Sionna~RT were modelled
-independently of our corpus, with detailed meshes and several ITU materials
-(brick, concrete, marble, metal, wood). We derive building footprints and
-heights from their meshes by vertical ray casting on a \SI{2}{\metre} grid,
-place \nExtSites{} rooftop sites per scene with the rule of our corpus
-(minimum separation \SI{\extMinSep}{\metre}, the scenes being smaller), ray
-trace them with the corpus settings and evaluate, without any retraining,
+independently of the corpus of this study, with detailed meshes and several
+ITU materials (brick, concrete, marble, metal, wood). Building footprints
+and heights are derived from their meshes by vertical ray casting on a
+\SI{2}{\metre} grid, \nExtSites{} rooftop sites per scene are placed with the
+siting rule of the main corpus (minimum separation
+\SI{\extMinSep}{\metre}, the scenes being smaller), the scenes are ray traced
+with the corpus settings, and the following predictors are evaluated without
+any retraining:
 the tile labels, the source median, ridge and GBDT fitted on all eleven
 cities under the nested rule, and the mean of the eleven leave-one-city-out
 link models, zero-shot and with the per-site calibration of
@@ -599,11 +603,11 @@ Every city is the target once (leave-one-city-out) and the other cities are
 training cities, inside which the nested selection of
 Section~\ref{sec:operators} takes place. Tiles of one city are spatially
 correlated, so tile-level tests would overstate significance; the unit of
-inference is the target city. For each comparison we report the mean
-per-city difference, a 95\% percentile bootstrap interval over
+inference is the target city. For each comparison, the mean per-city
+difference, a 95\% percentile bootstrap interval over
 cities~\cite{efron1993}, the exact two-sided Wilcoxon signed-rank
 $p$-value~\cite{wilcoxon1945} and the number of cities in which the first
-operator is better, with Holm's correction~\cite{holm1979} within each
-family of comparisons. Standard deviations across cities use $n-1$. With
+operator is better are reported, with Holm's correction~\cite{holm1979}
+within each family of comparisons. Standard deviations across cities use $n-1$. With
 \nCities{} cities an exact Wilcoxon test can reach $p<0.05$ only when nearly
-every city agrees; we state the power limit where it matters.
+every city agrees; the power limit is stated where it matters.

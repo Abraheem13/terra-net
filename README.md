@@ -2,8 +2,8 @@
 
 Code, data and manuscript for
 
-> **Cross-city path-loss transfer for 6G digital-twin network planning: why
-> tile parameters fall short and how site-aware link models close the gap**
+> **Cross-city propagation-model transfer for network planning in 6G digital
+> twin networks: tile parameters versus site-aware link models**
 
 The repository reproduces every number, table and figure of the manuscript
 (`paper/main.pdf`) from the ray-traced corpora with one command.

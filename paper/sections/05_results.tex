@@ -1,6 +1,78 @@
 %% ===================================================================
-\section{Results}
+\section{Performance evaluation}
 \label{sec:results}
+
+\subsection{Experimental setting}
+\label{sec:setting}
+
+All corpora were generated and all analyses were executed with the released
+pipeline on a virtual machine with four cores of an Intel Xeon processor at
+\SI{2.1}{\giga\hertz} and \SI{15}{\giga\byte} of memory under Ubuntu~24.04,
+without a GPU. Ray tracing uses Sionna~RT~\sionnaVersion{} on the LLVM
+backend of Mitsuba~3.9; the analysis uses Python~3.13 with
+scikit-learn~1.9, LightGBM~4.7 and PyTorch~2.14. Table~\ref{tab:settings}
+lists the parameters of the corpus generation, the models and the
+evaluation, and \ref{app:runtime} states the wall-clock cost of every step.
+The evaluation metrics, defined in Sections~\ref{sec:protocol}
+and~\ref{sec:neteval}, are the following.
+\begin{enumerate}
+\item \textbf{Parameter error:} root-mean-square error (RMSE) of the
+transferred exponent $\gamma$ and intercept $P_{L_0}$ over the tiles of the
+held-out city.
+\item \textbf{Path-loss error:} RMSE and bias over the ray-traced links, and
+the censored RMSE over all (pixel, site) pairs with prediction and truth
+clipped at the cut-off.
+\item \textbf{Link existence:} precision and recall of the predicted links
+below the cut-off, and the share of pixels whose reached state is predicted
+correctly.
+\item \textbf{Serving site:} share of the reached pixels assigned to the
+correct serving site.
+\item \textbf{SINR and coverage:} mean absolute SINR error,
+Kolmogorov--Smirnov distance between the SINR distributions, coverage
+agreement and coverage-share error at \SI{130}{\decibel}, and the error of
+the mean spectral efficiency.
+\item \textbf{Cell edges:} displacement of the predicted cell edges and
+relative error of their total length.
+\item \textbf{Planning regret and dimensioning:} coverage lost by selecting
+$K$ sites on the predicted map instead of the true map, and the number of
+sites the predicted map claims to need for \covTarget\% coverage together
+with their true coverage.
+\item \textbf{Certified coverage:} share of the pixels claimed covered under
+the city-level certificate and share claimed but not covered.
+\end{enumerate}
+Every comparison between predictors is accompanied by the city-level
+statistics of Section~\ref{sec:protocol}.
+
+\begin{table}[!t]
+\centering
+\caption{Parameters of the corpus generation, the models and the
+evaluation.}
+\label{tab:settings}
+\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{4.1cm}>{\raggedright\arraybackslash}p{3.6cm}}
+\toprule
+Parameter & Value \\
+\midrule
+Scene size; building source & $\sceneSize\times\sceneSize$\,km; Overture Maps release \mbox{\overtureRelease} \\
+Materials & ITU concrete (buildings), medium dry ground \\
+Sites per city; mast above roof; minimum separation & \nSitesPerCity; \siteMast\,m; \minSep\,m \\
+Carrier frequencies & \freqGHz{} and \freqTwoGHz\,GHz \\
+Receiver grid; receiver height & \cellSize\,m cells; \ueHeight\,m \\
+Ray budget per site; interaction depth & \rtSamples; \rtDepth \\
+Path-loss cut-off $L_{\max}$ & \maxPl\,dB \\
+Tile side $G_s$; reference distance $d_0$ & \tileSize\,m; \refDist\,m \\
+Minimum links per labelled tile & \minLinks \\
+Descriptors per tile; link features & 32; 46 \\
+Transmit power; bandwidth; noise figure & \SI{46}{dBm}; \SI{20}{\mega\hertz}; \SI{7}{\decibel} \\
+Coverage levels & 120, 130 and \SI{140}{\decibel} \\
+Site planning & greedy, $K=5$; dimensioning target \covTarget\% \\
+Seeds; inner folds of the expensive operators & 5; \nInnerExpensive \\
+Surveyed tiles $k$: tile correction; site calibration & 3--100; 10, 25, 50 \\
+Fixed prior strength $\kappa$ (calibration ablation) & \kappaLink{} links \\
+Certificate & $\alpha\in\{0.05,0.10\}$; $L=\SI{140}{\decibel}$; rank $j\in\{1,2\}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Corpus and ray-budget convergence}
 \label{sec:res-corpus}
@@ -251,8 +323,12 @@ and the facility-location design (all empirical Bayes unless stated).}
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{figures/fig_kshot.pdf}
-\caption{(a)~Exponent RMSE against the number of surveyed target tiles.
-(b)~GBDT per held-out city at $k\in\{0,10,50\}$.}
+\caption{(a)~Exponent RMSE on the unsurveyed tiles against the number of
+surveyed target tiles, for kernel transfer and for GBDT with the
+empirical-Bayes correction from random, designed and contiguous tiles and
+with the plain bias correction; ridge and the MLP lie within the line width
+of GBDT and are listed in Table~\ref{tab:kshot}. (b)~GBDT per held-out
+city at $k\in\{0,10,50\}$.}
 \label{fig:kshot}
 \end{figure*}
 
@@ -693,7 +769,7 @@ model with the exact labels of the new band, with a serving-site accuracy of
 
 \paragraph{External scenes}
 On the \nExtScenes{} independently modelled scenes (Table~\ref{tab:external};
-\nExtLinks{} links), whose geometry and materials differ from our corpus,
+\nExtLinks{} links), whose geometry and materials differ from the training corpus,
 zero-shot link transfer remains better than transferred tile parameters in
 path loss (\SI{\extNetLink}{\decibel} against \SI{\extNetGbdt}{\decibel} for
 GBDT, in \extLinkBetterGbdt{} of \nExtScenes{} scenes), serving site

@@ -5,17 +5,50 @@
 \subsection{Network and propagation model}
 \label{sec:netmodel}
 
+Table~\ref{tab:notation} summarises the notation used throughout the
+article.
+
+\begin{table}[!t]
+\centering
+\caption{Notation.}
+\label{tab:notation}
+\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{ll}
+\toprule
+Symbol & Description \\
+\midrule
+$\mathcal{B}$, $\mathcal{P}$ & Sites of a city and receiver locations (pixels) \\
+$d_{pb}$, $\PL(p,b)$ & 3-D length and path loss (dB) of link $(p,b)$ \\
+$P_{\mathrm{tx}}$, $P_{\mathrm{N}}$ & Transmit power and noise power (dBm) \\
+$P_{pb}$, $s(p)$ & Received power from site $b$ and serving site of pixel $p$ \\
+$L_{\max}$, $L$ & Coupling-loss cut-off of the receiver and coverage level \\
+$G_s$, $t$ & Tile side and tile index \\
+$\gamma_t$, $P_{L_0,t}$, $d_0$ & Exponent, intercept and reference distance of tile $t$ \\
+$\btheta_t$, $\hat\btheta_t$ & Tile label $(\gamma_t,P_{L_0,t})^{\top}$ and its estimate \\
+$w_t$, $\mu$, $\tau^{2}$ & Shrinkage weight; prior mean and variance of the slopes \\
+$\bv_t$ & Descriptor of tile $t$ ($p$ features) \\
+$\mathcal{T}_{\mathrm{S}}$, $N$ & Source tiles and their number \\
+$\mathcal{A}$, $w_j(\bv)$ & Transfer operator and label-averaging weights \\
+$n_{\mathrm{eff}}$, $\sigma$ & Effective neighbourhood size and kernel bandwidth \\
+$k$ & Number of surveyed target tiles \\
+$\kappa$, $o_s$ & Prior strength and offset of site $s$ in the link calibration \\
+$K$ & Number of sites selected by the planner \\
+$\alpha$, $\hat q_t$ & Risk level and margin of the coverage certificate \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 A city contains a set $\mathcal{B}$ of base-station sites and a set
 $\mathcal{P}$ of receiver locations (pixels) at user height. The link
 $(p,b)$ has three-dimensional length $d_{pb}$ and path loss $\PL(p,b)$ in dB.
-With transmit power $P_{\mathrm{tx}}$ (dBm) at every site and noise power $N$,
+With transmit power $P_{\mathrm{tx}}$ (dBm) at every site and noise power $P_{\mathrm{N}}$,
 the received power, serving site and downlink signal-to-interference-plus-noise
 ratio under full load are
 \begin{equation}
 \begin{gathered}
 P_{pb}=P_{\mathrm{tx}}-\PL(p,b),\qquad s(p)=\argmax_{b\in\mathcal{B}}P_{pb},\\
 \mathrm{SINR}(p)=\frac{10^{P_{p\,s(p)}/10}}
-{\sum_{b\neq s(p)}10^{P_{pb}/10}+10^{N/10}} .
+{\sum_{b\neq s(p)}10^{P_{pb}/10}+10^{P_{\mathrm{N}}/10}} .
 \end{gathered}
 \label{eq:sinr}
 \end{equation}
@@ -35,7 +68,7 @@ path loss follows the log-distance law~\cite{rappaport2002,erceg1999}
 \end{equation}
 with exponent $\gamma_t$, intercept $P_{L_0,t}$ at the reference distance
 $d_0$ and a residual $\varepsilon_{pb}$ of variance $\sigma_\varepsilon^2$.
-We use $d_0=\SI{\refDist}{\metre}$, the tile scale, so that $P_{L_0,t}$ is
+The reference distance is set to $d_0=\SI{\refDist}{\metre}$, the tile scale, so that $P_{L_0,t}$ is
 an interpolated rather than an extrapolated quantity; the intercept at
 \SI{1}{\metre} follows as $P_{L_0,t}-20\gamma_t$. Writing
 $x=10\log_{10}(d/d_0)$, Eq.~\eqref{eq:logdist} is linear in
@@ -53,7 +86,7 @@ $\btheta_t$, and (ii)~the predicted SINR is
 \begin{equation}
 \mathrm{SINR}(p)=\frac{(d_{ps}/d_0)^{-\gamma_t}}
 {\sum_{b\neq s}(d_{pb}/d_0)^{-\gamma_t}
-+10^{(N-P_{\mathrm{tx}}+P_{L_0,t})/10}},
++10^{(P_{\mathrm{N}}-P_{\mathrm{tx}}+P_{L_0,t})/10}},
 \label{eq:sinrtile}
 \end{equation}
 which in the interference-limited regime depends on the exponent only, while
