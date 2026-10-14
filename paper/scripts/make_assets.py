@@ -80,12 +80,11 @@ plt.rcParams.update({
     "pdf.fonttype": 42, "axes.unicode_minus": True})
 W1, W2 = 3.46, 7.16          # single / double column width (in)
 MARK = ["o", "s", "^", "D", "v", "P", "X", "*"]
-# Colour-vision-safe palette: three hues validated for every pairwise contrast
-# (blue, orange, aqua), achromatic tones, and an ordinal blue ramp. Series
-# identity is always carried by a marker or line style as well as by colour.
-C_BLUE, C_ORANGE, C_AQUA = "#2a78d6", "#eb6834", "#1baf7a"
-C_BLACK, C_GREY, C_LIGHT, C_PALE = "#1a1a1a", "#7a7a7a", "#c9c9c9", "#cde2fb"
-BLUES = ["#86b6ef", "#2a78d6", "#104281"]
+# Colour-vision-safe palette (defined once in figures_extra.py): three hues
+# validated for every pairwise contrast, achromatic tones and an ordinal ramp.
+import figures_extra  # noqa: E402
+from figures_extra import BLUES, C_AQUA, C_BLACK, C_BLUE, C_GREY, C_LIGHT, C_ORANGE, C_PALE  # noqa: E402
+
 FAMILY = {"median": C_BLACK, "uma_los": C_BLACK, "uma_nlos": C_BLACK, "cost231": C_BLACK,
           "kernel": C_ORANGE, "gp_ard": C_ORANGE, "knn": C_BLUE, "ridge": C_BLUE,
           "coral": C_BLUE, "mlp": C_BLUE, "encoder": C_BLUE, "gbdt": C_BLUE, "gbdt_iw": C_BLUE}
@@ -434,8 +433,41 @@ def stats(T, G, N):
                             f"{'yes' if r.holm_reject else 'no'} \\\\")
         save_table(G, name, tabular("llrrrrc", [
             r"Comparison & Metric & $\Delta$ & 95\% CI & $p$ & better & Holm \\"], rows))
-    table(["zero_shot", "pairs", "few_shot"], "tab_stats_param")
-    table(["network", "decomp", "band2"], "tab_stats_net")
+    key_rows = [("gbdt", "median", "gamma_rmse", "zero_shot"),
+                ("kernel", "median", "gamma_rmse", "zero_shot"),
+                ("gp_ard", "kernel", "gamma_rmse", "pairs"),
+                ("gbdt@k10", "gbdt@k0", "gamma_rmse", "few_shot"),
+                ("gbdt", "median", "pl_rmse_db", "network"),
+                ("link", "gbdt", "pl_rmse_db", "network"),
+                ("link", "oracle", "pl_rmse_db", "network"),
+                ("link", "gbdt", "assoc_acc", "network"),
+                ("link", "gbdt", "regret", "network"),
+                ("link", "oracle", "regret", "network"),
+                ("link+k25", "link", "pl_rmse_db", "network"),
+                ("link+k25d", "link+k25", "pl_rmse_db", "network"),
+                ("gbdt+h", "gbdt", "regret", "decomp"),
+                ("gbdt+los", "gbdt", "assoc_acc", "decomp"),
+                ("link", "gbdt+los+h", "pl_rmse_db", "decomp"),
+                ("link", "deygout", "pl_rmse_db", "decomp"),
+                ("link", "deygout", "regret", "decomp"),
+                ("link", "gbdt", "pl_rmse_db", "band2"),
+                ("link_x_phys", "link", "pl_rmse_db", "band2")]
+    rows = []
+    last_fam = None
+    for a, b, mtr, fam in key_rows:
+        q = s[(s.a == a) & (s.b == b) & (s.metric == mtr) & (s.family == fam)]
+        if not len(q):
+            continue
+        r = q.iloc[0]
+        if fam != last_fam:
+            rows.append(rf"\multicolumn{{7}}{{l}}{{\emph{{{fam_name[fam]}}}}} \\")
+            last_fam = fam
+        d, lo, hi = scaled(r.metric, r["diff"], r.ci_lo, r.ci_hi)
+        rows.append(f"{label.get(r.a, r.a)} vs {label.get(r.b, r.b)} & {metric[r.metric]} & "
+                    f"{d} & [{lo}, {hi}] & {pval(r.p_wilcoxon)} & {r.n_better}/{r.n_folds} & "
+                    f"{'yes' if r.holm_reject else 'no'} \\\\")
+    save_table(G, "tab_stats_key", tabular("llrrrrc", [
+        r"Comparison & Metric & $\Delta$ & 95\% CI & $p$ & better & Holm \\"], rows))
 
     def get(a, b, mtr, family):
         q = s[(s.a == a) & (s.b == b) & (s.metric == mtr) & (s.family == family)]
@@ -597,11 +629,7 @@ def fewshot(T, G, N, fig_dir):
     rows = [f"{nice(c)} & {pc.loc[c, 0]:.3f} & {pc.loc[c, 10]:.3f} & "
             f"{pc.loc[c, 50] if 50 in pc else float('nan'):.3f} & "
             f"{100 * (pc.loc[c, 10] / pc.loc[c, 0] - 1):+.0f} \\\\" for c in pc.index]
-    save_table(G, "tab_kshot_city", tabular("lrrrr", [
-        r"Target & $k{=}0$ & $k{=}10$ & $k{=}50$ & $\Delta_{10}$ (\%) \\"], [*rows, r"\midrule",
-        f"Mean & {pc[0].mean():.3f} & {pc[10].mean():.3f} & {pc[50].mean():.3f} & \\\\",
-        f"S.d. & {pc[0].std(ddof=1):.3f} & {pc[10].std(ddof=1):.3f} & "
-        f"{pc[50].std(ddof=1):.3f} & \\\\"]))
+    del rows
 
     fig, ax = plt.subplots(1, 2, figsize=(W2, 2.2))
     # panel (a): kernel transfer and the GBDT variants; ridge and the MLP lie within
@@ -643,21 +671,9 @@ def fewshot(T, G, N, fig_dir):
 # ----------------------------------------------------------------------------
 def label_noise(T, G, N):
     d = pd.read_csv(T / "label_noise.csv")
-    rows = [f"{nice(r.city)} & {r.median_n_bs:.0f} & {r.gamma_se_analytic:.3f} & "
-            f"{r.gamma_se_cluster:.3f} & {r.gamma_se_split_full:.3f} & {r.pl0_se_analytic:.2f} & "
-            f"{r.pl0_se_cluster:.2f} & {r.pl0_se_split_full:.2f} \\\\" for r in d.itertuples()]
-
     def rms(col):
         return float(np.sqrt((d[col] ** 2).mean()))
-    save_table(G, "tab_noise", tabular("lrrrrrrr", [
-        r"& & \multicolumn{3}{c}{$\mathrm{se}(\gamma)$} & "
-        r"\multicolumn{3}{c}{$\mathrm{se}(P_{L_0})$ (dB)} \\",
-        r"\cmidrule(lr){3-5}\cmidrule(lr){6-8}",
-        r"City & sites/tile & iid & cluster & split & iid & cluster & split \\"], [
-        *rows, r"\midrule",
-        f"RMS & & {rms('gamma_se_analytic'):.3f} & {rms('gamma_se_cluster'):.3f} & "
-        f"{rms('gamma_se_split_full'):.3f} & {rms('pl0_se_analytic'):.2f} & "
-        f"{rms('pl0_se_cluster'):.2f} & {rms('pl0_se_split_full'):.2f} \\\\"]))
+    # the per-city standard errors are shown as a figure (fig_noise.pdf)
     a, c, s = rms("gamma_se_analytic"), rms("gamma_se_cluster"), rms("gamma_se_split_full")
     N["seIid"], N["seCluster"], N["seSplit"] = f(a), f(c), f(s)
     N["seRatio"] = f(c / a, 1)
@@ -729,18 +745,7 @@ def network(T, G, N, fig_dir):
         N[f"reach{key}"] = pct(mean.loc[o, "reach_acc"])
         N[f"linkPrec{key}"] = pct(mean.loc[o, "link_precision"])
         N[f"linkRec{key}"] = pct(mean.loc[o, "link_recall"])
-    # per-city table of the link model against GBDT and the oracle
-    rows = []
-    for c in sorted(per.loc["link"].index):
-        a, b, o = per.loc[("link", c)], per.loc[("gbdt", c)], per.loc[("oracle", c)]
-        rows.append(f"{nice(c)} & {o.pl_rmse_db:.2f} & {b.pl_rmse_db:.2f} & {a.pl_rmse_db:.2f} & "
-                    f"{pct(o.assoc_acc)} & {pct(a.assoc_acc)} & {pct(o.regret)} & "
-                    f"{pct(b.regret)} & {pct(a.regret)} \\\\")
-    save_table(G, "tab_link_city", tabular("lrrrrrrrr", [
-        r"& \multicolumn{3}{c}{Path loss (dB)} & \multicolumn{2}{c}{Serving (\%)} & "
-        r"\multicolumn{3}{c}{Regret $K{=}5$ (\%)} \\",
-        r"\cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-9}",
-        r"City & oracle & GBDT & link & oracle & link & oracle & GBDT & link \\"], rows))
+    # the per-city comparison is shown as a figure (fig_cityres.pdf)
     lb = per.loc["link"]
     N["nLinkBetterGbdtPl"] = int((lb.pl_rmse_db < per.loc["gbdt"].pl_rmse_db).sum())
     N["nLinkBetterOraclePl"] = int((lb.pl_rmse_db < per.loc["oracle"].pl_rmse_db).sum())
@@ -1255,7 +1260,7 @@ def mixed(T, G, N):
                                                        ("kernel", "Kernel (NW)"),
                                                        ("gbdt", "GBDT")],
                mxf.xs("piecewise", level="model")),
-              (r"Mixed path, summed (\ref{app:summed})", [("oracle", "Tile labels (oracle)"),
+              (r"Mixed path, summed (literal reading)", [("oracle", "Tile labels (oracle)"),
                                                            ("median", "Source median"),
                                                            ("kernel", "Kernel (NW)"),
                                                            ("gbdt", "GBDT")],
@@ -1318,7 +1323,7 @@ def mixed_sizes(T, G, N):
                       pct(m.loc[(model, o), "assoc_acc"])]
         rows.append(" & ".join(r) + r" \\")
     save_table(G, "tab_mixed_size", tabular("rrrrrrrrrrrrrr", [
-        r"& & \multicolumn{4}{c}{Summed (\ref{app:summed})} & "
+        r"& & \multicolumn{4}{c}{Summed (literal)} & "
         r"\multicolumn{4}{c}{Piecewise} & \multicolumn{4}{c}{Path-averaged} \\",
         r"\cmidrule(lr){3-6}\cmidrule(lr){7-10}\cmidrule(lr){11-14}",
         r"& & \multicolumn{2}{c}{labels} & \multicolumn{2}{c}{GBDT} & "
@@ -1372,11 +1377,7 @@ def convergence(T, G, N):
             rows.append(f"{sci(r.rays)} & {r.seconds:.0f} & " + " & ".join(
                 f"{100 * getattr(r, f'frac_of_ref_{L}'):.1f} & {getattr(r, f'rms_diff_{L}'):.2f}"
                 for L in (120, 130, 140, 150)) + " \\\\")
-    save_table(G, "tab_convergence", tabular("rrrrrrrrrr", [
-        r"& & \multicolumn{2}{c}{$\le120$\,dB} & \multicolumn{2}{c}{$\le130$\,dB} & "
-        r"\multicolumn{2}{c}{$\le140$\,dB} & \multicolumn{2}{c}{$\le150$\,dB} \\",
-        r"\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}",
-        r"Rays & s & cells & RMS & cells & RMS & cells & RMS & cells & RMS \\"], rows))
+    del rows                      # the convergence study is shown as a figure
     used = c[c.rays == 10 ** 8]
     N["convNSites"] = int(len(used))
     N["convNCities"] = int(used.city.nunique())
@@ -1395,16 +1396,17 @@ def convergence(T, G, N):
 def runtime(T, G, N):
     r = pd.read_csv(T / "runtime.csv")
     us = "\\_"
-    def short(a):
-        a = "" if pd.isna(a) else str(a)
-        return a.replace("configs/data/", "").replace("--config ", "").replace("_", us)
-    rows = [f"\\texttt{{{x.script.replace('_', us)}}} & \\texttt{{{short(x.args)}}} & "
-            f"{x.seconds / 60:.0f} \\\\" for x in r.itertuples()]
-    save_table(G, "tab_runtime", tabular("lp{4.1cm}r", [r"Script & Configuration & minutes \\"],
-                                         rows))
+    g = r.groupby("script", sort=False).agg(runs=("seconds", "size"), seconds=("seconds", "sum"))
+    rows = [f"\\texttt{{{sc.replace('_', us)}}} & {int(x.runs)} & {x.seconds / 60:.0f} \\\\"
+            for sc, x in g.iterrows()]
+    rows += [r"\midrule", f"Total & {int(g.runs.sum())} & {g.seconds.sum() / 60:.0f} \\\\"]
+    save_table(G, "tab_runtime", tabular("lrr", [r"Script & runs & minutes \\"], rows))
     N["rtTotalHours"] = f"{r.seconds.sum() / 3600:.1f}"
     N["rtCpus"] = int(r.cpus.iloc[0])
     N["rtMachine"] = str(r.machine.iloc[0]).replace("_", "\\_")
+    heavy = g.seconds.sort_values(ascending=False)
+    N["rtHeaviest"] = heavy.index[0].replace("_", "\\_")
+    N["rtHeaviestHours"] = f"{heavy.iloc[0] / 3600:.1f}"
 
 
 def highlights(N, out):
@@ -1599,6 +1601,18 @@ def main():
     mixed(T, G, N)
     mixed_sizes(T, G, N)
     runtime(T, G, N)
+    n_all, pl_all, per_all = nets(T)
+    T2 = repo / str(cfg2.outputs_dir) / "tables"
+    figures_extra.fig_convergence(T, F, nice)
+    figures_extra.fig_noise(T, F, nice)
+    figures_extra.fig_city_results(per_all, F, nice)
+    figures_extra.fig_decomp(T, F, OP_NAME)
+    figures_extra.fig_survey(n_all, pl_all, F)
+    figures_extra.fig_certified(T, F, OP_NAME)
+    figures_extra.fig_replicates(T, F, per_all)
+    figures_extra.fig_band(T, T2, F, nice, OP_NAME, float(cfg.freq_ghz), float(cfg2.freq_ghz))
+    figures_extra.fig_mixed(T, F, per_all, MIX_SIZES)
+    figures_extra.fig_external(T, F, nice, OP_NAME)
     import importlib.util
     spec = importlib.util.spec_from_file_location("ext", repo / "scripts" / "17_external_scenes.py")
     mod = importlib.util.module_from_spec(spec)

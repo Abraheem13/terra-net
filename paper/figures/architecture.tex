@@ -1,0 +1,54 @@
+% Fig. -- architecture of the propagation-model layer of a digital twin network
+% as evaluated in this study: data layer, model layer and decision layer.
+\begin{tikzpicture}[
+  font=\footnotesize,
+  box/.style={draw, rectangle, minimum height=10mm, text width=27mm, align=center,
+              inner sep=2pt, line width=0.5pt},
+  data/.style={box, fill=tnblue!12},
+  model/.style={box, fill=white},
+  dec/.style={box, line width=1pt},
+  layer/.style={draw, rounded corners=2pt, line width=0.4pt, dashed, inner sep=4pt},
+  lab/.style={font=\scriptsize\bfseries, anchor=south west, inner sep=1pt},
+  arr/.style={-{Stealth[length=1.8mm,width=1.5mm]}, line width=0.5pt},
+  darr/.style={arr, dashed}]
+\def\dx{34mm}\def\dy{-22mm}
+% ---- data layer
+\node[data] (osm)   at (0*\dx, 0) {Open building data\\(Overture Maps, pinned release)};
+\node[data] (scene) at (1*\dx, 0) {Geo-referenced LoD1 scene\\(footprints, heights, materials)};
+\node[data] (rt)    at (2*\dx, 0) {Ray-traced corpus\\(links $\le L_{\max}$, outage pixels)};
+\node[data] (mdt)   at (3*\dx, 0) {Survey reports (MDT)\\$k$ tiles of the target city};
+% ---- model layer
+\node[model] (desc) at (0*\dx, 1*\dy) {Tile descriptors\\$\mathbf{v}_t\in\mathbb{R}^{32}$};
+\node[model] (lab)  at (1*\dx, 1*\dy) {Tile labels $(\gamma_t,P_{L_0,t})$\\empirical Bayes, CR2 precision};
+\node[model] (op)   at (2*\dx, 1*\dy) {Transfer operator $\mathcal{A}$\\(nested selection)};
+\node[model] (link) at (3*\dx, 1*\dy) {Site-aware link model\\hurdle + regressor; physics baselines};
+% ---- decision layer
+\node[dec] (map)   at (0.5*\dx, 2*\dy) {Predicted path-loss map\\$\widehat{P_L}(p,b)$ for every (pixel, site)};
+\node[dec] (net)   at (1.5*\dx, 2*\dy) {Serving site, SINR, coverage,\\cell edges, spectral efficiency};
+\node[dec] (plan)  at (2.5*\dx, 2*\dy) {Site planning and\\dimensioning (greedy)};
+\node[dec] (cert)  at (3.5*\dx, 2*\dy) {Coverage certificate $\hat q_t$\\city-level statistics};
+% ---- flows
+\draw[arr] (osm) -- (scene);
+\draw[arr] (scene) -- (rt);
+\draw[arr] (scene) -- (desc);
+\draw[arr] (rt) -- (lab);
+\draw[arr] (rt.south) -- ++(0,-3mm) -| ([xshift=-7mm]link.north);
+\draw[arr] (desc) -- (lab);
+\draw[arr] (lab) -- (op);
+\draw[darr] (mdt) -- (link);
+\draw[darr] (mdt.south) -- ++(0,-3mm) -| ([xshift=7mm]op.north);
+\draw[arr] (op.south) -- ++(0,-3mm) -| ([xshift=6mm]map.north);
+\draw[arr] (link.south) -- ++(0,-3mm) -| ([xshift=-6mm]map.north);
+\draw[arr] (map) -- (net);
+\draw[arr] (net) -- (plan);
+\draw[arr] (plan) -- (cert);
+% ---- layer frames
+\begin{scope}[on background layer]
+\node[layer, fit=(osm)(mdt), inner ysep=6pt] (L1) {};
+\node[layer, fit=(desc)(link), inner ysep=6pt] (L2) {};
+\node[layer, fit=(map)(cert), inner ysep=6pt] (L3) {};
+\end{scope}
+\node[lab] at (L1.north west) {Data layer};
+\node[lab] at (L2.north west) {Model layer};
+\node[lab] at (L3.north west) {Decision layer};
+\end{tikzpicture}

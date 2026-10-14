@@ -2,7 +2,14 @@
 \section{Related work}
 \label{sec:related}
 
-\subsection{Propagation models for network planning and digital twins}
+The problem studied here lies at the intersection of three bodies of work:
+propagation models and the digital twins that consume them for network
+planning, learned and transferred propagation models, and distribution-free
+uncertainty for decisions taken on predicted quantities. This section
+reviews each in turn and closes with a feature-based comparison between the
+representative studies and the present work.
+
+\subsection{Propagation models and digital twins for network planning}
 Empirical models such as Okumura--Hata~\cite{hata1980} and the 3GPP
 TR~38.901 formulas~\cite{tr38901} express path loss through a small number
 of parameters fitted to measurement campaigns and applied uniformly over an
@@ -18,16 +25,20 @@ resolves the geometry explicitly~\cite{yun2015raytracing}; differentiable
 ray tracers such as Sionna~RT make city-scale simulation and calibration
 against measurements practical~\cite{hoydis2023sionna,hoydis2024learning}.
 In this study, ray tracing produces the ground truth for many cities and is
-not the run-time predictor. Digital twins of wireless
-networks~\cite{khan2022dt,alkhateeb2023dt} and the ITU-T digital twin
-network architecture~\cite{ituy3090} need such propagation models for
-regions where no measurements exist yet, and consume them through planning
-functions: site selection with propagation predictions is a classical
-optimisation problem~\cite{amaldi2003}, and coverage maximisation is
-submodular and admits greedy approximation
-guarantees~\cite{nemhauser1978}.
+not the run-time predictor.
 
-\subsection{Learned radio maps and path-loss regression}
+Digital twins of wireless networks~\cite{khan2022dt,alkhateeb2023dt} and the
+ITU-T digital twin network architecture~\cite{ituy3090} need propagation
+models for regions where no measurements exist yet and consume them through
+planning functions. Site selection with propagation predictions is a
+classical optimisation problem~\cite{amaldi2003}; coverage maximisation is
+submodular and admits greedy approximation guarantees~\cite{nemhauser1978}.
+In operational networks, targeted measurements can be collected with the
+minimisation-of-drive-tests (MDT) framework~\cite{johansson2012mdt,ts37320},
+which motivates the few-shot setting of this study; choosing where to
+measure is a submodular sensor-placement problem~\cite{krause2008}.
+
+\subsection{Learned and transferred propagation models}
 Convolutional~\cite{levie2021radiounet}, autoencoder~\cite{teganya2022},
 adversarial~\cite{zhang2023rmegan} and diffusion~\cite{wang2025radiodiff}
 models predict dense radio maps from environment maps, and radio-map
@@ -46,7 +57,6 @@ family of~\cite{thrane2020,dempsey2025}; its purpose is to serve as a
 strong, simple and interpretable reference against which the tile
 representation is measured.
 
-\subsection{Tile-based transfer}
 MAPLE divides 3-D city maps into tiles and estimates mixed-path propagation
 in a new deployment area from the similarity of its tiles to tiles of
 measured areas~\cite{ozyurt2020maple}. The descriptor-based framework
@@ -58,25 +68,14 @@ descriptor similarity. It was evaluated with confidential measurements of an
 industrial partner in two European cities, each serving once as the source
 of the other, with tiles of \SI{200}{\metre} to \SI{1000}{\metre}, by the
 normalised error of the received power, and against empirical models only.
-The present study addresses the same transfer problem on a larger public
-corpus with a re-implementation of its operator on the built-structure
-descriptors, analyses the kernel operator, compares it with learned
-regressors under a common protocol, evaluates both the receiver-tile and the
-mixed-path composition, and measures the consequences for network planning.
-
-\subsection{Transfer under covariate shift and measurement collection}
 Transfer between domains with different input distributions is covariate
 shift~\cite{shimodaira2000}, and its difficulty depends on the discrepancy
 between the domains~\cite{bendavid2010}; importance
 weighting~\cite{shimodaira2000} and the alignment of feature
 statistics~\cite{sun2016coral} are standard remedies, which are included
-here as baselines. In operational networks, targeted measurements can be
-collected with the minimisation-of-drive-tests (MDT)
-framework~\cite{johansson2012mdt,ts37320}, which motivates the few-shot
-setting of this study; choosing where to measure is a submodular
-sensor-placement problem~\cite{krause2008}.
+here as baselines.
 
-\subsection{Uncertainty and censored measurements}
+\subsection{Uncertainty, censoring and positioning of this study}
 Conformal prediction gives distribution-free prediction sets under
 exchangeability~\cite{vovk2005}, and leave-one-out variants such as the
 jackknife+ reuse every training point for calibration~\cite{barber2021};
@@ -87,14 +86,17 @@ data beyond a receiver's sensitivity are censored in exactly this sense, and
 a hurdle model that first predicts whether a link exists is the natural
 counterpart for prediction.
 
-\subsection{Positioning of this study}
 Table~\ref{tab:related} summarises how the present study relates to the
 representative works above. None of the learned propagation models has been
 scored through the quantities a planner decides on, none states what
 coverage can be promised from a transferred model, and the tile-transfer
-framework has been evaluated on two cities with confidential data. This
-study fills these gaps with an open multi-city benchmark, a network-level
-evaluation and a city-level certificate.
+framework has been evaluated on two cities with confidential data. The
+present study addresses the same transfer problem on a larger public corpus
+with a re-implementation of the kernel operator on the built-structure
+descriptors, analyses that operator, compares it with learned regressors
+under a common protocol, evaluates both the receiver-tile and the mixed-path
+composition, measures the consequences for network planning, and states the
+coverage that can be promised at a given risk.
 
 \begin{table*}[!t]
 \centering

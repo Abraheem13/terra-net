@@ -1,8 +1,7 @@
 Dear Editor,
 
-We submit the manuscript **"Cross-city path-loss transfer for 6G digital-twin
-network planning: why tile parameters fall short and how site-aware link
-models close the gap"** for consideration as a research article in
+We submit the manuscript **"Cross-city propagation-model transfer for network planning in 6G
+digital twin networks: tile parameters versus site-aware link models"** for consideration as a research article in
 *Computer Communications*.
 
 Tile-based path-loss models, which fit a log-distance exponent and intercept
