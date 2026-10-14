@@ -6,7 +6,7 @@
 Reads only outputs/tables/*.csv and data/processed (tile tables), and writes
   paper/generated/numbers.tex   \\newcommand macros for every number in the text
   paper/generated/tab_*.tex     tables
-  paper/figures/fig_*.pdf       figures (monochrome)
+  paper/figures/fig_*.pdf       figures (colour-vision-safe palette)
 Nothing in the manuscript is typed by hand, so text, tables and figures
 cannot disagree with the results. Statements of the text that depend on the
 direction of a result are driven by macros as well (e.g. counts of cities,
@@ -74,12 +74,21 @@ plt.rcParams.update({
     "font.family": "serif", "font.serif": ["Times", "Nimbus Roman", "DejaVu Serif"],
     "mathtext.fontset": "stix", "font.size": 7.5, "axes.labelsize": 7.5,
     "axes.titlesize": 7.5, "legend.fontsize": 6.5, "xtick.labelsize": 6.5,
-    "ytick.labelsize": 6.5, "axes.linewidth": 0.5, "lines.linewidth": 0.9,
+    "ytick.labelsize": 6.5, "axes.linewidth": 0.5, "lines.linewidth": 1.1,
     "xtick.major.width": 0.5, "ytick.major.width": 0.5, "savefig.bbox": "tight",
     "savefig.pad_inches": 0.02, "axes.spines.top": False, "axes.spines.right": False,
     "pdf.fonttype": 42, "axes.unicode_minus": True})
 W1, W2 = 3.46, 7.16          # single / double column width (in)
 MARK = ["o", "s", "^", "D", "v", "P", "X", "*"]
+# Colour-vision-safe palette: three hues validated for every pairwise contrast
+# (blue, orange, aqua), achromatic tones, and an ordinal blue ramp. Series
+# identity is always carried by a marker or line style as well as by colour.
+C_BLUE, C_ORANGE, C_AQUA = "#2a78d6", "#eb6834", "#1baf7a"
+C_BLACK, C_GREY, C_LIGHT, C_PALE = "#1a1a1a", "#7a7a7a", "#c9c9c9", "#cde2fb"
+BLUES = ["#86b6ef", "#2a78d6", "#104281"]
+FAMILY = {"median": C_BLACK, "uma_los": C_BLACK, "uma_nlos": C_BLACK, "cost231": C_BLACK,
+          "kernel": C_ORANGE, "gp_ard": C_ORANGE, "knn": C_BLUE, "ridge": C_BLUE,
+          "coral": C_BLUE, "mlp": C_BLUE, "encoder": C_BLUE, "gbdt": C_BLUE, "gbdt_iw": C_BLUE}
 
 LINK_NAME = {"ke_loss_db": "knife-edge loss", "max_excess": "max.\\ excess height",
              "n_cross": "buildings crossed", "log_d3": "log distance",
@@ -272,10 +281,11 @@ def corpus(T, G, N, fig_dir, tiles):
     fig, ax = plt.subplots(1, 2, figsize=(W2, 2.2), gridspec_kw={"width_ratios": [1.15, 1]})
     data = [tiles[tiles.city == c].gamma.dropna().to_numpy() for c in order]
     bp = ax[0].boxplot(data, widths=0.6, patch_artist=True, showfliers=False,
-                       medianprops=dict(color="k", lw=1.0), whiskerprops=dict(lw=0.6),
-                       capprops=dict(lw=0.6), boxprops=dict(lw=0.6))
+                       medianprops=dict(color=BLUES[2], lw=1.0),
+                       whiskerprops=dict(lw=0.6, color=C_BLACK),
+                       capprops=dict(lw=0.6, color=C_BLACK), boxprops=dict(lw=0.6, color=C_BLACK))
     for b in bp["boxes"]:
-        b.set_facecolor("0.85")
+        b.set_facecolor(C_PALE)
     ax[0].set_xticks(range(1, len(order) + 1))
     ax[0].set_xticklabels([nice(c) for c in order], rotation=45, ha="right")
     ax[0].set_ylabel(r"tile exponent $\gamma$")
@@ -286,12 +296,12 @@ def corpus(T, G, N, fig_dir, tiles):
     r = np.array([np.corrcoef(D[:, j], g)[0, 1] for j in live])
     top = np.argsort(-np.abs(r))[:10]
     y = np.arange(len(top))
-    ax[1].barh(y, r[top], color=["0.25" if v > 0 else "0.7" for v in r[top]],
-               edgecolor="k", lw=0.4)
+    ax[1].barh(y, r[top], color=[C_BLUE if v > 0 else C_ORANGE for v in r[top]],
+               edgecolor="none", height=0.72)
     ax[1].set_yticks(y)
     ax[1].set_yticklabels([desc_name(DESCRIPTOR_NAMES[live[j]]) for j in top])
     ax[1].invert_yaxis()
-    ax[1].axvline(0, color="k", lw=0.5)
+    ax[1].axvline(0, color=C_BLACK, lw=0.5)
     ax[1].set_xlabel(r"Pearson $r$ with $\gamma$ (all tiles)")
     ax[1].set_title("(b)", loc="left")
     fig.tight_layout(w_pad=1.5)
@@ -371,7 +381,7 @@ def loco(T, G, N, fig_dir):
     order = g["median"].sort_values().index
     for i, o in enumerate(show):
         ax.plot(g.loc[order, o].to_numpy(), np.arange(len(order)) + (i - len(show) / 2) * 0.09,
-                MARK[i], ms=3.2, mfc="none" if i % 2 else "k", mec="k", mew=0.6,
+                MARK[i], ms=3.6, mfc="white" if i % 2 else FAMILY[o], mec=FAMILY[o], mew=0.7,
                 ls="none", label=SHORT[o])
     ax.set_yticks(range(len(order)))
     ax.set_yticklabels([nice(c) for c in order])
@@ -594,33 +604,36 @@ def fewshot(T, G, N, fig_dir):
         f"{pc[50].std(ddof=1):.3f} & \\\\"]))
 
     fig, ax = plt.subplots(1, 2, figsize=(W2, 2.2))
-    for i, o in enumerate(FS_OPS):
-        ax[0].plot(tab.index, tab[o], marker=MARK[i], ms=3, color="k",
-                   mfc="none" if i % 2 else "k", ls=["-", "--", ":", "-."][i], label=OP_NAME[o])
-    ax[0].plot(bias.index, bias["gbdt"], color="0.55", marker="x", ms=3, ls="-",
+    # panel (a): kernel transfer and the GBDT variants; ridge and the MLP lie within
+    # the line width of GBDT and are listed in the table instead
+    ax[0].plot(tab.index, tab["kernel"], marker="o", ms=3.2, color=C_ORANGE, mfc=C_ORANGE,
+               ls="-", label=OP_NAME["kernel"])
+    ax[0].plot(tab.index, tab["gbdt"], marker="D", ms=3.2, color=C_BLUE, mfc=C_BLUE, ls="-",
+               label="GBDT, random tiles")
+    ax[0].plot(design.index, design["gbdt"], color=C_BLUE, marker="*", ms=4.6, ls="-.",
+               mfc="white", label="GBDT, designed tiles")
+    ax[0].plot(bias.index, bias["gbdt"], color=C_BLUE, marker="x", ms=3.6, ls="--",
                label="GBDT, plain bias")
-    ax[0].plot(patch.index, patch["gbdt"], color="0.55", marker="+", ms=3, ls="--",
+    ax[0].plot(patch.index, patch["gbdt"], color=C_BLUE, marker="+", ms=4.2, ls=":",
                label="GBDT, contiguous tiles")
     ax[0].set_xscale("symlog", linthresh=3)
     ax[0].set_xticks(tab.index)
     ax[0].set_xticklabels([str(int(v)) for v in tab.index])
     ax[0].set_xlabel("surveyed target tiles $k$")
     ax[0].set_ylabel(r"$\gamma$ RMSE (unsurveyed tiles)")
-    lo_, hi_ = ax[0].get_ylim()
-    ax[0].set_ylim(lo_, hi_ + 0.6 * (hi_ - lo_))
-    ax[0].legend(frameon=False, ncol=2, loc="upper center")
+    ax[0].legend(frameon=False, ncol=2, loc="lower right", bbox_to_anchor=(1.0, 1.0),
+                 handlelength=2.4, columnspacing=1.2, handletextpad=0.4)
     ax[0].set_title("(a)", loc="left")
     order = pc[0].sort_values(ascending=False).index
     x = np.arange(len(order))
-    for j, (kk, col) in enumerate([(0, "0.2"), (10, "0.6"), (50, "0.9")]):
+    for j, (kk, col) in enumerate([(0, BLUES[0]), (10, BLUES[1]), (50, BLUES[2])]):
         if kk in pc:
-            ax[1].bar(x + (j - 1) * 0.27, pc.loc[order, kk], 0.27, color=col, edgecolor="k",
-                      lw=0.4, label=f"$k={kk}$")
+            ax[1].bar(x + (j - 1) * 0.27, pc.loc[order, kk], 0.26, color=col,
+                      edgecolor="none", label=f"$k={kk}$")
     ax[1].set_xticks(x)
     ax[1].set_xticklabels([nice(c) for c in order], rotation=45, ha="right")
     ax[1].set_ylabel(r"$\gamma$ RMSE, GBDT")
-    ax[1].set_ylim(0, 1.3 * ax[1].get_ylim()[1])
-    ax[1].legend(frameon=False, ncol=3, loc="upper center")
+    ax[1].legend(frameon=False, ncol=3, loc="lower right", bbox_to_anchor=(1.0, 1.0))
     ax[1].set_title("(b)", loc="left")
     fig.tight_layout(w_pad=1.5)
     fig.savefig(fig_dir / "fig_kshot.pdf")
@@ -741,9 +754,9 @@ def network(T, G, N, fig_dir):
     ops = [o for o in ["oracle", "median", "kernel", "ridge", "gbdt", "link", "link+k25"]
            if o in mean.index]
     y = np.arange(len(ops))
-    shade = {"oracle": "0.35", "link": "0.1", "link+k25": "0.1"}
+    shade = {"oracle": C_GREY, "link": C_BLUE, "link+k25": C_BLUE}
     ax[0].barh(y, [mean.loc[o, "pl_rmse_db"] for o in ops],
-               color=[shade.get(o, "0.8") for o in ops], edgecolor="k", lw=0.4)
+               color=[shade.get(o, C_LIGHT) for o in ops], edgecolor="none", height=0.72)
     ax[0].set_yticks(y)
     ax[0].set_yticklabels([OP_NAME[o] for o in ops])
     ax[0].invert_yaxis()
@@ -753,16 +766,19 @@ def network(T, G, N, fig_dir):
     pl_all = pd.concat([pd.read_csv(T / "planning.csv"), pd.read_csv(T / "planning_link.csv")])
     pl_all = pl_all[(pl_all.sites == pl_all.sites.max()) & (pl_all.K > 0)]
     reg = pl_all.groupby(["operator", "K", "fold"]).regret.mean().groupby(["operator", "K"]).mean()
-    for i, o in enumerate([o for o in ["oracle", "median", "kernel", "gbdt", "link"]
-                           if o in mean.index]):
+    net_style = {"oracle": (C_BLACK, "-", "o", 1.0), "median": (C_GREY, "--", "s", 1.0),
+                 "kernel": (C_ORANGE, ":", "^", 1.0), "gbdt": (C_AQUA, "-.", "D", 1.0),
+                 "link": (C_BLUE, "-", "v", 1.6)}
+    for o in [o for o in ["oracle", "median", "kernel", "gbdt", "link"] if o in mean.index]:
         r = reg.loc[o]
-        ax[1].plot(r.index, 100 * r.to_numpy(), marker=MARK[i], ms=3, color="k",
-                   mfc="none" if i % 2 else "k", ls=["-", "--", ":", "-.", "-"][i],
-                   lw=1.8 if o == "link" else 0.9, label=OP_NAME[o])
+        c_, ls_, m_, lw_ = net_style[o]
+        ax[1].plot(r.index, 100 * r.to_numpy(), marker=m_, ms=3.4, color=c_, mfc=c_, ls=ls_,
+                   lw=lw_, label=OP_NAME[o])
     ax[1].set_xlabel("sites selected $K$")
     ax[1].set_ylabel("planning regret (% of pixels)")
-    ax[1].set_ylim(0, 1.45 * ax[1].get_ylim()[1])
-    ax[1].legend(frameon=False, ncol=2, loc="upper center")
+    ax[1].set_ylim(0, None)
+    ax[1].legend(frameon=False, ncol=3, loc="lower right", bbox_to_anchor=(1.0, 1.0),
+                 handlelength=2.4, columnspacing=0.9, handletextpad=0.4)
     ax[1].set_title("(b)", loc="left")
     fig.tight_layout(w_pad=1.5)
     fig.savefig(fig_dir / "fig_network.pdf")
@@ -1438,7 +1454,7 @@ def city_figure(repo, base, cfg, fig_dir, city):
     fig, ax = plt.subplots(1, 3, figsize=(W2, 2.45))
     hv = np.clip(heights, 0, 60)
     pc = PolyCollection([np.asarray(q.exterior.coords) for q in parts], array=hv,
-                        cmap="Greys", edgecolors="none", clim=(0, 60))
+                        cmap="Blues", edgecolors="none", clim=(0, 60))
     ax[0].add_collection(pc)
     fig.colorbar(pc, ax=ax[0], fraction=0.046, pad=0.02, label="height (m)")
 
@@ -1452,12 +1468,12 @@ def city_figure(repo, base, cfg, fig_dir, city):
     ext = (-half, half, -half, half)
     cell = float(np.median(np.diff(np.unique(np.round(bx, 3)))))
     im = ax[1].imshow(raster(bx, by, best.pathloss_db.to_numpy(), cell), origin="lower",
-                      extent=ext, cmap="Greys", vmin=70, vmax=150, interpolation="nearest")
+                      extent=ext, cmap="Blues", vmin=70, vmax=150, interpolation="nearest")
     fig.colorbar(im, ax=ax[1], fraction=0.046, pad=0.02, label="best-server path loss (dB)")
     ok = np.isfinite(tiles.gamma).to_numpy()
     tcell = float(cfg.tile_size_m)
     im2 = ax[2].imshow(raster(tx[ok], ty[ok], tiles.gamma.to_numpy()[ok], tcell), origin="lower",
-                       extent=ext, cmap="Greys", interpolation="nearest")
+                       extent=ext, cmap="Blues", interpolation="nearest")
     fig.colorbar(im2, ax=ax[2], fraction=0.046, pad=0.02, label=r"tile exponent $\gamma$")
     for i, a in enumerate(ax):
         a.set_xlim(-half, half)
