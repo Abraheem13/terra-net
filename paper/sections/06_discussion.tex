@@ -2,27 +2,32 @@
 \section{Discussion}
 \label{sec:discussion}
 
-\paragraph{The tile exponent is not an environmental constant}
+The results of Section~\ref{sec:results} bear on three questions: why the
+tile exponent transfers poorly across cities, what the gap between tile
+models and link transfer consists of, and what follows for the propagation
+layer of a digital twin network. This section takes them in turn, returns
+to the kernel operator, draws the practical conclusions for planning and
+states the limitations of the study.
+
 The central premise of descriptor-based tile transfer is that a tile has a
 path-loss exponent determined by its environment, which can be read from
 descriptors and carried to similar tiles elsewhere. On this corpus the
-premise is weak, for three measured reasons. Two estimates of the same tile's
-exponent from disjoint halves of the sites differ by \seSplitDiff{} in
-standard deviation, so the exponent depends on which sites serve the tile;
-it depends on the dynamic range of the measurements, shifting by
-\censDgOneForty{} when the cut-off is lowered by \SI{10}{\decibel}; and the
-cross-city spread of the city medians (\betweenSd) is small against the
-spread within a city. A tile is seen by each site through a different street
-canyon, and the exponent fitted over all of them mixes the geometry of the
-tile with that of the paths reaching it. This explains why learned operators
-improve on the source median only modestly, why few-shot correction of the
-exponent gains only \fsGainGbdt\% with ten surveyed tiles and
-\fsGainMaxGbdt\% with \fsKmax, and why a planning
-tool fed with even the \emph{true} receiver-tile labels assigns half of the
-pixels to the wrong site and draws cell edges \SI{\edgeOracle}{\metre} away
-from the true ones.
+premise is weak, for three measured reasons. Two estimates of the exponent
+of the same tile from disjoint halves of the sites differ by
+\seSplitDiff{} in standard deviation, so the exponent depends on which
+sites serve the tile; it depends on the dynamic range of the measurements,
+shifting by \censDgOneForty{} when the cut-off is lowered by
+\SI{10}{\decibel}; and the cross-city spread of the city medians
+(\betweenSd) is small against the spread within a city. A tile is seen by
+each site through a different street canyon, and the exponent fitted over
+all of them mixes the geometry of the tile with that of the paths reaching
+it. This explains why learned operators improve on the source median only
+modestly, why few-shot correction of the exponent gains only \fsGainGbdt\%
+with ten surveyed tiles and \fsGainMaxGbdt\% with \fsKmax, and why a
+planning tool fed with even the \emph{true} receiver-tile labels assigns
+half of the pixels to the wrong site and draws cell edges
+\SI{\edgeOracle}{\metre} away from the true ones.
 
-\paragraph{What the gap is made of}
 Section~\ref{sec:res-decomp} separates three things that a receiver-tile
 model lacks. The first is a notion of reach: without a cut-off model every
 site covers every pixel, a single site appears to cover \covTarget\% of a
@@ -43,9 +48,8 @@ its deterministic hurdle is already as good (\varDeygoutRegret\% against
 \regretLink\%). The learning adds accuracy to the diffraction physics; the
 reach model is what makes either plan reliable.
 
-\paragraph{What to transfer}
-The quantity that transfers is the effect of the geometry along a link,
-not a per-tile summary of it. Site-aware link transfer uses the same
+The quantity that transfers is therefore the effect of the geometry along a
+link, not a per-tile summary of it. Site-aware link transfer uses the same
 descriptors, the same training cities and the same protocol, but conditions
 on the path between site and receiver; it improves path loss, serving site,
 coverage and planning in every held-out city and outperforms the tile model
@@ -69,49 +73,48 @@ this corpus the empirical-Bayes prior strength has a median of
 \kappaMedianTwentyFive{} links, close to the fixed value of \kappaLink, and
 both leave the zero-shot model nearly unchanged, whereas the designs that
 concentrate the survey make it worse; on the external scenes the same
-calibration removes a bias of several decibels.
-Third, its errors must be stated at the level of the decision: the
-city-level certificate turns the leave-one-city-out residuals into a
-coverage promise with a guaranteed risk, and the more accurate the model,
-the more of the city it can promise (\certClaimLink\% against
-\certClaimGbdt\% for tile transfer). For a 6G network digital twin this
-means that the transferable representation should be attached to links (or
-to site--tile pairs), which is also what a planning tool evaluates.
+calibration removes a bias of several decibels. Third, its errors must be
+stated at the level of the decision: the city-level certificate turns the
+leave-one-city-out residuals into a coverage promise with a guaranteed
+risk, and the more accurate the model, the more of the city it can promise
+(\certClaimLink\% against \certClaimGbdt\% for tile transfer). For a 6G
+network digital twin this means that the transferable representation should
+be attached to links (or to site--tile pairs), which is also what a planning
+tool evaluates.
 
-\paragraph{Kernel transfer}
-Proposition~\ref{prop:regimes} identifies two limits of kernel transfer;
-the tuned operator is in neither, but with the largest bandwidth selected
-on \nSigmaLargest{} targets it approaches the source mean without reaching
-the flat regime. Its disadvantage against the learned regressors is the
-noise-transmission term of Eq.~\eqref{eq:decomp} combined with an
+The analysis of the kernel operator completes the picture at the parameter
+level. Proposition~\ref{prop:regimes} identifies two limits of kernel
+transfer; the tuned operator is in neither, but with the largest bandwidth
+selected on \nSigmaLargest{} targets it approaches the source mean without
+reaching the flat regime. Its disadvantage against the learned regressors
+is the noise-transmission term of Eq.~\eqref{eq:decomp} combined with an
 isotropic distance: learning one length scale per descriptor (GP-ARD)
 removes most of the gap, which locates the weakness in the metric rather
 than in kernel averaging as such.
 
-\paragraph{Implications for planning}
-Four practical conclusions follow. First, a transfer model for a
-digital twin should be validated at the network level; parameter errors of
-similar size lead to very different planning losses (Table~\ref{tab:network}),
-and a uniformly biased model such as the 3GPP UMa NLoS constants has a
-path-loss error of \SI{\netUmaNlos}{\decibel}, far above all transfer
-operators, yet a planning
-regret of \regretUmaNlos\%, below that of transferred tile parameters,
-because a uniform bias does not change which sites cover the most pixels.
-Second, models trained on links below a receiver cut-off overstate the reach
-of distant sites unless the cut-off is modelled; the tile models with
-transferred parameters predict that a single site covers \covTarget\% of a
-city (GBDT: \sitesNeedGbdt; source median: \sitesNeedMedian), and a hurdle
-fixes most of the planning loss even for the tile model. Third, small surveys do not help a model without systematic error,
-but correct a shifted one, and they must be unbiased: a design that
-maximises the variance reduction of the offsets selects unrepresentative
-tiles, and the empirical-Bayes prior should decide how much to trust them.
-Fourth, coverage claims should come with a margin estimated across cities:
-without it, \certNaiveFalseGbdt\% of the pixels promised by tile transfer
-are not covered.
+Four practical conclusions follow for the planning functions of a digital
+twin. First, a transfer model should be validated at the network level;
+parameter errors of similar size lead to very different planning losses
+(Table~\ref{tab:network}), and a uniformly biased model such as the 3GPP
+UMa NLoS constants has a path-loss error of \SI{\netUmaNlos}{\decibel}, far
+above all transfer operators, yet a planning regret of \regretUmaNlos\%,
+below that of transferred tile parameters, because a uniform bias does not
+change which sites cover the most pixels. Second, models trained on links
+below a receiver cut-off overstate the reach of distant sites unless the
+cut-off is modelled; the tile models with transferred parameters predict
+that a single site covers \covTarget\% of a city (GBDT: \sitesNeedGbdt;
+source median: \sitesNeedMedian), and a hurdle fixes most of the planning
+loss even for the tile model. Third, small surveys do not help a model
+without systematic error, but correct a shifted one, and they must be
+unbiased: a design that maximises the variance reduction of the offsets
+selects unrepresentative tiles, and the empirical-Bayes prior should decide
+how much to trust them. Fourth, coverage claims should come with a margin
+estimated across cities: without it, \certNaiveFalseGbdt\% of the pixels
+promised by tile transfer are not covered.
 
-\paragraph{Limitations}
-The path loss is ray traced rather than measured, so absolute values depend
-on the solver, the ITU material models and the level-of-detail-1 geometry;
+The study has limitations that bound the reach of these conclusions. The
+path loss is ray traced rather than measured, so absolute values depend on
+the solver, the ITU material models and the level-of-detail-1 geometry;
 the results are comparisons under identical conditions, and the solver
 noise floor of Section~\ref{sec:res-corpus} bounds the agreement any model
 can reach near the cut-off. Ray tracing on single-material geometry makes
@@ -122,17 +125,17 @@ see and that a tile statistic partly absorbs. The materials replicate and
 the external scenes test the first of these and show the expected bias,
 which a small survey removes; vegetation and clutter remain untested, and
 none of the replicates replaces validation against measurements with known
-site positions, which the public drive-test data available to the authors do not
-provide. Between \impMin\% and \impMax\% of the building heights are imputed
-per city. With eleven cities, city-level tests have limited power: an exact
-Wilcoxon test with Holm's correction over a dozen comparisons requires
-nearly every city to agree, which is why no improvement of a tile operator
-over the median survives it although the learned operators improve on it in
-\learnedBetterMin{} to \learnedBetterMax{} of \nFolds{} cities, and why the
-certificate cannot state a 95\% level; a corpus of twenty or more cities,
-which the released pipeline generates at \rtSecPerSite{}\,s per site, would
-remove both limits. The corpus has flat terrain, \nSitesPerCity{} rooftop
-sites per city with isotropic antennas, full load and a fixed link budget.
-Tile labels come from the same ray tracer as the network truth, so the oracle
-is the reference for tile models with exact labels on this corpus, not a
-statement about measured data.
+site positions, which the public drive-test data available to the authors
+do not provide. Between \impMin\% and \impMax\% of the building heights are
+imputed per city. With eleven cities, city-level tests have limited power:
+an exact Wilcoxon test with Holm's correction over a dozen comparisons
+requires nearly every city to agree, which is why no improvement of a tile
+operator over the median survives it although the learned operators improve
+on it in \learnedBetterMin{} to \learnedBetterMax{} of \nFolds{} cities,
+and why the certificate cannot state a 95\% level; a corpus of twenty or
+more cities, which the released pipeline generates at \rtSecPerSite{}\,s
+per site, would remove both limits. The corpus has flat terrain,
+\nSitesPerCity{} rooftop sites per city with isotropic antennas, full load
+and a fixed link budget. Tile labels come from the same ray tracer as the
+network truth, so the oracle is the reference for tile models with exact
+labels on this corpus, not a statement about measured data.

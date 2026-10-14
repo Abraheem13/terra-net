@@ -75,7 +75,7 @@ make test               # unit tests + an end-to-end run on a synthetic corpus
 
 `make reproduce` needs no GPU and no network access; it runs from the
 ray-traced corpora in `data/raw/`. The wall-clock time of every step is
-recorded in `outputs/tables/runtime.csv` and reported in the appendix of the
+recorded in `outputs/tables/runtime.csv` and reported in the experimental-setting section of the
 manuscript (about one CPU-day on four cores for the nested protocol).
 `paper/scripts/check_build.py` fails the LaTeX build on undefined
 references, unused or missing generated macros and tables, and on any
