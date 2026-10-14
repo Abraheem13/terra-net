@@ -497,6 +497,8 @@ def stats(T, G, N):
     worse = zs[zs.holm_reject & (zs["diff"] > 0)]
     N["nZeroShotSigBetter"] = len(better)
     N["zeroShotSigBetterList"] = ", ".join(label.get(a, a) for a in better.a) or "none"
+    N["zeroShotSigBetterParen"] = (" (" + ", ".join(label.get(a, a) for a in better.a) + ")"
+                                   if len(better) else "")
     N["nZeroShotSigWorse"] = len(worse)
     N["zeroShotSigWorseList"] = ", ".join(label.get(a, a) for a in worse.a) or "none"
     N["zeroShotSigBetterWord"] = ("none" if len(better) == 0 else
@@ -560,6 +562,7 @@ def fewshot(T, G, N, fig_dir):
         N[f"fsZero{key}"], N[f"fsTen{key}"] = f(tab.loc[0, o]), f(tab.loc[10, o])
         N[f"fsMax{key}"] = f(tab.loc[tab.index.max(), o])
         N[f"fsGain{key}"] = pct(1 - tab.loc[10, o] / tab.loc[0, o])
+        N[f"fsGainMax{key}"] = pct(1 - tab.loc[tab.index.max(), o] / tab.loc[0, o])
     N["fsKmax"] = int(tab.index.max())
     better = [kk for kk in tab.index if kk > 0 and tab.loc[kk, "gbdt"] < tab.loc[0, "gbdt"]]
     N["fsFirstBetterK"] = int(better[0]) if better else "--"
@@ -574,7 +577,7 @@ def fewshot(T, G, N, fig_dir):
     N["fsPlainWorseKs"] = ", ".join(str(int(v)) for v in worse_plain) or "none"
     worse_eb = [kk for kk in tab.index if kk > 0 and tab.loc[kk, "gbdt"] > tab.loc[0, "gbdt"]]
     N["fsEbWorseKs"] = ", ".join(str(int(v)) for v in worse_eb) or "none"
-    N["fsEbNeverWorse"] = "never" if not worse_eb else "at $k=" + ", ".join(
+    N["fsEbNeverWorse"] = "at no value of $k$" if not worse_eb else "at $k=" + ", ".join(
         str(int(v)) for v in worse_eb) + "$"
     pc = k[(k["mode"] == "eb") & (k.sampling == "random") & (k.operator == "gbdt")] \
         .groupby(["fold", "k"]).gamma_rmse.mean().unstack()
@@ -707,7 +710,7 @@ def network(T, G, N, fig_dir):
         rows.append(f"{OP_NAME[o]} & {pct(m.reach_acc)} & {pct(m.link_precision)} & "
                     f"{pct(m.link_recall)} & {m.pl_rmse_cens_db:.2f} \\\\")
     save_table(G, "tab_hurdle", tabular("lrrrr", [
-        r"Predictor & reach (\%) & link precision (\%) & link recall (\%) & cens.\ RMSE (dB) \\"],
+        r"Predictor & reach (\%) & precision (\%) & recall (\%) & cens.\ RMSE (dB) \\"],
         rows))
     for o, key in [("link", "Link"), ("gbdt", "Gbdt"), ("link_reg", "LinkReg")]:
         N[f"reach{key}"] = pct(mean.loc[o, "reach_acc"])
@@ -1376,12 +1379,16 @@ def convergence(T, G, N):
 def runtime(T, G, N):
     r = pd.read_csv(T / "runtime.csv")
     us = "\\_"
-    rows = [f"\\texttt{{{x.script.replace('_', us)}}} & {str(x.args).replace('_', us)} & "
+    def short(a):
+        a = "" if pd.isna(a) else str(a)
+        return a.replace("configs/data/", "").replace("--config ", "").replace("_", us)
+    rows = [f"\\texttt{{{x.script.replace('_', us)}}} & \\texttt{{{short(x.args)}}} & "
             f"{x.seconds / 60:.0f} \\\\" for x in r.itertuples()]
-    save_table(G, "tab_runtime", tabular("llr", [r"Script & Arguments & minutes \\"], rows))
+    save_table(G, "tab_runtime", tabular("lp{4.1cm}r", [r"Script & Configuration & minutes \\"],
+                                         rows))
     N["rtTotalHours"] = f"{r.seconds.sum() / 3600:.1f}"
     N["rtCpus"] = int(r.cpus.iloc[0])
-    N["rtMachine"] = str(r.machine.iloc[0])
+    N["rtMachine"] = str(r.machine.iloc[0]).replace("_", "\\_")
 
 
 def highlights(N, out):
@@ -1390,7 +1397,7 @@ def highlights(N, out):
          for line in N.lines[1:]}
     plain = {k: val.replace("\\ensuremath{-}", "-").replace("{,}", ",") for k, val in v.items()}
     hl = [
-        f"Open ray-traced 6G corpora: {plain['nCities']} cities, 3.5 and 7.5 GHz, "
+        f"Open ray-traced 6G corpora: {plain['nCities']} cities, two bands, "
         "siting and material replicates",
         "Tile path-loss exponents depend on serving sites, tile size and cut-off",
         f"Exact tile labels reach {plain['netOracle']} dB and {plain['assocOracle']}% "

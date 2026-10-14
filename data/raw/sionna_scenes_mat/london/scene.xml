@@ -1,0 +1,50 @@
+<scene version="2.1.0">
+  <bsdf type="itu-radio-material" id="mat-itu_brick">
+    <string name="type" value="brick"/>
+    <float name="thickness" value="0.2"/>
+  </bsdf>
+  <bsdf type="itu-radio-material" id="mat-itu_concrete">
+    <string name="type" value="concrete"/>
+    <float name="thickness" value="0.2"/>
+  </bsdf>
+  <bsdf type="itu-radio-material" id="mat-itu_marble">
+    <string name="type" value="marble"/>
+    <float name="thickness" value="0.2"/>
+  </bsdf>
+  <bsdf type="itu-radio-material" id="mat-itu_metal">
+    <string name="type" value="metal"/>
+    <float name="thickness" value="0.2"/>
+  </bsdf>
+  <bsdf type="itu-radio-material" id="mat-itu_wood">
+    <string name="type" value="wood"/>
+    <float name="thickness" value="0.2"/>
+  </bsdf>
+  <bsdf type="itu-radio-material" id="mat-itu_medium_dry_ground">
+    <string name="type" value="medium_dry_ground"/>
+    <float name="thickness" value="0.2"/>
+  </bsdf>
+  <shape type="ply" id="buildings_brick">
+    <string name="filename" value="buildings_brick.ply"/>
+    <ref id="mat-itu_brick" name="bsdf"/>
+  </shape>
+  <shape type="ply" id="buildings_concrete">
+    <string name="filename" value="buildings_concrete.ply"/>
+    <ref id="mat-itu_concrete" name="bsdf"/>
+  </shape>
+  <shape type="ply" id="buildings_marble">
+    <string name="filename" value="buildings_marble.ply"/>
+    <ref id="mat-itu_marble" name="bsdf"/>
+  </shape>
+  <shape type="ply" id="buildings_metal">
+    <string name="filename" value="buildings_metal.ply"/>
+    <ref id="mat-itu_metal" name="bsdf"/>
+  </shape>
+  <shape type="ply" id="buildings_wood">
+    <string name="filename" value="buildings_wood.ply"/>
+    <ref id="mat-itu_wood" name="bsdf"/>
+  </shape>
+  <shape type="ply" id="ground">
+    <string name="filename" value="ground.ply"/>
+    <ref id="mat-itu_medium_dry_ground" name="bsdf"/>
+  </shape>
+</scene>

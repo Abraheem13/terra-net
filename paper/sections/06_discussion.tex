@@ -16,7 +16,8 @@ spread within a city. A tile is seen by each site through a different street
 canyon, and the exponent fitted over all of them mixes the geometry of the
 tile with that of the paths reaching it. This explains why learned operators
 improve on the source median only modestly, why few-shot correction of the
-exponent needs tens of surveyed tiles before it helps, and why a planning
+exponent gains only \fsGainGbdt\% with ten surveyed tiles and
+\fsGainMaxGbdt\% with \fsKmax, and why a planning
 tool fed with even the \emph{true} receiver-tile labels assigns half of the
 pixels to the wrong site and draws cell edges \SI{\edgeOracle}{\metre} away
 from the true ones.
@@ -36,9 +37,11 @@ tile size and which accounts for the remaining distance to link transfer.
 The per-link physics baselines, which use the same geometry without any
 training, reach \SI{\varBestPhysNetVal}{\decibel} at best; the learned link
 model is better than the best of them in \nLinkBetterPhysNet{} of
-\nVarFolds{} cities in path loss and in \nLinkBetterPhysRegret{} in
-planning regret, so the learning adds to the diffraction physics rather
-than replacing it.
+\nVarFolds{} cities in path loss and in \nLinkBetterPhysAssoc{} in serving
+site, but not in the five-site plan, where the Deygout construction with
+its deterministic hurdle is already as good (\varDeygoutRegret\% against
+\regretLink\%). The learning adds accuracy to the diffraction physics; the
+reach model is what makes either plan reliable.
 
 \paragraph{What to transfer}
 The quantity that transfers is the effect of the geometry along a link,
@@ -61,9 +64,12 @@ physical terms. Three design choices matter for planning. First, the model
 must represent the absence of a link: the hurdle, which predicts whether a
 site is received at all, reduces the planning regret from \regretLinkReg\%
 to \regretLink\% at the same path-loss error over the ray-traced links.
-Second, a calibration from surveyed links must be allowed to do nothing:
-with the empirical-Bayes $\kappa$ the per-site offsets switch themselves
-off where the survey shows no site-level bias, which a fixed prior cannot.
+Second, a calibration from surveyed links must be allowed to do little: on
+this corpus the empirical-Bayes prior strength has a median of
+\kappaMedianTwentyFive{} links, close to the fixed value of \kappaLink, and
+both leave the zero-shot model nearly unchanged, whereas the designs that
+concentrate the survey make it worse; on the external scenes the same
+calibration removes a bias of several decibels.
 Third, its errors must be stated at the level of the decision: the
 city-level certificate turns the leave-one-city-out residuals into a
 coverage promise with a guaranteed risk, and the more accurate the model,
@@ -92,10 +98,10 @@ operators, yet a planning
 regret of \regretUmaNlos\%, below that of transferred tile parameters,
 because a uniform bias does not change which sites cover the most pixels.
 Second, models trained on links below a receiver cut-off overstate the reach
-of distant sites unless the cut-off is modelled; every zero-shot tile model
-with transferred parameters predicts that a single site covers \covTarget\%
-of a city, and a hurdle fixes most of the planning loss even for the tile
-model. Third, small surveys do not help a model without systematic error,
+of distant sites unless the cut-off is modelled; the tile models with
+transferred parameters predict that a single site covers \covTarget\% of a
+city (GBDT: \sitesNeedGbdt; source median: \sitesNeedMedian), and a hurdle
+fixes most of the planning loss even for the tile model. Third, small surveys do not help a model without systematic error,
 but correct a shifted one, and they must be unbiased: a design that
 maximises the variance reduction of the offsets selects unrepresentative
 tiles, and the empirical-Bayes prior should decide how much to trust them.

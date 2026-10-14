@@ -151,8 +151,8 @@ the metric of the same kernel gives \dGpKernel{} ([\loGpKernel,
 \hiGpKernel], $p=\pGpKernel$, better in \nGpKernel{} of \nFolds{} cities),
 \holmGpKernel{} after Holm's correction. Over the \nZeroShotTotal{}
 comparisons with the source median, \zeroShotSigBetterWord{} of the
-improvements survive Holm's correction at eleven cities
-(\zeroShotSigBetterList), although the learned operators are better than
+improvements survive Holm's correction at eleven
+cities\zeroShotSigBetterParen, although the learned operators are better than
 the median in \learnedBetterMin{} to \learnedBetterMax{} of \nFolds{}
 cities; the significant differences in the other direction are
 \zeroShotSigWorseList. The hardest target is \hardCity, where the best
@@ -221,14 +221,16 @@ The empirical-Bayes correction of Eq.~\eqref{eq:fewshot}, which weights
 the anchors by their precision and shrinks the correction when the inner
 cities show no systematic bias, is worse than the zero-shot model
 \fsEbNeverWorse{} (GBDT at $k=3$: \fsGbdtEbThree; at $k=10$: \fsTenGbdt,
-\dFewEbGbdt{} against the plain correction, [\loFewEbGbdt, \hiFewEbGbdt]);
-with ten random tiles it improves the GBDT error in \fsImprovedTen{} of
-\nFolds{} cities, and the error falls clearly below the zero-shot value only
-from $k=\fsFirstBetterK$ surveyed tiles on (GBDT \fsFirstBetterGbdt),
-reaching \fsMaxGbdt{} at $k=\fsKmax$. The precision-weighted residual
-model on the descriptors gives \fsGbdtResidTen{} at $k=10$. Contiguous
-survey areas are worse than random tiles at every $k$ (GBDT at $k=10$:
-\fsGbdtPatchTen{}), because neighbouring tiles repeat the same information.
+\dFewEbGbdt{} against the plain correction, [\loFewEbGbdt, \hiFewEbGbdt]),
+but its gain is small: with ten random tiles it improves the GBDT error in
+\fsImprovedTen{} of \nFolds{} cities, by \fsGainGbdt\% on average
+(\dFewGbdt, [\loFewGbdt, \hiFewGbdt]), and with $k=\fsKmax$ tiles by
+\fsGainMaxGbdt\% (\fsMaxGbdt). The anchors measure the site-dependent
+label, not an environmental constant, so even many of them move the
+transferred exponent little. The precision-weighted residual model on the
+descriptors gives \fsGbdtResidTen{} at $k=10$. Contiguous survey areas are
+worse than random tiles (GBDT at $k=10$: \fsGbdtPatchTen{}), because
+neighbouring tiles repeat the same information.
 The facility-location design, which spreads the survey over the descriptor
 space without any measurement, gives \fsGbdtDesignTen{} at $k=10$
 (\dFewDesignGbdt{} against random tiles, [\loFewDesignGbdt,
@@ -242,7 +244,7 @@ empirical-Bayes correction with random anchors. Right: GBDT with the plain
 bias correction, the precision-weighted residual model, contiguous anchors
 and the facility-location design (all empirical Bayes unless stated).}
 \label{tab:kshot}
-\small\setlength{\tabcolsep}{3pt}
+\footnotesize\setlength{\tabcolsep}{3pt}
 \input{generated/tab_kshot}
 \end{table}
 
@@ -350,7 +352,7 @@ state is predicted correctly; precision and recall of the predicted links
 below the cut-off; censored RMSE over all pairs. The tile models reach
 every pixel from every site.}
 \label{tab:hurdle}
-\small
+\footnotesize\setlength{\tabcolsep}{2pt}
 \input{generated/tab_hurdle}
 \end{table}
 
@@ -433,14 +435,21 @@ differences are \dDecLinkDeygout{} dB ([\loDecLinkDeygout, \hiDecLinkDeygout]),
 \dDecLinkDeygoutAssoc{} points of serving site and \dDecLinkDeygoutRegret{}
 points of regret, and against UMa with geometric line of sight
 \dDecLinkUma{} dB ([\loDecLinkUma, \hiDecLinkUma]) and \dDecLinkUmaAssoc{}
-points. Of the \nDecompLinkTotal{} comparisons of link transfer with the tile
-variants and the physics baselines, \nDecompLinkAllCities{} hold in every
-city and \nDecompLinkHolm{} survive Holm's correction
-(Table~\ref{tab:stats-net}). The learned link model thus adds to the
-diffraction physics it is built on; it is not the geometry alone that
-explains its advantage over the tile representation.
+points. The planning regret is the one quantity in which a physics baseline
+is as good: the Deygout construction with the deterministic hurdle plans
+five sites with a regret of \varDeygoutRegret\% against \regretLink\% for
+link transfer, although its path loss is in error by
+\SI{\varDeygoutNet}{\decibel}, because a large but nearly uniform
+overestimate does not change which sites cover the most pixels. Of the
+\nDecompLinkTotal{} comparisons of link transfer with the tile variants and
+the physics baselines, \nDecompLinkAllCities{} hold in every city and
+\nDecompLinkHolm{} survive Holm's correction (Table~\ref{tab:stats-net}).
+The learned link model thus adds accuracy in path loss, serving site, SINR
+and coverage to the diffraction physics it is built on; a per-link physics
+model with a reach model is already enough for a five-site plan on this
+corpus.
 
-\begin{table}[!t]
+\begin{table*}[!t]
 \centering
 \caption{Decomposition of the gap. Receiver-tile variants of the tile model
 with exact labels, the source median and GBDT transfer, each without and with
@@ -453,7 +462,7 @@ regret: $K=5$.}
 \label{tab:variants}
 \footnotesize\setlength{\tabcolsep}{2.5pt}
 \input{generated/tab_variants}
-\end{table}
+\end{table*}
 
 \begin{table}[!t]
 \centering
@@ -652,7 +661,10 @@ trained on tall sites is therefore not tied to them. With random building
 materials the truth shifts by \rsMatBiasLink{}\,dB relative to the
 concrete-trained link models, whose error is \SI{\rsMatNetLink}{\decibel}
 against \SI{\rsMatNetOracleRand}{\decibel} for the exact labels of that
-network and \SI{\rsMatNetGbdt}{\decibel} for GBDT tile transfer. The tile
+network (the link model is better than them in \rsMatLinkBetterOracle{} of
+\nRandCities{} cities) and \SI{\rsMatNetGbdt}{\decibel} for GBDT tile
+transfer; the shift is the systematic error that the survey of
+Section~\ref{sec:res-survey} is for. The tile
 labels of the same tiles fitted under the main corpus give
 \SI{\rsRandNetOracleMain}{\decibel}, \SI{\rsCappedNetOracleMain}{\decibel}
 and \SI{\rsMatNetOracleMain}{\decibel} on the three replicates: the labels
@@ -690,11 +702,11 @@ against \SI{\extSinrGbdt}{\decibel}) and cell edges (\SI{\extEdgeLink}{\metre}
 against \SI{\extEdgeGbdt}{\metre}), but its path-loss error is above that of
 the tile model with the exact labels of these scenes
 (\SI{\extNetOracle}{\decibel}) and it has a bias of \extLinkBiasMin{}
-to \SI{\extLinkBiasMax}{\decibel} (positive in \extLinkBiasAllPositive),
+to \extLinkBiasMax{}\,dB (positive in \extLinkBiasAllPositive),
 consistent with the different materials of these scenes against the single
 concrete model of the training corpus. This is the systematic shift that
 the per-site calibration of Section~\ref{sec:link} is for: with 25 randomly
-surveyed tiles the bias falls to \SI{\extBiasLinkTwentyFive}{\decibel} on
+surveyed tiles the bias becomes \extBiasLinkTwentyFive{}\,dB on
 average and the path-loss error to \SI{\extNetLinkTwentyFive}{\decibel}
 on the unsurveyed pixels, against \SI{\extNetOracle}{\decibel} for the exact
 tile labels (lower in \extKBetterOracle{} of \nExtScenes{} scenes), while
@@ -703,8 +715,8 @@ the serving-site accuracy becomes \extAssocLinkTwentyFive\% against
 reaches \SI{\extNetLinkTwentyFiveD}{\decibel} and the stratified design
 \SI{\extNetLinkTwentyFiveS}{\decibel}. With \nExtSites{} sites on these
 smaller scenes, five sites cover almost every pixel, and the zero-shot
-predictors have \extRegretSame{} planning regrets
-(\extRegretMin--\extRegretMax\%).
+predictors have \extRegretSame{} planning regrets within each scene
+(\extRegretMin--\extRegretMax\% across the scenes).
 
 \begin{table*}[!t]
 \centering

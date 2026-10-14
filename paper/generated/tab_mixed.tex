@@ -3,25 +3,25 @@
 \toprule
 Predictor & PL (dB) & serv.\ (\%) & SINR (dB) & edge (m) & regret (\%) \\
 \midrule
-\multicolumn{6}{l}{\emph{Receiver tile (Proposition 1)}} \\
-Tile labels (oracle) & 11.64 & 50.1 & 7.56 & 76 & 9.3 \\
-GBDT & 12.80 & 50.1 & 7.44 & 80 & 20.6 \\
+\multicolumn{6}{l}{\emph{Receiver tile}} \\
+Tile labels (oracle) & 11.64 & 50.1 & 7.89 & 76 & 9.2 \\
+GBDT & 12.75 & 50.1 & 7.93 & 81 & 18.4 \\
 \multicolumn{6}{l}{\emph{Mixed path, path-averaged}} \\
-Tile labels (oracle) & 11.14 & 54.1 & 6.97 & 25 & 5.3 \\
-Source median & 14.27 & 50.1 & 7.76 & 80 & 31.3 \\
-Kernel (NW) & 13.72 & 44.8 & 7.51 & 50 & 21.7 \\
-GBDT & 13.45 & 46.3 & 7.66 & 49 & 18.3 \\
+Tile labels (oracle) & 11.14 & 54.1 & 7.45 & 26 & 5.1 \\
+Source median & 14.25 & 50.1 & 8.15 & 81 & 29.1 \\
+Kernel (NW) & 13.41 & 44.5 & 8.08 & 48 & 18.9 \\
+GBDT & 13.32 & 45.1 & 8.14 & 47 & 17.3 \\
 \multicolumn{6}{l}{\emph{Mixed path, piecewise (multi-slope)}} \\
-Tile labels (oracle) & 11.63 & 49.1 & 7.06 & 29 & 14.3 \\
-Source median & 14.20 & 50.3 & 7.62 & 79 & 30.4 \\
-Kernel (NW) & 15.85 & 37.9 & 7.63 & 69 & 27.4 \\
-GBDT & 16.94 & 34.3 & 7.69 & 59 & 24.1 \\
-\multicolumn{6}{l}{\emph{Mixed path, summed as in~\cite{ozyurt2026}}} \\
-Tile labels (oracle) & 33.20 & 21.3 & 11.15 & 14 & 7.9 \\
-Source median & 92.66 & 48.7 & 7.07 & 54 & 30.9 \\
-Kernel (NW) & 74.49 & 46.5 & 8.31 & 39 & 27.9 \\
-GBDT & 75.14 & 41.4 & 9.61 & 35 & 29.2 \\
+Tile labels (oracle) & 11.63 & 49.1 & 7.55 & 29 & 13.8 \\
+Source median & 14.12 & 50.3 & 8.01 & 80 & 29.3 \\
+Kernel (NW) & 16.27 & 33.2 & 8.18 & 64 & 26.8 \\
+GBDT & 16.25 & 34.3 & 8.21 & 64 & 22.3 \\
+\multicolumn{6}{l}{\emph{Mixed path, summed (\ref{app:summed})}} \\
+Tile labels (oracle) & 33.20 & 21.3 & 12.11 & 14 & 7.1 \\
+Source median & 92.68 & 48.7 & 7.78 & 53 & 29.3 \\
+Kernel (NW) & 73.20 & 48.8 & 8.76 & 45 & 29.2 \\
+GBDT & 74.09 & 41.4 & 10.44 & 37 & 20.6 \\
 \multicolumn{6}{l}{\emph{Site-aware link model}} \\
-Link transfer (ours) & 9.33 & 68.8 & 5.37 & 7 & 0.5 \\
+Link transfer & 9.32 & 68.4 & 5.74 & 7 & 0.7 \\
 \bottomrule
 \end{tabular}

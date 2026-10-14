@@ -75,9 +75,10 @@ the cut-off, of the line-of-sight state and of the link geometry by giving
 the tile model a hurdle and a dual-slope label.
 \item \textbf{Site-aware link transfer against physics baselines.} A hurdle
 link model conditioned on the obstruction geometry of each link outperforms
-the tile model with perfect labels and the non-learned per-link baselines
-(free space with single and multiple knife edges, 3GPP UMa with geometric
-line of sight) in every held-out city, across bands, sitings, materials and
+the tile model with perfect labels in path loss, serving site and planning
+in every held-out city, and the non-learned per-link baselines (free space
+with single and multiple knife edges, 3GPP UMa with geometric line of
+sight) in path loss and serving site, across bands, sitings, materials and
 independently modelled scenes; a small unbiased survey calibrates its
 per-site offsets with an empirical-Bayes prior.
 \item \textbf{Coverage certificates.} A distribution-free, city-level
@@ -93,5 +94,6 @@ operators and evaluation, Section~\ref{sec:results} reports the results,
 Section~\ref{sec:discussion} discusses their implications and limitations,
 and Section~\ref{sec:conclusion} concludes. Proofs are in \ref{app:proofs},
 the hyper-parameters in \ref{app:hparams}, further robustness tables in
-\ref{app:robust}, the complete city-level comparisons in \ref{app:stats}
+\ref{app:robust}, the summed reading of the mixed-path composition in
+\ref{app:summed}, the complete city-level comparisons in \ref{app:stats}
 and the cost of one reproduction in \ref{app:runtime}.

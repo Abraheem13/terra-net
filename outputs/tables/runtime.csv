@@ -1,0 +1,27 @@
+script,args,seconds,machine,cpus,jobs
+02_build_tiles.py,--config configs/data/sionna.yaml,101,x86_64,4,
+03_make_splits.py,--config configs/data/sionna.yaml,2,x86_64,4,
+04_fit_baselines.py,--config configs/data/sionna.yaml,1426,x86_64,4,4
+06_train_neural.py,--config configs/data/sionna.yaml,475,x86_64,4,4
+05_kshot.py,--config configs/data/sionna.yaml,20,x86_64,4,4
+07_label_noise.py,--config configs/data/sionna.yaml,37,x86_64,4,4
+08_degeneracy.py,--config configs/data/sionna.yaml,5,x86_64,4,4
+11_link_transfer.py,--config configs/data/sionna.yaml,4149,x86_64,4,4
+09_network_eval.py,--config configs/data/sionna.yaml,107,x86_64,4,4
+19_tile_variants.py,--config configs/data/sionna.yaml,914,x86_64,4,4
+13_certified_coverage.py,--config configs/data/sionna.yaml,15,x86_64,4,4
+12_tile_size.py,--config configs/data/sionna.yaml,730,x86_64,4,4
+14_censoring.py,--config configs/data/sionna.yaml,66,x86_64,4,4
+15_siting.py,--config configs/data/sionna.yaml --rand configs/data/sionna_cities_randsite.yaml configs/data/sionna_cities_capped.yaml configs/data/sionna_cities_materials.yaml,653,x86_64,4,4
+17_external_scenes.py,--config configs/data/sionna.yaml,28,x86_64,4,4
+18_mixed_path.py,--config configs/data/sionna.yaml,7755,x86_64,4,4
+18_mixed_path.py,--config configs/data/sionna.yaml --tile-size 200,4386,x86_64,4,4
+18_mixed_path.py,--config configs/data/sionna.yaml --tile-size 500,1547,x86_64,4,4
+18_mixed_path.py,--config configs/data/sionna.yaml --tile-size 1000,1124,x86_64,4,4
+02_build_tiles.py,--config configs/data/sionna_7p5.yaml,92,x86_64,4,4
+03_make_splits.py,--config configs/data/sionna_7p5.yaml,1,x86_64,4,4
+04_fit_baselines.py,--config configs/data/sionna_7p5.yaml,1130,x86_64,4,4
+11_link_transfer.py,--config configs/data/sionna_7p5.yaml,3251,x86_64,4,4
+09_network_eval.py,--config configs/data/sionna_7p5.yaml,81,x86_64,4,4
+16_band.py,--config configs/data/sionna.yaml --band2 configs/data/sionna_7p5.yaml,825,x86_64,4,4
+10_stats.py,,2,x86_64,4,4

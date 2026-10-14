@@ -4,9 +4,6 @@
     "test_cities": [
       "amsterdam"
     ],
-    "val_cities": [
-      "prague"
-    ],
     "train_cities": [
       "barcelona",
       "berlin",
@@ -16,6 +13,7 @@
       "munich",
       "newyork",
       "paris",
+      "prague",
       "vienna"
     ]
   },
@@ -24,9 +22,6 @@
     "test_cities": [
       "barcelona"
     ],
-    "val_cities": [
-      "newyork"
-    ],
     "train_cities": [
       "amsterdam",
       "berlin",
@@ -34,6 +29,7 @@
       "hamburg",
       "london",
       "munich",
+      "newyork",
       "paris",
       "prague",
       "vienna"
@@ -44,15 +40,13 @@
     "test_cities": [
       "berlin"
     ],
-    "val_cities": [
-      "munich"
-    ],
     "train_cities": [
       "amsterdam",
       "barcelona",
       "chicago",
       "hamburg",
       "london",
+      "munich",
       "newyork",
       "paris",
       "prague",
@@ -64,12 +58,10 @@
     "test_cities": [
       "chicago"
     ],
-    "val_cities": [
-      "berlin"
-    ],
     "train_cities": [
       "amsterdam",
       "barcelona",
+      "berlin",
       "hamburg",
       "london",
       "munich",
@@ -84,13 +76,11 @@
     "test_cities": [
       "hamburg"
     ],
-    "val_cities": [
-      "chicago"
-    ],
     "train_cities": [
       "amsterdam",
       "barcelona",
       "berlin",
+      "chicago",
       "london",
       "munich",
       "newyork",
@@ -104,10 +94,8 @@
     "test_cities": [
       "london"
     ],
-    "val_cities": [
-      "amsterdam"
-    ],
     "train_cities": [
+      "amsterdam",
       "barcelona",
       "berlin",
       "chicago",
@@ -124,10 +112,8 @@
     "test_cities": [
       "munich"
     ],
-    "val_cities": [
-      "amsterdam"
-    ],
     "train_cities": [
+      "amsterdam",
       "barcelona",
       "berlin",
       "chicago",
@@ -144,10 +130,8 @@
     "test_cities": [
       "newyork"
     ],
-    "val_cities": [
-      "amsterdam"
-    ],
     "train_cities": [
+      "amsterdam",
       "barcelona",
       "berlin",
       "chicago",
@@ -164,11 +148,9 @@
     "test_cities": [
       "paris"
     ],
-    "val_cities": [
-      "barcelona"
-    ],
     "train_cities": [
       "amsterdam",
+      "barcelona",
       "berlin",
       "chicago",
       "hamburg",
@@ -184,9 +166,6 @@
     "test_cities": [
       "prague"
     ],
-    "val_cities": [
-      "paris"
-    ],
     "train_cities": [
       "amsterdam",
       "barcelona",
@@ -196,6 +175,7 @@
       "london",
       "munich",
       "newyork",
+      "paris",
       "vienna"
     ]
   },
@@ -204,9 +184,6 @@
     "test_cities": [
       "vienna"
     ],
-    "val_cities": [
-      "munich"
-    ],
     "train_cities": [
       "amsterdam",
       "barcelona",
@@ -214,6 +191,7 @@
       "chicago",
       "hamburg",
       "london",
+      "munich",
       "newyork",
       "paris",
       "prague"

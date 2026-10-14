@@ -404,7 +404,7 @@ three-edge construction of ITU-R P.526~\cite{itup526} (the principal edge
 and the largest edge on each sub-path); and the 3GPP UMa model of
 TR~38.901~\cite{tr38901} with the line-of-sight state of each link decided
 from the geometry, its breakpoint, and
-$\PL_{\mathrm{NLOS}}=\max(\PL_{\mathrm{LOS}},\PL'_{\mathrm{NLOS}})$. They
+$P_{L,\mathrm{NLOS}}=\max(P_{L,\mathrm{LOS}},P'_{L,\mathrm{NLOS}})$. They
 answer the question whether a learned link model is needed at all once the
 obstruction geometry is available.
 
@@ -502,17 +502,20 @@ the true coverage those sites achieve.
 \paragraph{Certified coverage}
 A planner must decide which pixels to \emph{promise} as covered. For a
 transfer model and a held-out city $c$, let
-$r_p=PL_{\mathrm{serv}}(p)-\widehat{PL}_{\mathrm{serv}}(p)$ be the true minus the
-predicted serving path loss of pixel $p$ (the smallest path loss over the
-sites; $+\infty$ at an outage pixel), and $q_c$ the $(1-\alpha)$ quantile of
-$\{r_p\}$ over the pixels of $c$.
+$r_p=\min\{PL_{\mathrm{serv}}(p),C\}-\widehat{PL}_{\mathrm{serv}}(p)$ be the
+true serving path loss of pixel $p$ (the smallest path loss over the sites),
+censored at the cut-off $C=\SI{\maxPl}{\decibel}$ of the corpus, minus the
+predicted one, and $q_c$ the $(1-\alpha)$ quantile of $\{r_p\}$ over the
+pixels of $c$. The censoring keeps $q_c$ finite in a city where more than a
+fraction $\alpha$ of the pixels is reached by no site; where the model itself
+predicts no reaching site, $r_p=-\infty$ and the pixel is never claimed.
 
 \begin{proposition}[City-level coverage certificate]
 \label{prop:certify}
 Let the $n$ cities be exchangeable and the training procedure symmetric in
 its source cities. With $q_c$ computed from the leave-one-city-out model of
 each city $c$, let $\hat q_t$ be the $j$-th largest of $\{q_c\}_{c\ne t}$ for
-a target city $t$, and claim pixel $p$ as covered at level $L$ when
+a target city $t$, and claim pixel $p$ as covered at level $L<C$ when
 $\widehat{PL}_{\mathrm{serv}}(p)+\hat q_t\le L$. Then, with probability at
 least $(n-j)/n$ over the draw of the target city, at most a fraction
 $\alpha$ of its pixels are claimed but not covered.

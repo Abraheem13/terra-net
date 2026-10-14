@@ -87,9 +87,9 @@ that $q_t$ exceeds the $j$-th largest of the other values means that $q_t$
 is among the $j$ largest of the vector, with no tie at the $j$-th place; by
 exchangeability its probability is at most $j/n$, hence
 $\Pr(q_t\le\hat q_t)\ge(n-j)/n$. On this event, a claimed pixel with
-$r_p\le\hat q_t$ satisfies
-$PL_{\mathrm{serv}}(p)=\widehat{PL}_{\mathrm{serv}}(p)+r_p\le\widehat{PL}_{\mathrm{serv}}(p)+\hat q_t\le L$,
-so it is covered. Claimed but uncovered pixels therefore have
+$r_p\le\hat q_t$ has a finite prediction and satisfies
+$\min\{PL_{\mathrm{serv}}(p),C\}=\widehat{PL}_{\mathrm{serv}}(p)+r_p\le\widehat{PL}_{\mathrm{serv}}(p)+\hat q_t\le L<C$,
+hence $PL_{\mathrm{serv}}(p)\le L$ and the pixel is covered. Claimed but uncovered pixels therefore have
 $r_p>\hat q_t\ge q_t$, and by the definition of the quantile at most a
 fraction $\alpha$ of the pixels do; an outage pixel has $r_p=+\infty$ and
 is never claimed when $\hat q_t<\infty$ falls within the quantile.
@@ -244,6 +244,6 @@ tracing of the corpora (\texttt{make corpus}) is separate and took
 \centering
 \caption{Wall-clock time of the analysis steps.}
 \label{tab:runtime}
-\small
+\footnotesize
 \input{generated/tab_runtime}
 \end{table}
