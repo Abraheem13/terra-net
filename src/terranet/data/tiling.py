@@ -1,12 +1,12 @@
-"""Spherical grid construction over a convex polygon (base paper Algorithm 2).
+"""Spherical tile grid over a region.
 
 Produces indexed tiles T_{m,z} with centres C_{m,z} = (phi0 + m*dphi, lambda0 + z*dlam),
-EPSG:4326 / ISO 6709 ordering (m>0 north, z>0 east). Structures crossing tile
-boundaries are split with shapely and reassigned per tile.
+EPSG:4326 ordering (m>0 north, z>0 east); `grid_frame` is the table every
+downstream script indexes, and `point_tile_index` maps points to its rows.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import geopandas as gpd
 import numpy as np
@@ -23,7 +23,6 @@ class Tile:
     lon_c: float  # radians
     dphi: float
     dlam: float
-    structures: gpd.GeoDataFrame | None = field(default=None, repr=False)
 
     @property
     def bounds_deg(self) -> tuple[float, float, float, float]:
@@ -44,7 +43,7 @@ class Tile:
 def build_grid(region_polygon_deg: Polygon, tile_size_m: float) -> dict[tuple[int, int], Tile]:
     """Cover `region_polygon_deg` (lon/lat degrees) with tiles of size `tile_size_m`.
 
-    Tiles partially overlapping the polygon are retained (base paper, Fig. 5).
+    Tiles partially overlapping the polygon are retained.
     """
     corners = np.asarray(region_polygon_deg.exterior.coords[:-1])
     lat0, lon0 = spherical_centroid(np.radians(corners[:, 1]), np.radians(corners[:, 0]))
@@ -62,27 +61,6 @@ def build_grid(region_polygon_deg: Polygon, tile_size_m: float) -> dict[tuple[in
             t = Tile(m, z, lat0 + m * dphi, lon0 + z * dlam, dphi, dlam)
             if t.geometry.intersects(region_polygon_deg):
                 tiles[t.key] = t
-    return tiles
-
-
-def assign_structures(
-    tiles: dict[tuple[int, int], Tile], structures: gpd.GeoDataFrame
-) -> dict[tuple[int, int], Tile]:
-    """Clip every structure to each overlapping tile (split-at-boundary, Fig. 7).
-
-    `structures` must be EPSG:4326 with at least columns: geometry, height (m),
-    kind in {building, vegetation, water}.
-    """
-    sindex = structures.sindex
-    for tile in tiles.values():
-        idx = list(sindex.query(tile.geometry, predicate="intersects"))
-        if not idx:
-            tile.structures = structures.iloc[0:0].copy()
-            continue
-        sub = structures.iloc[idx].copy()
-        sub["geometry"] = sub.geometry.intersection(tile.geometry)
-        sub = sub[~sub.geometry.is_empty]
-        tile.structures = sub.reset_index(drop=True)
     return tiles
 
 

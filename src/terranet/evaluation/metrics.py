@@ -24,16 +24,6 @@ def correlations(pred: np.ndarray, target: np.ndarray) -> dict[str, float]:
             "spearman": float(spearmanr(pred, target)[0])}
 
 
-def coverage_classification(pred_db: np.ndarray, target_db: np.ndarray,
-                            threshold_db: float) -> dict[str, float]:
-    """Coverage-map agreement at a received-power threshold (planning-relevant)."""
-    p, t = pred_db >= threshold_db, target_db >= threshold_db
-    tp, fp = (p & t).sum(), (p & ~t).sum()
-    fn = (~p & t).sum()
-    iou = tp / max(tp + fp + fn, 1)
-    return {"coverage_iou": float(iou), "coverage_acc": float((p == t).mean())}
-
-
 def full_report(pred: np.ndarray, target: np.ndarray, prefix: str = "") -> dict[str, float]:
     rep = {"nmse": nmse(pred, target), "rmse": rmse(pred, target), "mae": mae(pred, target)}
     rep.update(correlations(pred.ravel(), target.ravel()))

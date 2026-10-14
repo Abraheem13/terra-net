@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 """Certified coverage maps from leave-one-city-out residuals.
 
-For a transfer model and a held-out city c, let r_p be the true minus the
-predicted serving path loss of pixel p (the smallest path loss over the sites),
-and q_c(alpha) the (1 - alpha) quantile of r over the pixels of c. Every q_c comes
+For a transfer model and a held-out city c, let r_p be the true serving path
+loss of pixel p (the smallest path loss over the sites), censored at the
+cut-off C of the corpus, minus the predicted serving path loss, and q_c(alpha)
+the (1 - alpha) quantile of r over the pixels of c. The censoring keeps q_c
+finite in a city where more than alpha of the pixels are reached by no site;
+a pixel the model declares unreached (prediction +inf) has r_p = -inf and is
+never claimed. For any level L < C the guarantee below is unchanged: r_p <=
+qhat and PLhat + qhat <= L give min(PL, C) <= L < C, hence PL <= L. Every q_c comes
 from a model that never saw city c, so under exchangeable cities the n values
 q_1..q_n are exchangeable. For a new city t the bound
 
@@ -27,6 +32,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from terranet.evaluation.network import CUTOFF_DB
 from terranet.experiments.common import load_cfg
 from terranet.utils.logging import get_logger
 
@@ -36,12 +42,21 @@ LEVELS = (130.0, 140.0)
 OPERATORS = ("oracle", "median", "uma_nlos", "kernel", "ridge", "gbdt", "link", "link_reg")
 
 
+def resid(d):
+    """min(true serving PL, cut-off) - predicted serving PL; -inf where the model
+    predicts that no site reaches the pixel (such a pixel is never claimed)."""
+    ts = np.minimum(d.true_serv_pl.to_numpy(np.float64), CUTOFF_DB)
+    ps = d.pred_serv_pl.to_numpy(np.float64)
+    return np.where(np.isfinite(ps), ts - ps, -np.inf)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/data/sionna.yaml")
     args = ap.parse_args()
     _, base = load_cfg(args.config)
     pr = Path(base.paths.outputs) / "predictions"
+    assert all(L < CUTOFF_DB for L in LEVELS)
     S = pd.concat([pd.read_parquet(pr / "serving_tile.parquet"),
                    pd.read_parquet(pr / "serving_link.parquet")], ignore_index=True)
     S = S[S.operator.isin(OPERATORS)]
@@ -50,15 +65,13 @@ def main():
         cities = sorted(g.fold.unique())
         by = {c: g[g.fold == c] for c in cities}
         for a in ALPHAS:
-            q = {c: float(np.quantile((by[c].true_serv_pl - by[c].pred_serv_pl)
-                                      .to_numpy(np.float64), 1 - a, method="higher"))
-                 for c in cities}
+            q = {c: float(np.quantile(resid(by[c]), 1 - a, method="higher")) for c in cities}
             for t, j in [(t, j) for t in cities for j in (1, 2)]:
                 qhat = sorted((q[c] for c in cities if c != t), reverse=True)[j - 1]
                 d = by[t]
                 ps = d.pred_serv_pl.to_numpy(np.float64)
                 ts = d.true_serv_pl.to_numpy(np.float64)
-                r = ts - ps
+                r = resid(d)
                 for L in LEVELS:
                     cov = ts <= L
                     claim, naive = ps + qhat <= L, ps <= L

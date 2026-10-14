@@ -9,7 +9,9 @@ relying on each source is recorded in scene_meta.json so the corpus states
 exactly how much geometry is measured vs imputed.
 
 Materials (ITU-R P.2040 models as implemented in Sionna RT): concrete for
-buildings, medium-dry ground for the ground plane.
+buildings, medium-dry ground for the ground plane. With `materials`, every
+building part is assigned one of the given ITU materials at random (fixed
+seed) and written to one mesh per material (the materials replicate).
 """
 from __future__ import annotations
 
@@ -67,16 +69,23 @@ def _polys(geom):
 
 
 def build_scene(city: str, lat0: float, lon0: float, size_m: float,
-                out_dir: Path) -> dict:
-    """Write buildings.ply + ground.ply + scene.xml + scene_meta.json."""
+                out_dir: Path, src_dir: Path | None = None,
+                materials: list[str] | None = None, seed: int = 0) -> dict:
+    """Write buildings.ply + ground.ply + scene.xml + scene_meta.json.
+
+    `src_dir` holds building.geojson (default: out_dir). With `materials`,
+    every part gets one of them at random and the meshes are written per
+    material (buildings_<material>.ply)."""
     import trimesh
 
+    src_dir = out_dir if src_dir is None else Path(src_dir)
     frame = LocalFrame.from_center(lat0, lon0)
-    b = load_buildings(out_dir)
+    b = load_buildings(src_dir)
     heights, prov = resolve_heights(b)
+    rng = np.random.default_rng(seed)
 
     clip = box(-size_m / 2, -size_m / 2, size_m / 2, size_m / 2)
-    meshes, kept, failed = [], 0, 0
+    meshes, mats, kept, failed = [], [], 0, 0
     for geom, h in zip(b.geometry, heights, strict=True):
         for poly in _polys(geom):
             x, y = frame.to_local(*np.asarray(poly.exterior.coords).T)
@@ -86,6 +95,8 @@ def build_scene(city: str, lat0: float, lon0: float, size_m: float,
                     continue
                 try:
                     meshes.append(trimesh.creation.extrude_polygon(q, float(h)))
+                    mats.append(materials[rng.integers(len(materials))] if materials
+                                else "concrete")
                     kept += 1
                 except Exception as e:
                     failed += 1
@@ -93,15 +104,29 @@ def build_scene(city: str, lat0: float, lon0: float, size_m: float,
                         print(f"    extrusion error ({type(e).__name__}): {e}")
     if not meshes:
         raise RuntimeError(f"{city}: no extrudable buildings ({failed} extrusion failures)")
-    trimesh.util.concatenate(meshes).export(out_dir / "buildings.ply")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    shares = {}
+    if materials:
+        shapes = []
+        for m in sorted(set(mats)):
+            sel = [mesh for mesh, mm in zip(meshes, mats, strict=True) if mm == m]
+            trimesh.util.concatenate(sel).export(out_dir / f"buildings_{m}.ply")
+            shares[m] = len(sel) / len(meshes)
+            shapes.append(_shape(f"buildings_{m}", f"buildings_{m}.ply", m))
+        xml = _xml([*sorted(set(mats)), "medium_dry_ground"], shapes)
+    else:
+        trimesh.util.concatenate(meshes).export(out_dir / "buildings.ply")
+        shares["concrete"] = 1.0
+        xml = _xml(["concrete", "medium_dry_ground"],
+                   [_shape("buildings", "buildings.ply", "concrete")])
 
     ground = trimesh.creation.box(extents=[size_m * 1.2, size_m * 1.2, 0.2])
     ground.apply_translation([0, 0, -0.1])
     ground.export(out_dir / "ground.ply")
-    (out_dir / "scene.xml").write_text(_XML)
+    (out_dir / "scene.xml").write_text(xml)
 
-    src = json.loads((out_dir / "building_source.json").read_text()) \
-        if (out_dir / "building_source.json").exists() else {}
+    src = json.loads((src_dir / "building_source.json").read_text()) \
+        if (src_dir / "building_source.json").exists() else {}
     meta = {
         "city": city, "lat0": lat0, "lon0": lon0, "size_m": size_m,
         "epsg": frame.epsg, "bbox_wsen": list(frame.bbox_deg(size_m)),
@@ -110,27 +135,20 @@ def build_scene(city: str, lat0: float, lon0: float, size_m: float,
         "n_building_parts_meshed": kept,
         "n_extrusion_failures": failed,
         "height_provenance": prov,
+        "materials": shares,
     }
     (out_dir / "scene_meta.json").write_text(json.dumps(meta, indent=2))
     return meta
 
 
-_XML = """<scene version="2.1.0">
-  <bsdf type="itu-radio-material" id="mat-itu_concrete">
-    <string name="type" value="concrete"/>
-    <float name="thickness" value="0.2"/>
-  </bsdf>
-  <bsdf type="itu-radio-material" id="mat-itu_medium_dry_ground">
-    <string name="type" value="medium_dry_ground"/>
-    <float name="thickness" value="0.2"/>
-  </bsdf>
-  <shape type="ply" id="buildings">
-    <string name="filename" value="buildings.ply"/>
-    <ref id="mat-itu_concrete" name="bsdf"/>
-  </shape>
-  <shape type="ply" id="ground">
-    <string name="filename" value="ground.ply"/>
-    <ref id="mat-itu_medium_dry_ground" name="bsdf"/>
-  </shape>
-</scene>
-"""
+def _shape(sid: str, filename: str, material: str) -> str:
+    return (f'  <shape type="ply" id="{sid}">\n    <string name="filename" value="{filename}"/>\n'
+            f'    <ref id="mat-itu_{material}" name="bsdf"/>\n  </shape>\n')
+
+
+def _xml(materials: list[str], shapes: list[str]) -> str:
+    bsdf = "".join(f'  <bsdf type="itu-radio-material" id="mat-itu_{m}">\n'
+                   f'    <string name="type" value="{m}"/>\n'
+                   f'    <float name="thickness" value="0.2"/>\n  </bsdf>\n' for m in materials)
+    ground = _shape("ground", "ground.ply", "medium_dry_ground")
+    return '<scene version="2.1.0">\n' + bsdf + "".join(shapes) + ground + "</scene>\n"

@@ -131,3 +131,79 @@ def city_link_matrix(city, scene_dir, descriptors, freq_hz: float) -> np.ndarray
     D = np.asarray(descriptors, np.float32)[city.tile]
     D = np.repeat(D, city.true_pl.shape[1], axis=0)
     return np.hstack([L, D]).astype(np.float32)
+
+
+# ---------------------------------------------------------------------------
+# non-learned link baselines (ITU-R P.526 diffraction, 3GPP TR 38.901 UMa)
+# ---------------------------------------------------------------------------
+def free_space_db(d_m, freq_hz):
+    return 20 * np.log10(np.maximum(d_m, 1.0)) + 20 * np.log10(freq_hz) - 147.55
+
+
+def _nu(exc, d1, d2, lam):
+    return exc * np.sqrt(2.0 / lam * (1.0 / np.maximum(d1, 1.0) + 1.0 / np.maximum(d2, 1.0)))
+
+
+def deygout_loss_db(hm: HeightMap, px, py, rx_h, sx, sy, sz, freq_hz: float,
+                    n_samples: int = 96, chunk: int = 50_000) -> np.ndarray:
+    """Deygout three-edge diffraction loss (ITU-R P.526) of every (pixel, site)
+    pair, pixel-major: the principal edge is the point of largest Fresnel
+    parameter; the secondary edges are the largest parameters on the two
+    sub-paths, counted only when the principal edge obstructs (nu > -0.78)."""
+    P, S = len(px), len(sx)
+    lam = C / freq_hz
+    pp = np.repeat(np.arange(P), S)
+    ss = np.tile(np.arange(S), P)
+    out = np.empty(P * S, np.float32)
+    t = (np.arange(n_samples) + 0.5) / n_samples
+    for a in range(0, P * S, chunk):
+        p, s = pp[a:a + chunk], ss[a:a + chunk]
+        x0, y0, z0 = sx[s], sy[s], sz[s]
+        x1, y1 = px[p], py[p]
+        d2 = np.hypot(x1 - x0, y1 - y0)
+        X = x0[:, None] + (x1 - x0)[:, None] * t
+        Y = y0[:, None] + (y1 - y0)[:, None] * t
+        H = hm.at(X, Y)
+        los = z0[:, None] + (rx_h - z0)[:, None] * t
+        exc = H - los
+        dist = d2[:, None] * t
+        nu = _nu(exc, dist, d2[:, None] - dist, lam)
+        k = nu.argmax(1)
+        rows = np.arange(len(k))
+        nu_p = nu[rows, k]
+        loss = knife_edge_loss_db(nu_p)
+        # secondary edges on the two sub-paths (tx -> edge, edge -> rx)
+        dk, hk = dist[rows, k], H[rows, k]
+        zk = np.where(nu_p > -0.78, hk, los[rows, k])
+        for side in (0, 1):
+            if side == 0:
+                m = t[None, :] < (k / n_samples)[:, None]
+                z_a, d_a, z_b, d_b = z0, np.zeros_like(dk), zk, dk
+            else:
+                m = t[None, :] > ((k + 1) / n_samples)[:, None]
+                z_a, d_a, z_b, d_b = zk, dk, np.full_like(dk, rx_h), d2
+            span = np.maximum(d_b - d_a, 1.0)
+            f = (dist - d_a[:, None]) / span[:, None]
+            los_s = z_a[:, None] + (z_b - z_a)[:, None] * f
+            exc_s = np.where(m, H - los_s, -np.inf)
+            nu_s = _nu(exc_s, dist - d_a[:, None], d_b[:, None] - dist, lam)
+            nu_s = np.where(m, nu_s, -np.inf)
+            ks = nu_s.argmax(1)
+            nu_2 = np.where(m.any(1), nu_s[rows, ks], -np.inf)
+            loss = loss + np.where(nu_p > -0.78, knife_edge_loss_db(nu_2), 0.0)
+        out[a:a + chunk] = loss
+    return out
+
+
+def uma_tr38901_db(d3, d2, h_bs, freq_hz, los, h_ut: float = 1.5) -> np.ndarray:
+    """3GPP TR 38.901 UMa path loss (Table 7.4.1-1) with the LoS state given
+    per link: PL_LOS with its breakpoint, PL_NLOS = max(PL_LOS, PL'_NLOS)."""
+    fc = freq_hz / 1e9
+    h_e = 1.0                                   # effective environment height (UMa, h_UT < 13 m)
+    d_bp = 4 * (h_bs - h_e) * (h_ut - h_e) * freq_hz / C
+    pl1 = 28.0 + 22 * np.log10(np.maximum(d3, 1.0)) + 20 * np.log10(fc)
+    pl2 = (28.0 + 40 * np.log10(np.maximum(d3, 1.0)) + 20 * np.log10(fc)
+           - 9 * np.log10(d_bp ** 2 + (h_bs - h_ut) ** 2))
+    pl_los = np.where(d2 <= d_bp, pl1, pl2)
+    pl_nlos = 13.54 + 39.08 * np.log10(np.maximum(d3, 1.0)) + 20 * np.log10(fc) - 0.6 * (h_ut - 1.5)
+    return np.where(los, pl_los, np.maximum(pl_los, pl_nlos))

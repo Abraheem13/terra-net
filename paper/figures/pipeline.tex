@@ -11,19 +11,19 @@
 % band A: corpus generation
 \node[io]  (osm)   at (0*\dx, 0)      {Building footprints\\(Overture Maps)};
 \node[box] (scene) at (1*\dx, 0)      {Geo-referenced scene\\LoD1, $\sceneSize\times\sceneSize$\,km};
-\node[box] (rt)    at (2*\dx, 0)      {Sionna RT, \nSitesPerCity{} sites\\\freqGHz{} and \freqTwoGHz\,GHz};
-\node[io]  (links) at (3*\dx, 0)      {Path-loss links\\\cellSize\,m cells, $\le\maxPl$\,dB};
+\node[box] (rt)    at (2*\dx, 0)      {Sionna RT, \nSitesPerCity{} sites\\\freqGHz{} and \freqTwoGHz\,GHz; replicates};
+\node[io]  (links) at (3*\dx, 0)      {Path-loss links\\\cellSize\,m cells, $\le\maxPl$\,dB, holes kept};
 % band B: tiles
 \node[box] (tile)  at (0*\dx, 1*\dy)  {Tiling\\$G_s=\tileSize$\,m};
 \node[box, minimum height=8.5mm] (desc)  at (1*\dx, 1*\dy+5.2mm) {Descriptor $\mathbf{v}_t\in\mathbb{R}^{32}$};
 \node[box, minimum height=8.5mm] (fit)   at (1*\dx, 1*\dy-5.2mm) {Labels $\boldsymbol{\theta}_t=(\gamma_t,P_{L_0,t})$};
 \node[io]  (table) at (2*\dx, 1*\dy)  {Tile table\\\nCities{} cities};
 % band C: transfer and evaluation
-\node[box] (op)    at (0*\dx, 2*\dy)  {Transfer operator\\(source cities)};
+\node[box] (op)    at (0*\dx, 2*\dy)  {Transfer operator\\(nested selection)};
 \node[box] (fs)    at (1*\dx, 2*\dy)  {Few-shot correction\\($k$ surveyed tiles)};
 \node[res] (pm)    at (2*\dx, 2*\dy)  {Parameter error\\$\gamma$, $P_{L_0}$};
-\node[res] (net)   at (3*\dx, 2*\dy)  {Network metrics,\\planning, certificate};
-\node[box] (rtn) at (3*\dx, 1*\dy) {Site-aware link\\transfer model};
+\node[res] (net)   at (3*\dx, 2*\dy)  {Network metrics, planning,\\decomposition, certificate};
+\node[box] (rtn) at (3*\dx, 1*\dy) {Site-aware link model;\\physics link baselines};
 % flows
 \draw[arr] (osm) -- (scene);
 \draw[arr] (scene) -- (rt);

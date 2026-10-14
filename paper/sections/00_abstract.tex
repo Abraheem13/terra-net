@@ -1,31 +1,35 @@
 \begin{abstract}
-Digital-twin network planning needs path-loss models for areas without
-measurements. Tile-based methods fit a log-distance exponent and intercept
-per map tile and transfer them to unmeasured tiles by descriptor similarity.
-We study this transfer across cities on ray-traced corpora:
+Network digital twins for 6G need a propagation model for places where no
+measurement exists yet. Tile-based transfer fits a log-distance exponent and
+intercept per map tile and carries them to unmeasured tiles by descriptor
+similarity. We test this across cities on open ray-traced corpora:
 \nCities{} geo-referenced cities with \nSites{} rooftop sites at
-\SI{\freqGHz}{\giga\hertz} (\nSamples{} links) and
-\SI{\freqTwoGHz}{\giga\hertz}, a random-siting replicate and independently
-modelled external scenes. The tile labels are imprecise: their
-cluster-robust uncertainty is \seRatio{} times the naive one, and they change
-with the serving sites and the dynamic range of the data. Learned regressors
-transfer them better than the source median in most cities, though not
-significantly. Yet even perfect tile labels give a path-loss error of
-\SI{\netOracle}{\decibel} and the correct serving site for only
-\assocOracle\% of the pixels; composing the parameters of the tiles a link
-crosses helps with exact labels, not once they are transferred. A site-aware hurdle model that predicts each
-link, and whether it exists, from its obstruction and diffraction geometry
-reduces the error on unseen cities to \SI{\netLink}{\decibel}, raises
-serving-site accuracy to \assocLink\% and cuts the coverage lost when
-planning five sites from \regretGbdt\% to \regretLink\%, in every held-out
-city. On external scenes with other materials, a survey of 25 random tiles
-calibrates it to the accuracy of exact tile labels. A city-level
-certificate lets it promise \certClaimLink\% of the pixels as covered at a
-guaranteed risk, against \certClaimGbdt\% for tile transfer.
-All results are reproducible by one command.
+\SI{\freqGHz}{\giga\hertz} and in the upper mid-band at
+\SI{\freqTwoGHz}{\giga\hertz} (\nSamples{} and \nSamplesTwo{} links),
+replicates with other sitings and random building materials, and
+independently modelled external scenes. Tile labels are imprecise, with a
+cluster-robust uncertainty \seRatio{} times the naive one, and they change
+with the serving sites, the tile size and the dynamic range of the data. At
+the network level, even exact tile labels leave a path-loss error of
+\SI{\netOracle}{\decibel} and the correct serving site for \assocOracle\% of
+the pixels. We decompose the gap: a cut-off model for distant sites removes
+most of the planning loss, a line-of-sight dual-slope label part of the rest,
+and the remainder is the geometry of each link. A site-aware hurdle model that
+predicts every link, and whether it exists, from its obstruction and
+diffraction geometry reaches \SI{\netLink}{\decibel}, \assocLink\% correct
+serving sites and a planning regret of \regretLink\% for five sites, in every
+held-out city, and it outperforms per-link physics baselines (free space with
+single or multiple knife edges, 3GPP UMa with geometric line of sight) in
+path loss and serving site under the same protocol. On scenes with other materials a survey of 25 random tiles
+calibrates it to the accuracy of exact tile labels, and a distribution-free
+city-level certificate lets it promise \certClaimLink\% of the pixels as
+covered at a guaranteed risk, against \certClaimGbdt\% for tile transfer.
+Every number, table and figure is regenerated from the released data by one
+command.
 \end{abstract}
 
 \begin{keyword}
-digital twin \sep network planning \sep path-loss modelling \sep transfer
-learning \sep ray tracing \sep coverage certification \sep empirical Bayes
+6G \sep network digital twin \sep network planning \sep path-loss modelling
+\sep transfer learning \sep ray tracing \sep upper mid-band \sep coverage
+certification
 \end{keyword}

@@ -1,11 +1,19 @@
-"""Shared data access and transfer operators for the LOCO experiments.
+"""Shared data access and transfer operators for the leave-one-city-out experiments.
 
 Protocol (identical for every operator):
-  * source = train cities of the split; the split's validation city is used
-    only to select hyper-parameters; the held-out city is never touched;
-  * descriptors are max-abs normalised with constants fitted on the train
-    cities and applied unchanged to validation and test tiles;
-  * stochastic operators are run for every seed in SEEDS.
+  * the held-out city is never touched; every other city is a training city;
+  * hyper-parameters are chosen by an inner leave-one-training-city-out loop
+    (`inner_splits`): each training city is held out once, the operator is
+    fitted on the others, and the grid value with the smallest mean inner
+    loss (`selection_loss`, standardised over both targets) is kept; the
+    operator is then refitted on all training cities. For operators with
+    early stopping the number of rounds or epochs of the final fit is the
+    median best iteration over the inner folds;
+  * descriptors are max-abs normalised with constants fitted on the training
+    cities of the fit at hand (inner or outer) and applied unchanged to the
+    held-out tiles;
+  * stochastic operators are run for every seed in SEEDS; the inner selection
+    uses seed 0.
 """
 from __future__ import annotations
 
@@ -20,8 +28,9 @@ from terranet.data.descriptors.scene_tiles import DESCRIPTOR_COLUMNS
 
 SEEDS = (0, 1, 2, 3, 4)
 TARGETS = ["gamma", "pl0"]
-LINK_KAPPA = 50.0          # prior weight (links) of the per-site offset calibration
+LINK_KAPPA = 50.0          # fixed prior weight (links) of the per-site offset (ablation)
 SITES_SMALL = 10           # size of the reduced network (first sites of the siting rule)
+N_INNER_EXPENSIVE = 3      # inner validation cities for the two expensive operators
 
 
 def load_cfg(config: str):
@@ -35,6 +44,17 @@ def load_cfg(config: str):
 
 def load_splits(path: str = "data/splits/loco.json") -> list[dict]:
     return json.loads(Path(path).read_text())
+
+
+def inner_splits(train_cities, n_inner=None, seed=0):
+    """Inner leave-one-training-city-out splits [(inner_train, inner_val)].
+    With n_inner, only that many validation cities are drawn (fixed seed)."""
+    cities = list(train_cities)
+    vals = cities
+    if n_inner is not None and n_inner < len(cities):
+        rng = np.random.default_rng(seed)
+        vals = [cities[i] for i in sorted(rng.choice(len(cities), n_inner, replace=False))]
+    return [([c for c in cities if c != v], v) for v in vals]
 
 
 def load_tiles(base, cfg, city: str, fitted_only: bool = True) -> pd.DataFrame:
@@ -62,6 +82,25 @@ class MaxAbs:
 
     def __call__(self, X):
         return X / self.mx
+
+
+class CityData:
+    """Descriptors and labels of every city, with inner-fold access."""
+
+    def __init__(self, base, cfg, cities):
+        self.d = {c: xy(load_tiles(base, cfg, c)) for c in cities}
+
+    def pool(self, cities):
+        X = np.vstack([self.d[c][0] for c in cities])
+        Y = np.vstack([self.d[c][1] for c in cities])
+        return X, Y
+
+    def fold(self, train, val):
+        """Normalised (Xtr, Ytr, Xva, Yva) of one (inner or outer) fold."""
+        Xtr, Ytr = self.pool(train)
+        Xva, Yva = self.d[val]
+        norm = MaxAbs().fit(Xtr)
+        return norm(Xtr), Ytr, norm(Xva), Yva
 
 
 # --------------------------------------------------------------------------
@@ -118,17 +157,30 @@ RIDGE_GRID = (0.01, 0.1, 1.0, 10.0, 100.0)
 MLP_ALPHA_GRID = (1e-4, 1e-2, 1.0)
 
 
-def selection_loss(pred, Y, scale=None):
-    """Model-selection loss on the validation city: RMS over both targets of
-    the error standardised by the target's spread (so gamma and PL0 count
-    equally; `scale` defaults to the validation spread)."""
-    sc = np.std(Y, axis=0) if scale is None else np.asarray(scale)
-    return float(np.sqrt((((pred - Y) / sc) ** 2).mean()))
+def selection_loss(pred, Y, scale):
+    """Model-selection loss: RMS over both targets of the error standardised by
+    `scale` (the spread of the targets over the training tiles), so gamma and
+    PL0 count equally."""
+    return float(np.sqrt((((pred - Y) / np.asarray(scale)) ** 2).mean()))
 
 
-def select_sigma(Xtr, Ytr, Xva, Yva):
-    errs = {s: selection_loss(nw_predict(Xva, Xtr, Ytr, s), Yva) for s in SIGMA_GRID}
+def select_grid(grid, loss_fn):
+    """Grid value with the smallest loss; returns (value, {value: loss})."""
+    errs = {g: float(loss_fn(g)) for g in grid}
     return min(errs, key=errs.get), errs
+
+
+def inner_select(data, train_cities, grid, fit_predict, n_inner=None, seed=0):
+    """Mean inner-fold loss of every grid value. `fit_predict(g, Xtr, Ytr, Xva)`
+    returns predictions for the inner validation tiles."""
+    scale = data.pool(train_cities)[1].std(0)
+    errs = {g: [] for g in grid}
+    for tr, va in inner_splits(train_cities, n_inner, seed):
+        Xtr, Ytr, Xva, Yva = data.fold(tr, va)
+        for g in grid:
+            errs[g].append(selection_loss(fit_predict(g, Xtr, Ytr, Xva), Yva, scale))
+    mean = {g: float(np.mean(v)) for g, v in errs.items()}
+    return min(mean, key=mean.get), mean
 
 
 def knn_predict(Xq, Xs, Ys, k):
@@ -136,11 +188,9 @@ def knn_predict(Xq, Xs, Ys, k):
     return KNeighborsRegressor(n_neighbors=min(k, len(Xs))).fit(Xs, Ys).predict(Xq)
 
 
-def fit_ridge(Xtr, Ytr, Xva, Yva):
+def ridge_predict(Xq, Xs, Ys, alpha):
     from sklearn.linear_model import Ridge
-    errs = {a: selection_loss(Ridge(alpha=a).fit(Xtr, Ytr).predict(Xva), Yva) for a in RIDGE_GRID}
-    a = min(errs, key=errs.get)
-    return Ridge(alpha=a).fit(Xtr, Ytr), a
+    return Ridge(alpha=alpha).fit(Xs, Ys).predict(Xq)
 
 
 GBDT_PARAMS = dict(learning_rate=0.05, num_leaves=31, min_child_samples=40,
@@ -161,46 +211,125 @@ def _lgb_supports_eval_xy() -> bool:
 _LGB_EVAL_XY = _lgb_supports_eval_xy()
 
 
-def fit_gbdt(Xtr, Ytr, Xva, Yva, seed, sample_weight=None):
-    """LightGBM per target; number of trees chosen by early stopping on the
-    validation city (patience 100)."""
+def lgb_eval_kw(Xva, yva):
+    return ({"eval_X": (Xva,), "eval_y": (yva,)} if _LGB_EVAL_XY
+            else {"eval_set": [(Xva, yva)]})
+
+
+class _Multi:
+    """Column-wise wrapper of per-target models."""
+
+    def __init__(self, models, n_trees=None):
+        self.models, self.n_trees = models, n_trees
+
+    def predict(self, X):
+        return np.column_stack([m.predict(X) for m in self.models])
+
+
+def fit_gbdt_es(Xtr, Ytr, Xva, Yva, seed, sample_weight=None, patience=100):
+    """LightGBM per target with early stopping on (Xva, Yva); n_trees = best
+    iteration per target (used by the inner selection)."""
+    import lightgbm as lgb
+    models, best = [], []
+    for j in range(Ytr.shape[1]):
+        m = lgb.LGBMRegressor(n_estimators=GBDT_MAX_TREES, random_state=seed, **GBDT_PARAMS)
+        m.fit(Xtr, Ytr[:, j], sample_weight=sample_weight,
+              callbacks=[lgb.early_stopping(patience, verbose=False)],
+              **lgb_eval_kw(Xva, Yva[:, j]))
+        models.append(m)
+        best.append(int(m.best_iteration_))
+
+    class _M(_Multi):
+        def predict(self, X):
+            return np.column_stack([m.predict(X, num_iteration=n)
+                                    for m, n in zip(self.models, self.n_trees, strict=True)])
+    return _M(models, best)
+
+
+def fit_gbdt(Xtr, Ytr, n_trees, seed, sample_weight=None):
+    """LightGBM per target with a fixed number of rounds (the final fit)."""
     import lightgbm as lgb
     models = []
     for j in range(Ytr.shape[1]):
-        m = lgb.LGBMRegressor(n_estimators=GBDT_MAX_TREES, random_state=seed, **GBDT_PARAMS)
-        kw = ({"eval_X": (Xva,), "eval_y": (Yva[:, j],)} if _LGB_EVAL_XY
-              else {"eval_set": [(Xva, Yva[:, j])]})
-        m.fit(Xtr, Ytr[:, j], sample_weight=sample_weight,
-              callbacks=[lgb.early_stopping(100, verbose=False)], **kw)
+        m = lgb.LGBMRegressor(n_estimators=int(n_trees[j]), random_state=seed, **GBDT_PARAMS)
+        m.fit(Xtr, Ytr[:, j], sample_weight=sample_weight)
         models.append(m)
-
-    class _M:
-        n_trees = [m.best_iteration_ for m in models]
-
-        def predict(self, X):
-            return np.column_stack([m.predict(X, num_iteration=m.best_iteration_)
-                                    for m in models])
-    return _M()
+    return _Multi(models, list(n_trees))
 
 
-def fit_mlp(Xtr, Ytr, Xva, Yva, seed):
-    """Two hidden layers of 256; targets standardised on source; L2 chosen on val city."""
+def select_gbdt_trees(data, train_cities, seed=0, n_inner=None):
+    """Median best iteration per target over the inner folds."""
+    best = []
+    for tr, va in inner_splits(train_cities, n_inner, seed):
+        Xtr, Ytr, Xva, Yva = data.fold(tr, va)
+        best.append(fit_gbdt_es(Xtr, Ytr, Xva, Yva, seed).n_trees)
+    return [max(1, int(np.median([b[j] for b in best]))) for j in range(len(best[0]))]
+
+
+MLP_MAX_EPOCHS, MLP_PATIENCE = 300, 20
+
+
+def fit_mlp_es(Xtr, Ytr, Xva, Yva, alpha, seed, scale, max_epochs=MLP_MAX_EPOCHS,
+               patience=MLP_PATIENCE):
+    """Two hidden layers of 256, targets standardised on the training tiles,
+    trained epoch by epoch with early stopping on the validation city.
+    Returns (model, best_epoch)."""
+    from sklearn.neural_network import MLPRegressor
+    from threadpoolctl import threadpool_limits
+    mu, sd = Ytr.mean(0), Ytr.std(0)
+    m = MLPRegressor(hidden_layer_sizes=(256, 256), alpha=alpha, max_iter=1,
+                     random_state=seed, warm_start=False)
+    best, best_ep, best_state, bad = np.inf, 0, None, 0
+    for ep in range(1, max_epochs + 1):
+        with threadpool_limits(1):      # small matrices: BLAS threads only cost time
+            m.partial_fit(Xtr, (Ytr - mu) / sd)
+        e = selection_loss(m.predict(Xva) * sd + mu, Yva, scale)
+        if e < best - 1e-6:
+            best, best_ep, bad = e, ep, 0
+            best_state = ([w.copy() for w in m.coefs_], [b.copy() for b in m.intercepts_])
+        else:
+            bad += 1
+            if bad >= patience:
+                break
+    m.coefs_, m.intercepts_ = best_state
+    return _MlpModel(m, mu, sd), best_ep
+
+
+class _MlpModel:
+    def __init__(self, m, mu, sd):
+        self.m, self.mu, self.sd = m, mu, sd
+
+    def predict(self, X):
+        return self.m.predict(X) * self.sd + self.mu
+
+
+def fit_mlp(Xtr, Ytr, alpha, epochs, seed):
+    """Final MLP fit for a fixed number of epochs."""
     from sklearn.neural_network import MLPRegressor
     mu, sd = Ytr.mean(0), Ytr.std(0)
-    best = None
-    for a in MLP_ALPHA_GRID:
-        m = MLPRegressor(hidden_layer_sizes=(256, 256), alpha=a, max_iter=300,
-                         early_stopping=True, random_state=seed).fit(Xtr, (Ytr - mu) / sd)
-        e = selection_loss(m.predict(Xva) * sd + mu, Yva)
-        if best is None or e < best[0]:
-            best = (e, m, a)
+    from threadpoolctl import threadpool_limits
+    m = MLPRegressor(hidden_layer_sizes=(256, 256), alpha=alpha, max_iter=1, random_state=seed)
+    with threadpool_limits(1):
+        for _ in range(int(epochs)):
+            m.partial_fit(Xtr, (Ytr - mu) / sd)
+    return _MlpModel(m, mu, sd)
 
-    class _M:
-        alpha = best[2]
 
-        def predict(self, X):
-            return best[1].predict(X) * sd + mu
-    return _M()
+def select_mlp(data, train_cities, seed=0, n_inner=None):
+    """(alpha, epochs) from the inner folds: alpha with the smallest mean inner
+    loss at its best epoch; epochs = median best epoch for that alpha."""
+    scale = data.pool(train_cities)[1].std(0)
+    loss = {a: [] for a in MLP_ALPHA_GRID}
+    ep = {a: [] for a in MLP_ALPHA_GRID}
+    for tr, va in inner_splits(train_cities, n_inner, seed):
+        Xtr, Ytr, Xva, Yva = data.fold(tr, va)
+        for a in MLP_ALPHA_GRID:
+            m, e = fit_mlp_es(Xtr, Ytr, Xva, Yva, a, seed, scale)
+            loss[a].append(selection_loss(m.predict(Xva), Yva, scale))
+            ep[a].append(e)
+    mean = {a: float(np.mean(v)) for a, v in loss.items()}
+    a = min(mean, key=mean.get)
+    return a, max(1, int(np.median(ep[a]))), mean
 
 
 def importance_weights(Xs, Xt, clip_q=0.99):
@@ -237,7 +366,7 @@ def fit_gp_ard(Xtr, Ytr, seed, n_hyper=600, maxiter=50):
     """Gaussian process with one length scale per descriptor (ARD) per target.
     Hyper-parameters maximise the marginal likelihood on a random subset of
     n_hyper source tiles (L-BFGS-B, at most maxiter iterations); the posterior
-    mean then uses every source tile."""
+    mean then uses every source tile. No validation data are needed."""
     import os
     import warnings
 
@@ -264,16 +393,25 @@ def fit_gp_ard(Xtr, Ytr, seed, n_hyper=600, maxiter=50):
         with warnings.catch_warnings():     # length scales at the bounds are
             warnings.simplefilter("ignore", ConvergenceWarning)   # expected (ARD)
             gp.fit(Xtr[sub], Z[sub, j])
-        full = GaussianProcessRegressor(gp.kernel_, optimizer=None, normalize_y=False)
-        full.fit(Xtr, Z[:, j])
-        models.append(full)
+        # posterior mean on all source tiles with the fitted kernel: only the
+        # weights alpha = K^-1 z are kept (the n x n matrices are freed), so a
+        # fold needs one kernel matrix at a time instead of four
+        from scipy.linalg import cho_solve, cholesky
+        K = gp.kernel_(Xtr)                       # includes the white-noise diagonal
+        L = cholesky(K, lower=True, overwrite_a=True, check_finite=False)
+        del K
+        alpha = cho_solve((L, True), Z[:, j], check_finite=False)
+        del L
+        models.append((gp.kernel_, alpha))
         scales.append(gp.kernel_.k1.k2.length_scale)
 
     class _M:
         length_scales = scales
+        kernels = [kern for kern, _ in models]
 
         def predict(self, X):
-            return np.column_stack([m.predict(X) for m in models]) * sd + mu
+            # WhiteKernel contributes nothing between distinct inputs
+            return np.column_stack([kern(X, Xtr) @ a for kern, a in models]) * sd + mu
     return _M()
 
 

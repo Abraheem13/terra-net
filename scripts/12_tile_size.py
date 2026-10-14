@@ -3,9 +3,9 @@
 
 For every G the whole tile pipeline is rerun: labels (empirical-Bayes, CR2),
 descriptors, zero-shot LOCO transfer (source median, ridge, GBDT with five
-seeds; the protocol of 04_fit_baselines.py) and the network evaluation of the
-oracle labels and the transferred parameters (09_network_eval.py). G = 100 m
-reproduces the main pipeline.
+seeds; the nested-selection protocol of 04_fit_baselines.py) and the network
+evaluation of the oracle labels and the transferred parameters
+(09_network_eval.py). G = 100 m reproduces the main pipeline.
 
 Output: outputs/tables/tile_size.csv  one row per (G, fold, operator, seed)
 """
@@ -27,13 +27,17 @@ from terranet.data.sionna_gen.geo import LocalFrame
 from terranet.data.tiling import grid_frame, point_tile_index, region_from_points
 from terranet.evaluation.network import City
 from terranet.experiments.common import (
+    RIDGE_GRID,
     SEEDS,
     TARGETS,
+    CityData,
     MaxAbs,
     fit_gbdt,
-    fit_ridge,
+    inner_select,
     load_cfg,
     load_splits,
+    ridge_predict,
+    select_gbdt_trees,
 )
 from terranet.utils.logging import get_logger
 
@@ -69,16 +73,18 @@ def main():
     for G in SIZES:
         data = {c: city_tiles(cfg, base, c, G) for c in cfg.cities}
         fitted = {c: t[np.isfinite(t.gamma)].reset_index() for c, (t, _) in data.items()}
+        cd = CityData(base, cfg, [])
+        cd.d = {c: (f[DESCRIPTOR_COLUMNS].to_numpy(float), f[TARGETS].to_numpy(float))
+                for c, f in fitted.items()}
         for sp in load_splits():
-            fold = sp["test_cities"][0]
-            tr = pd.concat([fitted[c] for c in sp["train_cities"]], ignore_index=True)
-            va = pd.concat([fitted[c] for c in sp["val_cities"]], ignore_index=True)
+            fold, train = sp["test_cities"][0], sp["train_cities"]
+            tr = pd.concat([fitted[c] for c in train], ignore_index=True)
             te = fitted[fold]
             tiles, city = data[fold]
             norm = MaxAbs().fit(tr[DESCRIPTOR_COLUMNS].to_numpy(float))
             X = {k: norm(d[DESCRIPTOR_COLUMNS].to_numpy(float)) for k, d in
-                 (("tr", tr), ("va", va), ("te", te))}
-            Y = {k: d[TARGETS].to_numpy(float) for k, d in (("tr", tr), ("va", va), ("te", te))}
+                 (("tr", tr), ("te", te))}
+            Y = {k: d[TARGETS].to_numpy(float) for k, d in (("tr", tr), ("te", te))}
             labels = dict(n_tiles=len(te),
                           shrink_median=float(np.median(te.shrink)),
                           se_iid=float(np.sqrt(np.nanmean(te.gamma_se ** 2))),
@@ -100,11 +106,12 @@ def main():
 
             score("oracle", 0, Y["te"])
             score("median", 0, np.tile(np.median(Y["tr"], 0), (len(te), 1)))
-            rg, _ = fit_ridge(X["tr"], Y["tr"], X["va"], Y["va"])
-            score("ridge", 0, rg.predict(X["te"]))
+            alpha, _ = inner_select(cd, train, RIDGE_GRID,
+                                    lambda a, Xa, Ya, Xb: ridge_predict(Xb, Xa, Ya, a))
+            score("ridge", 0, ridge_predict(X["te"], X["tr"], Y["tr"], alpha))
+            trees = select_gbdt_trees(cd, train, seed=0)
             for seed in SEEDS:
-                score("gbdt", seed, fit_gbdt(X["tr"], Y["tr"], X["va"], Y["va"], seed)
-                      .predict(X["te"]))
+                score("gbdt", seed, fit_gbdt(X["tr"], Y["tr"], trees, seed).predict(X["te"]))
             log.info(f"G={G:.0f} {fold}: " + " ".join(
                 f"{o}={np.mean([r['pl_rmse_db'] for r in rows if r['G'] == G and r['fold'] == fold and r['operator'] == o]):.2f}"  # noqa: E501
                 for o in ("oracle", "median", "ridge", "gbdt")))

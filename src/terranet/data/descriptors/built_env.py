@@ -1,13 +1,12 @@
-"""Built-environment descriptors (38), matching base paper Appendix B.
+"""The 32 built-environment tile descriptors (the built-structure group of the
+descriptor-based framework this study evaluates).
 
 Height classes: <5, 5-10, 10-30, 30-60, >=60 m.
- - base-area ratio per class (5)
+ - footprint-area ratio per class (5)
  - building count per class (5)
- - mean/std base area, mean/std height, mean/std volume, building density (7)
- - horizontal-plane intersections at 5/10/30/60/100 m AGL:
-   n intersected, mean & std inter-building distance (LoS pairs) (15)
- - land-cover (6): water density / area% / count, vegetation density / area% / count
-   (kept in this module for locality; counted in the land-cover group)
+ - mean/std footprint area, mean/std height, mean/std volume, footprint density (7)
+ - horizontal planes at 5/10/30/60/100 m above ground: number of buildings
+   reaching the plane, mean and std of the distance between their centroids (15)
 """
 from __future__ import annotations
 
@@ -52,22 +51,6 @@ def built_env_features(buildings: GeoDataFrame, tile_area_m2: float) -> np.ndarr
     return f
 
 
-def landcover_features(water: GeoDataFrame, vegetation: GeoDataFrame,
-                       tile_area_m2: float) -> np.ndarray:
-    f = np.zeros(6, dtype=np.float32)
-    if len(water):
-        wa = water["area_m2"].to_numpy(float)
-        f[0] = len(water) / (tile_area_m2 / 1e6)      # density per km^2
-        f[1] = wa.sum() / tile_area_m2                # area fraction
-        f[2] = float(len(water))
-    if len(vegetation):
-        va = vegetation["area_m2"].to_numpy(float)
-        f[3] = len(vegetation) / (tile_area_m2 / 1e6)
-        f[4] = va.sum() / tile_area_m2
-        f[5] = float(len(vegetation))
-    return f
-
-
 BUILT_NAMES = (
     [f"base_area_ratio_h{c}" for c in range(5)]
     + [f"n_buildings_h{c}" for c in range(5)]
@@ -75,5 +58,3 @@ BUILT_NAMES = (
        "volume_mean", "volume_std", "building_density"]
     + sum([[f"plane{p}_n", f"plane{p}_dist_mean", f"plane{p}_dist_std"] for p in PLANES_M], [])
 )
-LAND_NAMES = ["water_density", "water_area_pct", "water_count",
-              "veg_density", "veg_area_pct", "veg_count"]

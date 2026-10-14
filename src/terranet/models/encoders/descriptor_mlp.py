@@ -1,8 +1,6 @@
-"""Descriptor MLP encoder: 116-dim tile descriptor -> embedding.
+"""Descriptor MLP encoder: tile descriptor (32 features) -> embedding.
 
-Deliberately small (the input is already engineered features, not raw pixels).
-Exposes the embedding separately so a domain-adaptation loss (DANN/CORAL) can
-act on it in step 2, and so few-shot / conformal can reuse the shared space.
+Deliberately small: the input is already engineered features, not raw pixels.
 """
 from __future__ import annotations
 
@@ -11,7 +9,7 @@ import torch.nn as nn
 
 
 class DescriptorEncoder(nn.Module):
-    def __init__(self, in_dim: int = 116, emb_dim: int = 256, hidden: int = 256,
+    def __init__(self, in_dim: int = 32, emb_dim: int = 256, hidden: int = 256,
                  depth: int = 2, dropout: float = 0.1):
         super().__init__()
         layers: list[nn.Module] = [nn.LayerNorm(in_dim)]

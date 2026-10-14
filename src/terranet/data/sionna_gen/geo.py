@@ -2,9 +2,8 @@
 
 Every scene has a TRUE geographic anchor: a centre (lat, lon) and a local
 east-north-up frame in metres centred on it. Ray tracing runs in the local
-frame; measurements are written back as real lat/lon so OSM descriptors,
-DEM, and climate all line up with the propagation data. This is the property
-the DeepMIMO/LWM scenarios lack.
+frame; measurements are written back as real lat/lon so that the tile
+descriptors and the propagation data describe the same ground.
 """
 from __future__ import annotations
 

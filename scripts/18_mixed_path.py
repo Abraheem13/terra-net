@@ -13,9 +13,9 @@ path-length weighted), under the protocol of the paper:
      target);
   2. every leave-one-city-out split: the labels of the tiles crossed by at
      least 30 links of the training cities are transferred to every tile of
-     the held-out city with the source median, Gaussian-kernel transfer
-     (bandwidth chosen on the validation city) and GBDT (early stopping on the
-     validation city), and the predicted map is scored with the network
+     the held-out city with the source median, Gaussian-kernel transfer and
+     GBDT (bandwidth and rounds by inner leave-one-training-city-out
+     selection, as in 04), and the predicted map is scored with the network
      metrics and site planning of `City`.
 
 With --tile-size G the tiles of the composition (and their descriptors) have
@@ -47,12 +47,15 @@ from terranet.data.tiling import grid_frame, region_from_points
 from terranet.evaluation import mixed_path as mp
 from terranet.evaluation.network import City
 from terranet.experiments.common import (
+    SIGMA_GRID,
+    CityData,
     MaxAbs,
     fit_gbdt,
+    inner_select,
     load_cfg,
     load_splits,
     nw_predict,
-    select_sigma,
+    select_gbdt_trees,
 )
 from terranet.utils.logging import get_logger
 
@@ -175,18 +178,21 @@ def main():
         T = paths.shape[1]
         for model in todo:
             n_rows, n_plans = len(rows), len(plans)
-            tr = pd.concat([table(c, model) for c in sp["train_cities"]])
-            va = pd.concat([table(c, model) for c in sp["val_cities"]])
+            train = sp["train_cities"]
+            cd = CityData(base, cfg, [])
+            cd.d = {c: (table(c, model)[DESCRIPTOR_COLUMNS].to_numpy(float),
+                        table(c, model)[["A", "gamma"]].to_numpy()) for c in train}
+            tr = pd.concat([table(c, model) for c in train])
             te = table(fold, model, all_tiles=True)
             Xtr, Ytr = tr[DESCRIPTOR_COLUMNS].to_numpy(float), tr[["A", "gamma"]].to_numpy()
-            Xva, Yva = va[DESCRIPTOR_COLUMNS].to_numpy(float), va[["A", "gamma"]].to_numpy()
             Xte = te[DESCRIPTOR_COLUMNS].to_numpy(float)
             norm = MaxAbs().fit(Xtr)
-            Xtr, Xva, Xte = norm(Xtr), norm(Xva), norm(Xte)
+            Xtr, Xte = norm(Xtr), norm(Xte)
             ok = np.isfinite(Xte).all(1)
             med = np.median(Ytr, 0)
-            sigma, _ = select_sigma(Xtr, Ytr, Xva, Yva)
-            gb = fit_gbdt(Xtr, Ytr, Xva, Yva, seed=0)
+            sigma, _ = inner_select(cd, train, SIGMA_GRID,
+                                    lambda s, Xa, Ya, Xb: nw_predict(Xb, Xa, Ya, s))
+            gb = fit_gbdt(Xtr, Ytr, select_gbdt_trees(cd, train, seed=0), seed=0)
             preds = {"oracle": te[["A", "gamma"]].to_numpy(),
                      "median": np.tile(med, (len(te), 1))}
             for op, f in (("kernel", lambda X: nw_predict(X, Xtr, Ytr, sigma)),

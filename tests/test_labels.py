@@ -112,3 +112,17 @@ def test_cr2_matches_direct_computation():
             meat += np.outer(u, u)
         C = M @ meat @ M
         assert np.allclose([va[k], vg[k], cag[k]], [C[0, 0], C[1, 1], C[0, 1]], rtol=1e-8)
+
+
+def test_eb_fewshot_correction_shrinks_to_zero_without_evidence():
+    from terranet.experiments.fewshot import eb_correction
+    resid = np.array([[0.5, 5.0], [0.7, 4.0], [0.6, 6.0]])
+    se = np.full((3, 2), 0.5)
+    c, w = eb_correction(resid, se, s2=np.array([0.1, 10.0]), tau2=np.array([1e-9, 1e-9]))
+    assert np.all(np.abs(c) < 1e-6) and w.shape == (3, 2)          # no between-city bias
+    c, _ = eb_correction(resid, se, s2=np.array([0.1, 10.0]), tau2=np.array([1e6, 1e6]))
+    assert abs(c[0] - 0.6) < 1e-3 and abs(c[1] - 5.0) < 1e-3         # full correction
+    se2 = se.copy()
+    se2[0] = 5.0                                                     # a noisy anchor counts less
+    c2, w2 = eb_correction(resid, se2, s2=np.array([0.1, 10.0]), tau2=np.array([1e6, 1e6]))
+    assert w2[0, 0] < w2[1, 0] and abs(c2[0] - 0.65) < 0.02

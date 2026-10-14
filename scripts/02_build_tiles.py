@@ -73,6 +73,7 @@ def main():
         tiles.to_parquet(od / "tiles.parquet")
 
         _, prov = resolve_heights(bld)
+        site_h = meas.groupby("bs_id").tx_h.first().to_numpy(float)
         ok = np.isfinite(f.gamma)
         wrmse = float(np.sqrt(np.nansum(f.fit_rmse_db[ok] ** 2 * f.n[ok]) / f.n[ok].sum()))
         corpus.append(dict(
@@ -81,7 +82,8 @@ def main():
             frac_imputed=prov["frac_imputed"], median_height_m=prov["median_height_m"],
             building_parts=len(parts), transmitters=int(meas.bs_id.nunique()),
             samples=int(len(meas)), qc_removed=n_qc, tiles=int(ok.sum()),
-            tiles_grid=len(grid)))
+            tiles_grid=len(grid), site_h_min=float(site_h.min()),
+            site_h_median=float(np.median(site_h)), site_h_max=float(site_h.max())))
         fits.append(dict(
             city=city, gamma_global=g_glob, pl0_global=p_glob,
             mu=f.mu, tau=float(np.sqrt(f.tau2)),

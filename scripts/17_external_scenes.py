@@ -18,11 +18,13 @@ Phase 1 (--raytrace): for every scene
     data/raw/sionna_ext/<scene>/ (measurements.parquet, origin.json,
     building.geojson, scene_meta.json).
 Phase 2 (default): tile labels and descriptors at 100 m, then the network
-evaluation of the tile labels (oracle), the source median and GBDT tile
-transfer fitted on all eleven cities, and the site-aware link model (the
-mean of the eleven leave-one-city-out hurdle models, seed 0), zero-shot and
-with the per-site calibration of 11_link_transfer.py from k surveyed tiles
-(random: ten draws; "d": the survey design).
+evaluation of the tile labels (oracle), the source median, ridge and GBDT
+tile transfer fitted on all eleven cities (hyper-parameters by inner
+leave-one-city-out selection), and the site-aware link model (the mean of
+the eleven leave-one-city-out hurdle models, seed 0), zero-shot and with the
+per-site calibration of 11_link_transfer.py from k surveyed tiles (random:
+ten draws; "d": the variance-reduction design; "s": the stratified design),
+scored on the unsurveyed pixels only.
 
 Output: outputs/tables/external.csv
 """
@@ -43,9 +45,20 @@ from terranet.data.descriptors.scene_tiles import (
 from terranet.data.labels import fit_tiles, link_distance_m, load_links, log_distance
 from terranet.data.sionna_gen.geo import LocalFrame
 from terranet.data.tiling import grid_frame, point_tile_index, region_from_points
-from terranet.evaluation.network import City
-from terranet.experiments.calibration import calibrate, design_survey
-from terranet.experiments.common import TARGETS, MaxAbs, fit_gbdt, load_cfg, stack
+from terranet.evaluation.network import City, unsurveyed_mask
+from terranet.experiments.calibration import calibrate, design_survey, design_survey_stratified
+from terranet.experiments.common import (
+    RIDGE_GRID,
+    TARGETS,
+    CityData,
+    MaxAbs,
+    fit_gbdt,
+    inner_select,
+    load_cfg,
+    ridge_predict,
+    select_gbdt_trees,
+    stack,
+)
 from terranet.utils.logging import get_logger
 
 log = get_logger("external")
@@ -199,20 +212,20 @@ def evaluate(cfg, base):
     import lightgbm as lgb
 
     from terranet.data.link_features import city_link_matrix
-    from terranet.experiments.common import fit_ridge
     raw = Path(base.paths.raw)
     out_dir = Path(base.paths.outputs)
-    # tile transfer fitted on all eleven cities (validation: a fixed held-out city)
-    splits = json.loads(Path("data/splits/loco.json").read_text())
-    val = splits[0]["val_cities"][0]
-    tr = stack(base, cfg, [c for c in cfg.cities if c != val])
-    va = stack(base, cfg, [val])
+    # tile transfer fitted on all eleven cities; hyper-parameters by inner
+    # leave-one-city-out selection over the eleven (the protocol of 04)
+    all_cities = list(cfg.cities)
+    cd = CityData(base, cfg, all_cities)
+    tr = stack(base, cfg, all_cities)
     norm = MaxAbs().fit(tr[DESCRIPTOR_COLUMNS].to_numpy(float))
     Xtr, Ytr = norm(tr[DESCRIPTOR_COLUMNS].to_numpy(float)), tr[TARGETS].to_numpy(float)
-    Xva, Yva = norm(va[DESCRIPTOR_COLUMNS].to_numpy(float)), va[TARGETS].to_numpy(float)
-    gbdt = fit_gbdt(Xtr, Ytr, Xva, Yva, seed=0)
-    ridge, _ = fit_ridge(Xtr, Ytr, Xva, Yva)
-    med = np.median(np.r_[Ytr, Yva], 0)
+    trees = select_gbdt_trees(cd, all_cities, seed=0)
+    gbdt = fit_gbdt(Xtr, Ytr, trees, seed=0)
+    alpha, _ = inner_select(cd, all_cities, RIDGE_GRID,
+                            lambda a, Xa, Ya, Xb: ridge_predict(Xb, Xa, Ya, a))
+    med = np.median(Ytr, 0)
     rows = []
     for si, name in enumerate(SCENES):
         d = raw / DATASET / name
@@ -234,7 +247,7 @@ def evaluate(cfg, base):
         Xt = norm(tiles[DESCRIPTOR_COLUMNS].to_numpy(float))
         preds = {"oracle": tiles[TARGETS].to_numpy(float),
                  "median": np.tile(med, (len(tiles), 1)),
-                 "ridge": ridge.predict(Xt), "gbdt": gbdt.predict(Xt)}
+                 "ridge": ridge_predict(Xt, Xtr, Ytr, alpha), "gbdt": gbdt.predict(Xt)}
         info = {"scene": name, "links": len(meas), "qc_removed": n_qc, "tiles": int(ok.sum()),
                 "sites": int(meas.bs_id.nunique()), "footprints": len(bld),
                 "height_median_m": float(np.median(heights))}
@@ -260,20 +273,26 @@ def evaluate(cfg, base):
         keep = Pk >= 0.5
         M = np.where(keep, R, np.inf)
 
-        def score(op, M, R, draw=0):
-            r = {**info, "operator": op, "draw": draw, **city.evaluate(M, pl_for_error=R)}
-            r["regret5"] = next(q["regret"] for q in city.plan(M) if q["K"] == 5)
+        def score(op, M, R, draw=0, mask=None, kappa=np.nan):
+            r = {**info, "operator": op, "draw": draw, "kappa": kappa,
+                 **city.evaluate(M, pl_for_error=R, mask=mask)}
+            r["regret5"] = next(q["regret"] for q in city.plan(M, mask=mask) if q["K"] == 5)
             rows.append(r)
         score("link", M, R)
-        # the same per-site calibration from k surveyed tiles as 11_link_transfer.py
+        # the same per-site calibration from k surveyed tiles as 11_link_transfer.py,
+        # scored on the unsurveyed pixels only
         tile_ids = np.flatnonzero(ok)
         for k in SURVEY_KS:
             for draw in range(N_DRAWS):
-                pick = np.random.default_rng([si, k, draw]).choice(len(tile_ids), size=k,
-                                                                   replace=False)
-                score(f"link+k{k}", *calibrate(city, R, keep, tile_ids[pick]), draw=draw)
-            pick = design_survey(city.tile, tile_ids, keep, k)
-            score(f"link+k{k}d", *calibrate(city, R, keep, tile_ids[pick]))
+                pick = tile_ids[np.random.default_rng([si, k, draw]).choice(len(tile_ids), size=k,
+                                                                            replace=False)]
+                Mk, Rk, kap = calibrate(city, R, keep, pick)
+                score(f"link+k{k}", Mk, Rk, draw=draw, mask=unsurveyed_mask(city, pick), kappa=kap)
+            for suffix, pick in (("d", tile_ids[design_survey(city.tile, tile_ids, keep, k)]),
+                                 ("s", tile_ids[design_survey_stratified(
+                                     city.tile, tile_ids, keep, k, Xt[ok])])):
+                Mk, Rk, kap = calibrate(city, R, keep, pick)
+                score(f"link+k{k}{suffix}", Mk, Rk, mask=unsurveyed_mask(city, pick), kappa=kap)
         log.info(f"{name}: " + " ".join(f"{q['operator']}={q['pl_rmse_db']:.2f}"
                                          for q in rows if q["scene"] == name))
     o = out_dir / "tables" / "external.csv"
