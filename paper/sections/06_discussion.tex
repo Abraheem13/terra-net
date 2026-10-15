@@ -101,9 +101,9 @@ above all transfer operators, yet a planning regret of \regretUmaNlos\%,
 below that of transferred tile parameters, because a uniform bias does not
 change which sites cover the most pixels. Second, models trained on links
 below a receiver cut-off overstate the reach of distant sites unless the
-cut-off is modelled; the tile models with transferred parameters predict
-that a single site covers \covTarget\% of a city (GBDT: \sitesNeedGbdt;
-source median: \sitesNeedMedian), and a hurdle fixes most of the planning
+cut-off is modelled; with transferred parameters, the tile model predicts
+that \sitesNeedGbdt{} suffices to cover \covTarget\% of a city
+(Table~\ref{tab:mobility}), and a hurdle fixes most of the planning
 loss even for the tile model. Third, small surveys do not help a model
 without systematic error, but correct a shifted one, and they must be
 unbiased: a design that maximises the variance reduction of the offsets

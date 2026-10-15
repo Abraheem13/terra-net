@@ -30,6 +30,19 @@ import pandas as pd  # noqa: E402
 from omegaconf import OmegaConf  # noqa: E402
 
 NICE = {"newyork": "New York", "etoile": "\\'Etoile"}
+# names of the per-link baselines and tile variants as they read inside a sentence
+PROSE = {"fspl_ke": "the single knife-edge model", "deygout": "the Deygout model",
+         "uma_geo": "3GPP UMa with geometric line of sight", "gbdt": "GBDT",
+         "gbdt+h": "GBDT with the hurdle", "gbdt+los": "GBDT with the dual-slope label",
+         "gbdt+los+h": "GBDT with the dual-slope label and the hurdle"}
+WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+         "ten", "eleven", "twelve"]
+
+
+def word(n):
+    """Number as a word in running text (style: numbers up to twelve are spelled out)."""
+    return WORDS[int(n)] if 0 <= int(n) < len(WORDS) else str(int(n))
+
 OPS = ["median", "uma_los", "uma_nlos", "cost231", "kernel", "gp_ard", "knn", "ridge", "coral",
        "mlp", "encoder", "gbdt", "gbdt_iw"]
 OP_NAME = {"median": "Source median", "uma_los": "3GPP UMa LoS", "uma_nlos": "3GPP UMa NLoS",
@@ -533,6 +546,29 @@ def stats(T, G, N):
         N[f"n{key}"] = f"{r.n_better}"
         N[f"holm{key}"] = "significant" if r.holm_reject else "not significant"
     N["nFolds"] = int(s.n_folds.max())
+    n_f = int(s.n_folds.max())
+    parts = [("link", "gbdt", "pl_rmse_db", "path loss"),
+             ("link", "gbdt", "assoc_acc", "serving site"),
+             ("link", "gbdt", "sinr_mae_db", "SINR"), ("link", "gbdt", "regret", "planning regret"),
+             ("link", "oracle", "pl_rmse_db", "path loss"),
+             ("link", "oracle", "assoc_acc", "serving site"),
+             ("link", "oracle", "regret", "planning regret")]
+    cnt = [int(get(a_, b_, m_, "network").n_better) for a_, b_, m_, _ in parts]
+    holm = all(bool(get(a_, b_, m_, "network").holm_reject) for a_, b_, m_, _ in parts)
+    if all(c == n_f for c in cnt):
+        N["netLinkSummary"] = (
+            "Link transfer is better than GBDT tile transfer in path loss, serving site, SINR and "
+            "planning regret, and better than the tile model with the true labels in path loss, "
+            f"serving site and planning regret, in every one of the {word(n_f)} held-out cities")
+    else:
+        g = ", ".join(f"{lab} in {c}" for (_, _, _, lab), c in zip(parts[:4], cnt[:4], strict=True))
+        o = ", ".join(f"{lab} in {c}" for (_, _, _, lab), c in zip(parts[4:], cnt[4:], strict=True))
+        N["netLinkSummary"] = (f"Link transfer is better than GBDT tile transfer in {g} of the "
+                               f"{n_f} held-out cities, and better than the tile model with the "
+                               f"true labels in {o}")
+    N["netLinkSummaryHolm"] = ("all seven comparisons remain significant after Holm's correction"
+                               if holm else "not all seven comparisons remain significant after "
+                               "Holm's correction")
     zs = s[s.family == "zero_shot"]
     N["nZeroShotTotal"] = len(zs)
     better = zs[zs.holm_reject & (zs["diff"] < 0)]
@@ -543,6 +579,7 @@ def stats(T, G, N):
                                    if len(better) else "")
     N["nZeroShotSigWorse"] = len(worse)
     N["zeroShotSigWorseList"] = ", ".join(label.get(a, a) for a in worse.a) or "none"
+    N["zeroShotSigBetterVerb"] = "survives" if len(better) <= 1 else "survive"
     N["zeroShotSigBetterWord"] = ("none" if len(better) == 0 else
                                   "one" if len(better) == 1 else str(len(better)))
     nb = zs[zs["diff"] < 0].n_better
@@ -964,6 +1001,8 @@ def variants(T, G, N):
         bp = (m.loc[phys, mtr].idxmin() if lower else m.loc[phys, mtr].idxmax())
         N[f"varBestTile{name}"] = OP_NAME[bt]
         N[f"varBestPhys{name}"] = OP_NAME[bp]
+        N[f"varBestTile{name}Prose"] = PROSE[bt]
+        N[f"varBestPhys{name}Prose"] = PROSE[bp]
         N[f"varBestPhys{name}Val"] = (f(m.loc[bp, mtr], 1) if lower and mtr.endswith("db")
                                       else pct(m.loc[bp, mtr]))
         lk, bst = per.loc["link"][mtr], per.loc[bp][mtr]
@@ -1120,6 +1159,7 @@ def siting(T, G, N):
         rows))
     N["repList"] = ", ".join(rep_name[r].lower() for r in reps)
     N["nReplicates"] = len(reps)
+    N["nReplicatesWord"] = word(len(reps))
     for rep in reps:
         m = s[s.replicate == rep].groupby(["operator", "city"]).mean(numeric_only=True) \
             .groupby("operator").mean()
@@ -1209,6 +1249,7 @@ def external(T, G, N):
         r"Predictor & PL (dB) & bias & serv.\ (\%) & SINR (dB) & edge (m) & regret (\%) \\"],
         rows))
     N["nExtScenes"] = e.scene.nunique()
+    N["nExtScenesWord"] = word(e.scene.nunique())
     N["nExtLinks"] = thou(e.groupby("scene").links.first().sum())
     for o, key in [("oracle", "Oracle"), ("median", "Median"), ("gbdt", "Gbdt"),
                    ("link", "Link"), ("link+k10", "LinkTen"), ("link+k25", "LinkTwentyFive"),
@@ -1393,19 +1434,42 @@ def convergence(T, G, N):
     N["convRefSecondsMax"] = f"{c[c.rays == c.ref_rays].seconds.max():.0f}"
 
 
+STAGE = {"02_build_tiles.py": "Tile labels and descriptors",
+         "03_make_splits.py": "Leave-one-city-out splits",
+         "04_fit_baselines.py": "Zero-shot transfer operators",
+         "05_kshot.py": "Few-shot tile correction",
+         "06_train_neural.py": "Neural encoder",
+         "07_label_noise.py": "Label precision",
+         "08_degeneracy.py": "Kernel regimes",
+         "09_network_eval.py": "Network-level evaluation",
+         "10_stats.py": "City-level statistics",
+         "11_link_transfer.py": "Link model and calibration",
+         "12_tile_size.py": "Tile size",
+         "13_certified_coverage.py": "Coverage certificate",
+         "14_censoring.py": "Path-loss cut-off",
+         "15_siting.py": "Siting and material replicates",
+         "16_band.py": "Second band",
+         "17_external_scenes.py": "External scenes",
+         "18_mixed_path.py": "Mixed-path compositions",
+         "19_tile_variants.py": "Gap decomposition and physics baselines"}
+
+
 def runtime(T, G, N):
     r = pd.read_csv(T / "runtime.csv")
-    us = "\\_"
     g = r.groupby("script", sort=False).agg(runs=("seconds", "size"), seconds=("seconds", "sum"))
-    rows = [f"\\texttt{{{sc.replace('_', us)}}} & {int(x.runs)} & {x.seconds / 60:.0f} \\\\"
+    g = g.loc[sorted(g.index)]
+
+    def minutes(sec):
+        return "$<$1" if sec < 30 else f"{sec / 60:.0f}"
+    rows = [f"{STAGE.get(sc, sc.replace('_', ' '))} & {int(x.runs)} & {minutes(x.seconds)} \\\\"
             for sc, x in g.iterrows()]
     rows += [r"\midrule", f"Total & {int(g.runs.sum())} & {g.seconds.sum() / 60:.0f} \\\\"]
-    save_table(G, "tab_runtime", tabular("lrr", [r"Script & runs & minutes \\"], rows))
+    save_table(G, "tab_runtime", tabular("lrr", [r"Analysis stage & Runs & Minutes \\"], rows))
     N["rtTotalHours"] = f"{r.seconds.sum() / 3600:.1f}"
     N["rtCpus"] = int(r.cpus.iloc[0])
     N["rtMachine"] = str(r.machine.iloc[0]).replace("_", "\\_")
     heavy = g.seconds.sort_values(ascending=False)
-    N["rtHeaviest"] = heavy.index[0].replace("_", "\\_")
+    N["rtHeaviestStage"] = STAGE.get(heavy.index[0], heavy.index[0]).lower()
     N["rtHeaviestHours"] = f"{heavy.iloc[0] / 3600:.1f}"
 
 
@@ -1528,6 +1592,7 @@ def corpus_settings(repo, base, cfg, N):
     mat = OmegaConf.load(repo / "configs" / "data" / "sionna_cities_materials.yaml")
     N["matList"] = ", ".join(str(m) for m in mat.materials)
     N["nMat"] = len(mat.materials)
+    N["nMatWord"] = word(len(mat.materials))
 
 
 def main():
@@ -1579,6 +1644,7 @@ def main():
     OP_NAME["link_x_fs"] = rf"Link, {float(cfg.freq_ghz):g}\,GHz model, offset only"
     rand = OmegaConf.load(repo / "configs" / "data" / "sionna_cities_randsite.yaml")
     N["nRandCities"] = len(rand.rt_cities)
+    N["nRandCitiesWord"] = word(len(rand.rt_cities))
     N["randCities"] = ", ".join(nice(c) for c in rand.rt_cities)
     fig_city_name = str(cfg.get("figure_city", cfg.cities[0]))
     city_figure(repo, base, cfg, F, fig_city_name)
@@ -1618,6 +1684,7 @@ def main():
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     N["nExtSites"] = mod.SITES
+    N["nExtSitesWord"] = word(mod.SITES)
     N["extMinSep"] = f"{mod.MIN_SEP:g}"
     # siunitx cannot parse the text-mode minus: macros used inside \SI must be raw
     vals = {ln.split("}{", 1)[0][len("\\newcommand{\\"):]: ln.split("}{", 1)[1][:-1]

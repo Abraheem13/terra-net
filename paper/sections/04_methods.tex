@@ -2,52 +2,58 @@
 \section{Methodology}
 \label{sec:methods}
 
-The evaluation rests on three layers, shown in Fig.~\ref{fig:architecture}:
-a data layer that builds geo-referenced scenes from open building data and
-ray traces them into corpora of links; a model layer that derives tile
-labels, descriptors, transfer operators and a site-aware link model from
-those corpora; and a decision layer that turns every predicted path-loss map
-into the serving sites, SINR, coverage, cell edges, site plans and coverage
-certificates a planner uses. Figure~\ref{fig:pipeline} gives the processing
-order and Fig.~\ref{fig:protocol} the leave-one-city-out protocol under
-which every model is fitted and scored. Every stage is implemented in the
-accompanying repository and executed by a single command, and every number
-reported in Sections~\ref{sec:results}--\ref{sec:discussion} is generated
-from its outputs.
+This section describes how the corpora are built, how the tile labels and
+descriptors are obtained, which transfer operators and link models are
+compared, and how every predicted map is evaluated. Figure~\ref{fig:architecture}
+places the evaluated components in the digital twin network architecture
+of ITU-T Y.3090~\cite{ituy3090}: the data repository holds the building
+data, the city scenes, the ray-traced corpora and the tile table; the
+service mapping models are the tile transfer operators, their few-shot
+correction, the site-aware link model and the per-link physics baselines;
+and the network applications derive coverage, cell edges, site plans and
+coverage certificates from the predicted path loss. Figure~\ref{fig:pipeline}
+gives the processing order and Fig.~\ref{fig:protocol} the nested
+leave-one-city-out protocol under which every model is fitted and scored.
+Every stage is implemented in the accompanying repository and executed by a
+single command, and every number reported in
+Sections~\ref{sec:results}--\ref{sec:discussion} is generated from its
+outputs.
 
-\begin{figure*}[!t]
+\begin{figure*}[!tp]
 \centering
 \input{figures/architecture}
-\caption{Architecture of the propagation-model layer of a digital twin
-network as evaluated in this study. Data layer: open building data,
-geo-referenced scenes and ray-traced corpora, plus optional survey reports
-from the target city. Model layer: tile descriptors and labels, transfer
-operators and the site-aware link model. Decision layer: the predicted
-path-loss map and the network quantities, site plans and certificates
-derived from it. Dashed arrows mark the optional survey information.}
+\caption{Position of the evaluated models in the digital twin network
+architecture of ITU-T Y.3090~\cite{ituy3090}. The digital twin layer
+comprises the data repository and the service mapping models; the network
+application layer consumes the predicted path loss, and its decisions
+return to the physical network (dashed). In this study the radio
+environment of the physical network is emulated by ray tracing, and survey
+reports are drawn from the ray-traced truth.}
 \label{fig:architecture}
 \end{figure*}
 
-\begin{figure*}[!t]
+\begin{figure*}[!tp]
 \centering
 \input{figures/pipeline}
 \caption{Processing pipeline. (a)~Geo-referenced scenes are built from
-open building footprints and ray traced. (b)~Links are grouped into tiles;
-each tile receives a label $\btheta_t=(\gamma_t,P_{L_0,t})$ and a descriptor
-$\bv_t$ computed from the same scene geometry. (c)~Tile transfer operators
-fitted on source cities predict the labels of a held-out city, optionally
-corrected with $k$ surveyed tiles; the site-aware link model and the
-per-link physics baselines predict every link from its geometry. All are
-evaluated through the network quantities of Section~\ref{sec:netmodel}, a
-site plan and a coverage certificate.}
+open building footprints and ray traced. (b)~The links are grouped into
+tiles, each tile receives a label $\btheta_t=(\gamma_t,P_{L_0,t})$ and a
+descriptor $\bv_t$, and transfer operators fitted on the training cities
+predict the labels of the held-out city, optionally corrected from $k$
+surveyed tiles. (c)~The hurdle link model predicts every link from its
+geometry and the descriptors of the receiver tile, optionally calibrated per
+site. (d)~All predictors, and the per-link physics baselines, are scored on
+the held-out city through the network quantities of
+Section~\ref{sec:netmodel}.}
 \label{fig:pipeline}
 \end{figure*}
 
-\begin{figure}[!t]
+\begin{figure}[!tp]
 \centering
 \input{figures/protocol}
-\caption{Nested leave-one-city-out protocol. Every hyper-parameter is chosen
-inside the training cities; the held-out city is used only for scoring.}
+\caption{Nested leave-one-city-out protocol. The shaded steps
+select every hyper-parameter inside the training cities; the held-out city
+$c$ is used only for scoring.}
 \label{fig:protocol}
 \end{figure}
 
@@ -103,14 +109,14 @@ density and the siting rule are tested in Section~\ref{sec:res-robust}.
 Four further corpora use the same scenes. The \emph{second band} re-traces
 every site at \SI{\freqTwoGHz}{\giga\hertz}, in the \SIrange{7}{24}{\giga\hertz}
 range studied for 6G~\cite{tr38820}. The \emph{random-siting replicate}
-re-traces \nRandCities{} cities (\randCities) at \SI{\freqGHz}{\giga\hertz}
+re-traces \nRandCitiesWord{} cities (\randCities) at \SI{\freqGHz}{\giga\hertz}
 with the same number of sites taken from the rooftop candidates in random
 order instead of by height, under the same separation rule; the
 \emph{mid-rise replicate} draws them in random order from the rooftops
 between \SI{\cappedLo}{\metre} and \SI{\cappedHi}{\metre} above ground, the
 site-height range of the 3GPP urban-macro scenario; and the \emph{materials
 replicate} keeps the main siting but assigns each building part one of
-\nMat{} ITU materials (\matList) at random with a fixed seed instead of
+\nMatWord{} ITU materials (\matList) at random with a fixed seed instead of
 concrete for all. The geometry, and hence every descriptor and link
 feature, is identical across these replicates; only the ray-traced truth
 changes.
@@ -209,19 +215,20 @@ procedure; it is vectorised over all links of a city.
 
 \begin{algorithm}[!t]
 \SetAlgoLined\DontPrintSemicolon
-\KwIn{links $(x_i,y_i,t_i,b_i)$ of one city; minimum count $n_{\min}$}
+\KwIn{links $(x_i,y_i,t_i,b_i)$ of one city; $n_{\min}$}
 \KwOut{$\hat\btheta_t$, $w_t$, iid and cluster-robust standard errors}
 \ForEach{tile $t$ with $n_t\ge n_{\min}$}{
-  $\bar x_t,\bar y_t,S_{xx,t},S_{xy,t}$;\quad $b_t\leftarrow S_{xy,t}/S_{xx,t}$;\quad
-  $v_t\leftarrow$ cluster-robust variance of $b_t$ (Eq.~\eqref{eq:cr})\;
+  compute $\bar x_t$, $\bar y_t$, $S_{xx,t}$ and $S_{xy,t}$\;
+  $b_t\leftarrow S_{xy,t}/S_{xx,t}$\;
+  $v_t\leftarrow$ cluster-robust variance of $b_t$, Eq.~\eqref{eq:cr}\;
 }
-$(\hat\mu,\hat\tau^{2})\leftarrow$ DerSimonian--Laird over $\{(b_t,v_t)\}$ (Eq.~\eqref{eq:dl})\;
+$(\hat\mu,\hat\tau^{2})\leftarrow$ DerSimonian--Laird over $\{(b_t,v_t)\}$, Eq.~\eqref{eq:dl}\;
 \ForEach{tile $t$}{
-  $w_t\leftarrow v_t/(v_t+\hat\tau^{2})$;\quad
-  $\hat\gamma_t\leftarrow(1-w_t)b_t+w_t\hat\mu$;\quad
+  $w_t\leftarrow v_t/(v_t+\hat\tau^{2})$\;
+  $\hat\gamma_t\leftarrow(1-w_t)b_t+w_t\hat\mu$\;
   $\hat P_{L_0,t}\leftarrow\bar y_t-\hat\gamma_t\bar x_t$\;
-  residuals $e_i\leftarrow y_i-\hat P_{L_0,t}-\hat\gamma_t x_i$\;
-  standard errors from Eq.~\eqref{eq:cr} with iid and with site clusters\;
+  $e_i\leftarrow y_i-\hat P_{L_0,t}-\hat\gamma_t x_i$ for the links of $t$\;
+  standard errors from Eq.~\eqref{eq:cr}, with iid and with site clusters\;
 }
 \caption{Tile labels}
 \label{alg:labels}
@@ -323,7 +330,7 @@ descriptor (automatic relevance determination)~\cite{rasmussen2006}, i.e.\ a
 kernel operator whose metric is learned. With the kernel
 \begin{equation}
 k(\bv,\bv')=\sigma_f^{2}\exp\Bigl(-\tfrac12\sum_{\ell=1}^{p}\frac{(v_\ell-v'_\ell)^{2}}{\ell_\ell^{2}}\Bigr)
-+\sigma_n^{2}\,\mathbb{1}\{\bv=\bv'\},
++\sigma_n^{2}\,\ind\{\bv=\bv'\},
 \label{eq:ard}
 \end{equation}
 the posterior mean of each standardised target is
@@ -615,7 +622,7 @@ the largest Fresnel parameter along the path (the principal edge) and
 $\nu_{1}$, $\nu_{2}$ the largest parameters on the two sub-paths from each
 end to the principal edge,
 \begin{equation}
-P_{L,\mathrm{D}}=P_{L,\mathrm{FS}}(d)+J(\nu_{\mathrm{p}})+\mathbb{1}\{\nu_{\mathrm{p}}>-0.78\}\bigl[J(\nu_{1})+J(\nu_{2})\bigr].
+P_{L,\mathrm{D}}=P_{L,\mathrm{FS}}(d)+J(\nu_{\mathrm{p}})+\ind\{\nu_{\mathrm{p}}>-0.78\}\bigl[J(\nu_{1})+J(\nu_{2})\bigr].
 \label{eq:deygout}
 \end{equation}
 The third is the 3GPP UMa model of TR~38.901~\cite{tr38901} with the
@@ -648,7 +655,8 @@ the four labels of the dual-slope model under the nested rule.
 \subsection{Network-level evaluation, planning and certification}
 \label{sec:neteval}
 
-The decision layer scores every predicted map against the ray-traced truth
+The network application layer of Fig.~\ref{fig:architecture} is emulated by
+scoring every predicted map against the ray-traced truth
 through the quantities of Section~\ref{sec:netmodel}. For the held-out
 city, each operator's tile parameters and the true site positions define a
 predicted path-loss map for every (pixel, site) pair through
@@ -677,15 +685,15 @@ association metrics are
 \begin{aligned}
 \mathrm{prec}&=\frac{|\widehat{\mathcal{L}}\cap\mathcal{L}|}{|\widehat{\mathcal{L}}|},\qquad
 \mathrm{rec}=\frac{|\widehat{\mathcal{L}}\cap\mathcal{L}|}{|\mathcal{L}|},\\
-A_{\mathrm{serv}}&=\frac{1}{|\mathcal{P}_{\mathrm{r}}|}\sum_{p\in\mathcal{P}_{\mathrm{r}}}\mathbb{1}\{\hat s(p)=s(p)\},
+A_{\mathrm{serv}}&=\frac{1}{|\mathcal{P}_{\mathrm{r}}|}\sum_{p\in\mathcal{P}_{\mathrm{r}}}\ind\{\hat s(p)=s(p)\},
 \end{aligned}
 \label{eq:assoc}
 \end{equation}
 so that a pixel the model does not reach counts as wrongly associated, and
 the reach accuracy is the share of pixels whose reached state
-$\mathbb{1}\{\exists b:(p,b)\in\mathcal{L}\}$ is predicted correctly. Coverage
+$\ind\{\exists b:(p,b)\in\mathcal{L}\}$ is predicted correctly. Coverage
 is compared at $L\in\{120,130,140\}$\,dB through the agreement
-$|\mathcal{P}|^{-1}\sum_p\mathbb{1}\{\hat c_L(p)=c_L(p)\}$ and the error
+$|\mathcal{P}|^{-1}\sum_p\ind\{\hat c_L(p)=c_L(p)\}$ and the error
 $\hat C_L-C_L$ of the covered share; the SINR of Eq.~\eqref{eq:sinr}, with
 values below \SI{\sinrFloor}{\decibel} (including pixels at which no site is
 predicted to be received) set to \SI{\sinrFloor}{\decibel} for the truth and
@@ -838,7 +846,7 @@ evaluated at the new wavelength. \emph{External scenes.} The Munich,
 independently of the corpus of this study, with detailed meshes and several
 ITU materials (brick, concrete, marble, metal, wood). Building footprints
 and heights are derived from their meshes by vertical ray casting on a
-\SI{2}{\metre} grid, \nExtSites{} rooftop sites per scene are placed with
+\SI{2}{\metre} grid, \nExtSitesWord{} rooftop sites per scene are placed with
 the siting rule of the main corpus (minimum separation
 \SI{\extMinSep}{\metre}, the scenes being smaller), the scenes are ray
 traced with the corpus settings, and the following predictors are evaluated

@@ -202,6 +202,7 @@ def fig_certified(T, F, op_name):
     ax[1].axvline(10, color=C_BLACK, ls=":", lw=0.8)
     ax[1].text(10, -0.7, r" $\alpha=10\%$", fontsize=6, ha="left", va="bottom")
     ax[1].set_xlabel("pixels claimed but not covered (%)")
+    ax[1].set_xlim(0, 11.5)
     for a in ax:
         a.set_yticks(y)
         a.invert_yaxis()

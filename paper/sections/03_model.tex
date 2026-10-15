@@ -7,7 +7,7 @@ scored, defines the tile-parameter representation and the transfer problem,
 and derives the risk decomposition that governs label-averaging transfer
 operators. Table~\ref{tab:notation} summarises the notation.
 
-\begin{table}[!t]
+\begin{table}[!tp]
 \centering
 \caption{Notation.}
 \label{tab:notation}
@@ -22,6 +22,7 @@ $P_{\mathrm{tx}}$, $P_{\mathrm{N}}$ & Transmit power and noise power (dBm) \\
 $P_{pb}$, $s(p)$ & Received power from site $b$ and serving site of pixel $p$ \\
 $L_{\max}$, $L$ & Coupling-loss cut-off of the receiver and coverage level \\
 $c_L(p)$, $C_L$ & Coverage indicator of pixel $p$ and covered share at level $L$ \\
+$\ind\{\cdot\}$ & Indicator function (1 if the condition holds, else 0) \\
 $\eta(p)$, $\mathcal{E}$ & Spectral efficiency of pixel $p$ and set of cell-edge pixels \\
 $G_s$, $t$ & Tile side and tile index \\
 $\gamma_t$, $P_{L_0,t}$, $d_0$ & Exponent, intercept and reference distance of tile $t$ \\
@@ -64,7 +65,7 @@ pixel, with $s(p)$ undefined and its SINR set to the outage floor. A pixel is
 most $L$, and the covered share of the city is the mean of the coverage
 indicator,
 \begin{equation}
-c_L(p)=\mathbb{1}\{\PL(p,s(p))\le L\},\qquad
+c_L(p)=\ind\{\PL(p,s(p))\le L\},\qquad
 C_L=\frac{1}{|\mathcal{P}|}\sum_{p\in\mathcal{P}}c_L(p).
 \label{eq:coverage}
 \end{equation}
