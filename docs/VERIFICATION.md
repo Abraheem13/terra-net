@@ -98,6 +98,7 @@ executed after the final build.
 | LaTeX build: no undefined reference or citation, no multiply defined label, no missing glyph, no overfull box, no BibTeX warning | `python paper/scripts/check_build.py` | build clean |
 | Every generated table input exactly once; every input exists; every figure file exists | same script | pass (24 generated tables, 15 generated figures) |
 | No result-like number typed by hand in any section (a digit followed by %, dB, m or an `\SI` unit must come from a macro, with a whitelist of fixed settings) | same script | pass |
+| LaTeX package for the submission system: flat (no subfolders), one self-contained `manuscript.tex` with its `.bbl`, `.bib`, figure PDFs and the elsarticle class and style; extracted into an empty folder and compiled with the supplied `.bbl` and, separately, with a full BibTeX run | `python scripts/make_release.py` | pass: no error, warning or undefined reference; BibTeX regenerates the supplied `.bbl` byte for byte; all fonts embedded, none Type 3; all 32 pages pixel-identical to `paper/main.pdf` |
 | Unit and end-to-end tests on a synthetic corpus | `python -m pytest` | 45 passed |
 | Lint | `ruff check src tests scripts paper/scripts` | clean |
 | Fold-level parallelism does not change results | `scratch par_check` (1 vs 2 workers on the synthetic corpus) | identical to 1e-13 |

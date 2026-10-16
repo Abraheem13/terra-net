@@ -107,7 +107,7 @@ where it is repeated). The ray tracing of the corpora is separate
 (\rtHours{}\,h for the main corpus).}
 \label{tab:runtime}
 \footnotesize
-\input{generated/tab_runtime}
+\input{generated/tab_runtime}%
 \end{table}
 
 \subsection{Corpora, solver convergence and tile labels}
@@ -149,7 +149,7 @@ ray-traced (pixel, site) pairs below the \SI{\maxPl}{\decibel} cut-off.
 Tiles: labelled tiles ($\ge\minLinks{}$ links).}
 \label{tab:corpus}
 \small
-\input{generated/tab_corpus}
+\input{generated/tab_corpus}%
 \end{table*}
 
 \begin{figure*}[!tp]
@@ -211,7 +211,7 @@ median and standard deviation of $\hat\gamma_t$ and median $\hat P_{L_0,t}$
 of the slope; $w_t$: shrinkage weight; RMSE: link-weighted fit residual (dB).}
 \label{tab:fits}
 \small
-\input{generated/tab_fits}
+\input{generated/tab_fits}%
 \end{table*}
 
 \begin{figure*}[!tp]
@@ -284,7 +284,7 @@ operator (\hardCityBestOp) reaches \hardCityBest.
 stochastic operators; best per row in bold). Last row: mean $P_{L_0}$ RMSE (dB).}
 \label{tab:loco}
 \small
-\input{generated/tab_loco}
+\input{generated/tab_loco}%
 \end{table*}
 
 \begin{figure}[!tp]
@@ -304,7 +304,7 @@ neighbours; epochs and rounds: median best iteration over the inner folds
 classifier.}
 \label{tab:hparams}
 \small\setlength{\tabcolsep}{3pt}
-\input{generated/tab_hparams}
+\input{generated/tab_hparams}%
 \end{table*}
 
 Table~\ref{tab:degeneracy} places the tuned kernel operator relative to
@@ -334,7 +334,7 @@ median largest weight (Proposition~\ref{prop:regimes}b); standard deviation
 of the predictions over that of the labels.}
 \label{tab:degeneracy}
 \small\setlength{\tabcolsep}{2.5pt}
-\input{generated/tab_degeneracy}
+\input{generated/tab_degeneracy}%
 \end{table}
 
 Surveying target tiles helps the tile exponent little at small $k$
@@ -371,7 +371,7 @@ bias correction, the precision-weighted residual model, contiguous anchors
 and the facility-location design (all empirical Bayes unless stated).}
 \label{tab:kshot}
 \footnotesize\setlength{\tabcolsep}{3pt}
-\input{generated/tab_kshot}
+\input{generated/tab_kshot}%
 \end{table}
 
 \begin{figure*}[!tp]
@@ -451,7 +451,7 @@ covered share: \covTrue\%; true mean spectral efficiency: \seTrue{}\,b/s/Hz.
 Few-shot rows are scored on the unsurveyed pixels.}
 \label{tab:network}
 \small\setlength{\tabcolsep}{3.5pt}
-\input{generated/tab_network}
+\input{generated/tab_network}%
 \end{table*}
 
 \begin{figure*}[!tp]
@@ -480,7 +480,7 @@ below the cut-off; censored RMSE over all pairs. The tile models reach
 every pixel from every site.}
 \label{tab:hurdle}
 \footnotesize\setlength{\tabcolsep}{2pt}
-\input{generated/tab_hurdle}
+\input{generated/tab_hurdle}%
 \end{table}
 
 \begin{table}[!tp]
@@ -489,7 +489,7 @@ every pixel from every site.}
 split gain (mean over folds and seeds).}
 \label{tab:importance}
 \small
-\input{generated/tab_importance}
+\input{generated/tab_importance}%
 \end{table}
 
 Table~\ref{tab:mobility} turns the maps into mobility and dimensioning
@@ -520,7 +520,7 @@ predicted map until it covers \covTarget\% of the pixels at
 same procedure needs on the true map.}
 \label{tab:mobility}
 \footnotesize\setlength{\tabcolsep}{2.5pt}
-\input{generated/tab_mobility}
+\input{generated/tab_mobility}%
 \end{table}
 
 \subsection{Decomposition of the gap and physics baselines}
@@ -607,7 +607,7 @@ reached/unreached pixels; cov.: coverage agreement at \SI{130}{\decibel};
 regret: $K=5$.}
 \label{tab:variants}
 \footnotesize\setlength{\tabcolsep}{2.5pt}
-\input{generated/tab_variants}
+\input{generated/tab_variants}%
 \end{table*}
 
 \begin{figure*}[!tp]
@@ -629,7 +629,7 @@ least \minLinks{} links of each kind (the others fall back to the all-link
 pair), and median parameters per kind.}
 \label{tab:los}
 \footnotesize\setlength{\tabcolsep}{2.5pt}
-\input{generated/tab_los}
+\input{generated/tab_los}%
 \end{table}
 
 \subsection{Mixed-path composition}
@@ -712,7 +712,7 @@ serving-site accuracy; SINR: mean absolute error; edge: cell-edge
 displacement; regret: $K=5$.}
 \label{tab:mixed}
 \footnotesize\setlength{\tabcolsep}{3pt}
-\input{generated/tab_mixed}
+\input{generated/tab_mixed}%
 \end{table}
 
 \begin{figure*}[!tp]
@@ -739,7 +739,7 @@ serving-site accuracy (\%). Link transfer: \SI{\netLink}{\decibel},
 \assocLink\%.}
 \label{tab:mixedsize}
 \small\setlength{\tabcolsep}{4pt}
-\input{generated/tab_mixed_size}
+\input{generated/tab_mixed_size}%
 \end{table*}
 
 \subsection{Survey design and certified coverage}
@@ -788,7 +788,7 @@ PL: path-loss RMSE (dB); serv.: serving-site accuracy (\%); regret: $K=5$
 \SI{\svPlZero}{\decibel}, \svAssocZero\%, \svRegZero\%.}
 \label{tab:survey}
 \small\setlength{\tabcolsep}{3pt}
-\input{generated/tab_survey}
+\input{generated/tab_survey}%
 \end{table*}
 
 \begin{figure*}[!tp]
@@ -835,7 +835,7 @@ the margin; certified claim: share claimed covered and share claimed but not
 covered; naive claim: without a margin; covered: true covered share.}
 \label{tab:certified}
 \small\setlength{\tabcolsep}{4pt}
-\input{generated/tab_certified}
+\input{generated/tab_certified}%
 \end{table*}
 
 \begin{figure*}[!tp]
@@ -895,7 +895,7 @@ transfer; serving-site accuracy of the tile model. Means over the held-out
 cities.}
 \label{tab:tilesize}
 \small
-\input{generated/tab_tilesize}
+\input{generated/tab_tilesize}%
 \end{table*}
 
 \begin{table*}[!tp]
@@ -907,7 +907,7 @@ lowered to 140 and \SI{130}{\decibel}; for random tiles, median and 90th
 percentile of the Tobit minus the least-squares slope.}
 \label{tab:censoring}
 \small
-\input{generated/tab_censoring}
+\input{generated/tab_censoring}%
 \end{table*}
 
 \begin{table*}[!tp]
@@ -917,7 +917,7 @@ the \nSitesSmall-site network (mean over held-out cities). PL: path-loss
 RMSE; serv.: serving-site accuracy; SINR: mean absolute error; regret: $K=5$.}
 \label{tab:density}
 \small
-\input{generated/tab_density}
+\input{generated/tab_density}%
 \end{table*}
 
 Table~\ref{tab:siting} and Fig.~\ref{fig:replicates} apply the models of
@@ -958,7 +958,7 @@ corpus. PL: path-loss RMSE (dB); serv.: serving-site accuracy (\%); regret:
 $K=5$ (\%). Means over cities (and seeds).}
 \label{tab:siting}
 \small\setlength{\tabcolsep}{3pt}
-\input{generated/tab_siting}
+\input{generated/tab_siting}%
 \end{table*}
 
 \begin{figure*}[!tp]
@@ -999,7 +999,7 @@ link models trained at \SI{\freqGHz}{\giga\hertz} with the free-space offset,
 with the knife-edge feature at the new wavelength or unchanged.}
 \label{tab:band}
 \footnotesize\setlength{\tabcolsep}{2pt}
-\input{generated/tab_band}
+\input{generated/tab_band}%
 \end{table}
 
 \begin{figure*}[!tp]
@@ -1055,7 +1055,7 @@ of ten draws; the variance design; the stratified design), scored on the
 unsurveyed pixels.}
 \label{tab:external}
 \small
-\input{generated/tab_external}
+\input{generated/tab_external}%
 \end{table*}
 
 \begin{figure*}[!tp]
@@ -1098,5 +1098,5 @@ which the first is better; Holm: significant at 5\% after Holm's correction
 within the family.}
 \label{tab:stats}
 \small
-\input{generated/tab_stats_key}
+\input{generated/tab_stats_key}%
 \end{table*}
