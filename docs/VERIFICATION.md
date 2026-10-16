@@ -185,22 +185,36 @@ accordingly:
 
 ## 7. References
 
-Online bibliographic services (Crossref, OpenAlex, publisher sites) are not
-reachable from the environment in which this revision was prepared, so the
-entries were verified as follows: the venue, volume, issue, pages and year of
-every entry were checked against the known publication record of each work;
-five entries were additionally checked by web search in this session; DOIs
-are given only for the two entries whose DOI could be verified. Two entries
-require confirmation by the authors before submission.
+All 55 entries were checked online on 16 October 2026. Crossref and OpenAlex
+are blocked by the network policy of the environment, so each entry was
+looked up by web search and compared field by field (authors, title, venue,
+volume, issue, pages, year, version) with an authoritative record: the
+publisher's page (IEEE Xplore, ScienceDirect, Springer, SIAM, JSTOR, Project
+Euclid, OUP), DBLP, the NeurIPS and AAAI proceedings, arXiv, the ITU, 3GPP and
+ETSI pages for standards, the USGS and EU Publications Office for reports, or
+an author or institutional publication list. Where a page range was not shown
+on the publisher's page it was confirmed through a DOI record or a citing
+paper.
 
-| Key | Work | Method | Status |
-|---|---|---|---|
-| ozyurt2026 | Ozyurt, Computer Communications 257 (2026) 108620 | web search: the author's publication listing corroborates title and abstract; the journal page was not reachable | **confirm volume and article number** |
-| ozyurt2020maple | MAPLE, IEEE Communications Letters 24(2) 461–465, 2020 | web search did not surface the record | **confirm** |
-| dempsey2025 | Dempsey, Ethier, Yanikomeroglu, arXiv:2411.17752 | web search: arXiv record confirmed; the journal version could not be confirmed, so the arXiv record is cited | verified |
-| ts37320 | 3GPP TS 37.320 V16.5.0 (2021) | web search: version and date confirmed (ETSI TS 137 320 V16.5.0) | verified |
-| tr38820 | 3GPP TR 38.820 V16.1.0 (2021-03) | web search: version and date confirmed | verified |
-| hata1980, erceg1999, rappaport2002, tr38901, tr36942, itup2040, yun2015raytracing, hoydis2023sionna, hoydis2024learning, levie2021radiounet, teganya2022, zhang2023rmegan, wang2025radiodiff, romero2022, zeng2021ckm, seretis2022, thrane2020, gupta2022, khan2022dt, alkhateeb2023dt, johansson2012mdt, amaldi2003, nemhauser1978, haklay2008osm, snyder1987, nadaraya1964, watson1964, shimodaira2000, bendavid2010, dersimonian1986, morris1983, liang1986, cameron2015, ke2017lightgbm, efron1993, wilcoxon1945, holm1979, overture, itup526, bell2002, pustejovsky2018, sun2016coral, rasmussen2006, cost231, tobin1958, barber2021, vovk2005, krause2008, itu2160, ituy3090 | 50 entries | bibliographic details checked against the publication record | verified |
+| Outcome | Entries |
+|---|---|
+| Exists, every field matches | 54 |
+| Corrected | 1: `cost231` was a technical report published in Brussels; the report's cover gives it as an edited volume (E. Damosso, L. M. Correia, Eds.), Office for Official Publications of the European Communities, Luxembourg, 1999, EUR 18957 |
+
+Notes:
+
+- `ozyurt2026` (*Computer Communications* 257 (2026) 108620) and
+  `ozyurt2020maple` (*IEEE Communications Letters* 24(2) 461–465, 2020,
+  doi:10.1109/LCOMM.2019.2954397), previously flagged for confirmation, are
+  confirmed.
+- `overture` (release 2026-09-23.0) is not indexed by search engines; the
+  release is the one recorded in the provenance files written when the
+  building data was downloaded (`data/raw/sionna_scenes/*/scene_meta.json`).
+- `itup526` (P.526-15, 2019) and `itup2040` (P.2040-3, 2023) have since been
+  superseded by newer versions; the versions cited are those in force when
+  the corpora were built and that the solver's material model follows.
+- `dempsey2025` is cited as arXiv:2411.17752 (2024); the arXiv record's
+  current title matches the citation.
 
 Only cited entries appear in the reference list (BibTeX); the build checker
 fails on any undefined citation or BibTeX warning.
@@ -209,7 +223,5 @@ fails on any undefined citation or BibTeX warning.
 
 - All results are ray traced; no measured data with known site positions were
   available. The manuscript states this limitation.
-- The two bibliographic entries flagged above must be confirmed by the
-  authors from the publisher's pages.
 - Eleven cities limit the power of city-level tests and the resolution of the
   certificate; both limits are stated in the manuscript.
