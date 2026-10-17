@@ -1,0 +1,62 @@
+% Fig. 1 -- the propagation models of this study in the digital twin network
+% architecture of ITU-T Y.3090. Strict grid: four box columns shared by every
+% band, straight connectors only, no connector crosses a box or a label.
+\begin{tikzpicture}[x=1mm, y=1mm, font=\footnotesize,
+  box/.style={draw=black!70, fill=white, rounded corners=1pt, line width=0.45pt,
+              minimum width=31mm, minimum height=10mm, align=center, inner sep=1pt},
+  band/.style={rounded corners=2pt, line width=0pt},
+  lab/.style={font=\footnotesize\bfseries, align=center, anchor=center},
+  flow/.style={-{Triangle[length=2.4mm, width=3.6mm]}, line width=1.1mm, draw=black!40},
+  chain/.style={-{Stealth[length=1.6mm, width=1.4mm]}, line width=0.5pt},
+  note/.style={font=\footnotesize\itshape, anchor=west, align=left}]
+% ---- geometry (mm)
+\def\cA{45}\def\cB{80}\def\cC{115}\def\cD{150}
+\def\xL{0}\def\xR{170}\def\xLab{13.5}
+% ---- bands
+\fill[band, black!5]   (\xL,0)     rectangle (\xR,-14);          % application
+\draw[rounded corners=2pt, draw=tndark, line width=0.6pt] (\xL,-22) rectangle (\xR,-65);
+\fill[band, tnblue!9]  (\xL+2,-27) rectangle (\xR-2,-41);        % models
+\fill[band, tnblue!9]  (\xL+2,-49) rectangle (\xR-2,-63);        % repository
+\fill[band, black!5]   (\xL,-73)   rectangle (\xR,-87);          % physical
+\node[fill=tndark, text=white, font=\footnotesize\bfseries, anchor=north west,
+      inner xsep=3pt, inner ysep=1.6pt, rounded corners=1pt] at (\xL,-22) {Digital twin layer};
+% ---- band labels
+\node[lab] at (\xLab,-7)  {Network\\application\\layer};
+\node[lab] at (\xLab+1,-34) {\strut Service\\\strut mapping models};
+\node[lab] at (\xLab+1,-56) {\strut Data\\\strut repository};
+\node[lab] at (\xLab,-80) {\strut Physical\\\strut network layer};
+% ---- network application layer
+\node[box] at (\cA,-7) {\strut Coverage and\\\strut SINR analysis};
+\node[box] at (\cB,-7) {\strut Cell edges and\\\strut handover};
+\node[box] at (\cC,-7) {\strut Site planning and\\\strut dimensioning};
+\node[box] at (\cD,-7) {\strut Coverage\\\strut certification};
+% ---- service mapping models
+\node[box] at (\cA,-34) {\strut Tile transfer\\\strut operators};
+\node[box] at (\cB,-34) {\strut Few-shot tile\\\strut correction};
+\node[box] at (\cC,-34) {\strut Site-aware\\\strut link model};
+\node[box] at (\cD,-34) {\strut Per-link physics\\\strut baselines};
+% ---- data repository
+\node[box] (r1) at (\cA,-56) {\strut Open building\\\strut data};
+\node[box] (r2) at (\cB,-56) {\strut LoD1 city\\\strut scenes};
+\node[box] (r3) at (\cC,-56) {\strut Ray-traced\\\strut corpora};
+\node[box] (r4) at (\cD,-56) {\strut Tile labels and\\\strut descriptors};
+\draw[chain] (r1) -- (r2);
+\draw[chain] (r2) -- (r3);
+\draw[chain] (r3) -- (r4);
+% ---- physical network layer
+\node[box] at (\cA,-80) {\strut Base-station\\\strut sites};
+\node[box] at (\cB,-80) {\strut User\\\strut equipment};
+\node[box] at (\cC,-80) {\strut MDT measurement\\\strut reports};
+\node[box] at (\cD,-80) {\strut Built\\\strut environment};
+% ---- inter-layer flows (in the free gaps only)
+\draw[flow] (\cB-17.5,-73) -- (\cB-17.5,-65.4);
+\node[note] at (\cB-14,-69) {site layout, building data and, optionally, survey reports};
+\draw[flow] (\cB-17.5,-49) -- (\cB-17.5,-41.4);
+\node[note] at (\cB-14,-45) {scenes, ray-traced links, tile labels and descriptors};
+\draw[flow] (\cB-17.5,-22) -- (\cB-17.5,-14.4);
+\node[note] at (\cB-14,-18) {predicted path loss $\widehat{P}_{L}(p,b)$ for every pixel $p$ and site $b$};
+% ---- closed loop back to the physical network (right margin)
+\draw[chain, dashed, line width=0.6pt] (\xR,-7) -- (\xR+4.5,-7) -- (\xR+4.5,-80) -- (\xR,-80);
+\node[font=\footnotesize\itshape, rotate=-90, anchor=south] at (\xR+5.4,-43.5)
+      {site plan and coverage promise};
+\end{tikzpicture}

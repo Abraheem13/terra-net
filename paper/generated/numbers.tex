@@ -16,6 +16,7 @@
 \newcommand{\cappedHi}{45}
 \newcommand{\matList}{brick, concrete, marble, metal, wood}
 \newcommand{\nMat}{5}
+\newcommand{\nMatWord}{five}
 \newcommand{\tileSize}{100}
 \newcommand{\refDist}{100}
 \newcommand{\minLinks}{30}
@@ -77,6 +78,7 @@
 \newcommand{\isdSmall}{1020}
 \newcommand{\freqTwoGHz}{7.5}
 \newcommand{\nRandCities}{4}
+\newcommand{\nRandCitiesWord}{four}
 \newcommand{\randCities}{Amsterdam, London, New York, Paris}
 \newcommand{\figCity}{Amsterdam}
 \newcommand{\rmseMedian}{0.871}
@@ -448,12 +450,15 @@
 \newcommand{\nBandCrossRegret}{3}
 \newcommand{\holmBandCrossRegret}{not significant}
 \newcommand{\nFolds}{11}
+\newcommand{\netLinkSummary}{Link transfer is better than GBDT tile transfer in path loss, serving site, SINR and planning regret, and better than the tile model with the true labels in path loss, serving site and planning regret, in every one of the eleven held-out cities}
+\newcommand{\netLinkSummaryHolm}{all seven comparisons remain significant after Holm's correction}
 \newcommand{\nZeroShotTotal}{12}
 \newcommand{\nZeroShotSigBetter}{0}
 \newcommand{\zeroShotSigBetterList}{none}
 \newcommand{\zeroShotSigBetterParen}{}
 \newcommand{\nZeroShotSigWorse}{1}
 \newcommand{\zeroShotSigWorseList}{3GPP UMa NLoS}
+\newcommand{\zeroShotSigBetterVerb}{survives}
 \newcommand{\zeroShotSigBetterWord}{none}
 \newcommand{\learnedBetterMin}{8}
 \newcommand{\learnedBetterMax}{9}
@@ -803,16 +808,22 @@
 \newcommand{\varLinkSinr}{5.7}
 \newcommand{\varBestTileNet}{GBDT, dual slope}
 \newcommand{\varBestPhysNet}{Free space + knife edge}
+\newcommand{\varBestTileNetProse}{GBDT with the dual-slope label}
+\newcommand{\varBestPhysNetProse}{the single knife-edge model}
 \newcommand{\varBestPhysNetVal}{14.7}
 \newcommand{\nLinkBetterPhysNet}{11}
 \newcommand{\nLinkBetterTileNet}{11}
 \newcommand{\varBestTileAssoc}{GBDT, dual slope + hurdle}
 \newcommand{\varBestPhysAssoc}{3GPP UMa, geometric LoS}
+\newcommand{\varBestTileAssocProse}{GBDT with the dual-slope label and the hurdle}
+\newcommand{\varBestPhysAssocProse}{3GPP UMa with geometric line of sight}
 \newcommand{\varBestPhysAssocVal}{62.3}
 \newcommand{\nLinkBetterPhysAssoc}{11}
 \newcommand{\nLinkBetterTileAssoc}{11}
 \newcommand{\varBestTileRegret}{GBDT + hurdle}
 \newcommand{\varBestPhysRegret}{Free space + Deygout}
+\newcommand{\varBestTileRegretProse}{GBDT with the hurdle}
+\newcommand{\varBestPhysRegretProse}{the Deygout model}
 \newcommand{\varBestPhysRegretVal}{0.1}
 \newcommand{\nLinkBetterPhysRegret}{3}
 \newcommand{\nLinkBetterTileRegret}{3}
@@ -924,6 +935,7 @@
 \newcommand{\censTobitTiles}{3{,}300}
 \newcommand{\repList}{random rooftops, mid-rise rooftops, random materials}
 \newcommand{\nReplicates}{3}
+\newcommand{\nReplicatesWord}{three}
 \newcommand{\siteHRand}{26}
 \newcommand{\rsRandNetOracleRand}{12.0}
 \newcommand{\rsRandAssocOracleRand}{54.3}
@@ -1027,6 +1039,7 @@
 \newcommand{\outDiffOn}{69}
 \newcommand{\outDiffOff}{0}
 \newcommand{\nExtScenes}{3}
+\newcommand{\nExtScenesWord}{three}
 \newcommand{\nExtLinks}{202{,}782}
 \newcommand{\extBiasOracle}{+0.0}
 \newcommand{\extNetOracle}{12.24}
@@ -1171,5 +1184,8 @@
 \newcommand{\rtTotalHours}{8.0}
 \newcommand{\rtCpus}{4}
 \newcommand{\rtMachine}{x86\_64}
+\newcommand{\rtHeaviestStage}{mixed-path compositions}
+\newcommand{\rtHeaviestHours}{4.1}
 \newcommand{\nExtSites}{8}
+\newcommand{\nExtSitesWord}{eight}
 \newcommand{\extMinSep}{150}

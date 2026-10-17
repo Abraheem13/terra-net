@@ -1,0 +1,39 @@
+% Fig. 3 -- nested leave-one-city-out protocol. Single column, one vertical
+% spine; the inner selection loop returns on the right, the outer loop over
+% target cities on the left. All boxes share one width; no text is hyphenated.
+\begin{tikzpicture}[x=1mm, y=1mm, font=\footnotesize,
+  blk/.style={draw=black!70, fill=white, rounded corners=1pt, line width=0.45pt,
+              minimum width=58mm, minimum height=9mm, align=center, inner sep=1pt},
+  inner/.style={blk, fill=tnblue!9},
+  term/.style={draw=black!70, fill=black!7, rounded corners=4.5mm, line width=0.45pt,
+               minimum width=40mm, minimum height=9mm, align=center},
+  dec/.style={draw=black!70, fill=white, diamond, aspect=2.8, line width=0.45pt,
+              align=center, inner sep=0.6pt},
+  arr/.style={-{Stealth[length=1.7mm, width=1.5mm]}, line width=0.5pt},
+  yes/.style={font=\footnotesize\itshape, anchor=west, inner sep=1.5pt, xshift=0.6mm},
+  no/.style={font=\footnotesize\itshape, anchor=south, inner sep=1.5pt}]
+\node[term]  (start) at (0,0)    {\strut Ray-traced corpora of $n$ cities};
+\node[blk]   (tgt)   at (0,-13)  {\strut Select target city $c$; the other\\\strut $n-1$ cities form the training set};
+\node[inner] (fit)   at (0,-26)  {\strut For a grid value $h$ and a training city $c'$:\\\strut fit on the other $n-2$ cities, score $\ell$ on $c'$};
+\node[dec]   (d1)    at (0,-40.5)  {\strut All $h$ and $c'$\\\strut evaluated?};
+\node[inner] (sel)   at (0,-55)  {\strut Keep the value $h^{\star}$ with the smallest\\\strut mean inner loss $\ell$, Eq.~\eqref{eq:selloss}};
+\node[blk]   (refit) at (0,-68)  {\strut Refit on the $n-1$ training cities\\\strut with $h^{\star}$ (five seeds)};
+\node[blk]   (score) at (0,-81)  {\strut Predict city $c$; score path loss, serving\\\strut site, SINR, coverage, cell edges, plan};
+\node[dec]   (d2)    at (0,-95.5) {\strut All $n$ target\\\strut cities done?};
+\node[blk]   (inf)   at (0,-110) {\strut City-level inference: bootstrap intervals,\\\strut Wilcoxon tests, Holm; certificate};
+\node[term]  (end)   at (0,-123) {\strut Reported results};
+\draw[arr] (start) -- (tgt);
+\draw[arr] (tgt) -- (fit);
+\draw[arr] (fit) -- (d1);
+\draw[arr] (d1) -- node[yes] {yes} (sel);
+\draw[arr] (sel) -- (refit);
+\draw[arr] (refit) -- (score);
+\draw[arr] (score) -- (d2);
+\draw[arr] (d2) -- node[yes] {yes} (inf);
+\draw[arr] (inf) -- (end);
+% inner loop (right) and outer loop (left)
+\draw[arr] (d1.east) -- node[no, pos=0.45] {no} (36,-40.5) -- (36,-26) -- (fit.east);
+\draw[arr] (d2.west) -- node[no, pos=0.45] {no} (-36,-95.5) -- (-36,-13) -- (tgt.west);
+\node[font=\footnotesize\itshape, rotate=90, anchor=south] at (-36.6,-54.25) {outer loop over target cities};
+\node[font=\footnotesize\itshape, rotate=-90, anchor=south] at (36.6,-33.25) {inner loop};
+\end{tikzpicture}

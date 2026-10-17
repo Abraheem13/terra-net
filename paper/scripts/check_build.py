@@ -61,4 +61,4 @@ if problems:
 print(f"build clean; {len(defined)} generated macros ({len(unused)} defined but unused), "
       f"{len(gen)} generated tables")
 if unused:
-    print("unused macros: " + ", ".join(unused))
+    print("unused macros (available for the text, not an error): " + str(len(unused)))

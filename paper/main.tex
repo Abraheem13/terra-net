@@ -7,14 +7,22 @@
 \usepackage{array}
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 \usepackage{tikz}
-\usetikzlibrary{positioning,arrows.meta,fit,backgrounds,calc}
+\usetikzlibrary{positioning,arrows.meta,fit,backgrounds,calc,shapes.geometric}
+\definecolor{tnblue}{HTML}{2A78D6}
+\definecolor{tndark}{HTML}{104281}
 \usepackage[hidelinks]{hyperref}
 \usepackage{siunitx}
 \sisetup{detect-weight=true,detect-family=true,per-mode=symbol,group-separator={,}}
 
 \setcounter{topnumber}{3}\setcounter{bottomnumber}{2}\setcounter{totalnumber}{4}
 \renewcommand{\topfraction}{0.9}\renewcommand{\bottomfraction}{0.5}
-\renewcommand{\textfraction}{0.08}\renewcommand{\floatpagefraction}{0.8}
+\renewcommand{\textfraction}{0.15}\renewcommand{\floatpagefraction}{0.7}
+\renewcommand{\dbltopfraction}{0.9}\renewcommand{\dblfloatpagefraction}{0.8}\setcounter{dbltopnumber}{3}
+\raggedbottom
+\makeatletter % float-only pages: pack the floats at the top
+\setlength{\@fptop}{0pt}\setlength{\@fpsep}{14pt plus 2pt}\setlength{\@fpbot}{0pt plus 1fil}
+\setlength{\@dblfptop}{0pt}\setlength{\@dblfpsep}{14pt plus 2pt}\setlength{\@dblfpbot}{0pt plus 1fil}
+\makeatother
 \setlength{\textfloatsep}{12pt plus 2pt minus 4pt}
 
 \theoremstyle{plain}
@@ -31,18 +39,19 @@
 \newcommand{\PLz}{P_{L_0}}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\E}{\mathbb{E}}
+\newcommand{\ind}{\mathbf{1}} % indicator function
 
-\input{generated/numbers}
+\input{generated/numbers}%
 
+\biboptions{sort&compress}
 \journal{Computer Communications}
 
 \begin{document}
 
 \begin{frontmatter}
 
-\title{Cross-city path-loss transfer for 6G digital-twin network
-planning: why tile parameters fall short and how site-aware link models
-close the gap}
+\title{Cross-city propagation-model transfer for network planning in 6G
+digital twin networks: tile parameters versus site-aware link models}
 
 \author[bru]{Abraheem Rashid}
 \ead{2546393@brunel.ac.uk}
@@ -66,23 +75,20 @@ University, Selangor Darul Ehsan, Malaysia}
 \address[bou]{Department of Management Information Systems,
 Bo\u{g}azi\c{c}i University, \.{I}stanbul, T\"urkiye}
 
-\input{sections/00_abstract}
+\input{sections/00_abstract}%
 
 \end{frontmatter}
 
-\input{sections/01_intro}
-\input{sections/02_related}
-\input{sections/03_model}
-\input{sections/04_methods}
-\input{sections/05_results}
-\input{sections/06_discussion}
-\input{sections/07_conclusion}
-\input{sections/08_backmatter}
+\input{sections/01_intro}%
+\input{sections/02_related}%
+\input{sections/03_model}%
+\input{sections/04_methods}%
+\input{sections/05_results}%
+\input{sections/06_discussion}%
+\input{sections/07_conclusion}%
+\input{sections/08_backmatter}%
 
 \bibliographystyle{elsarticle-num}
 \bibliography{references}
-
-\appendix
-\input{sections/09_appendix}
 
 \end{document}

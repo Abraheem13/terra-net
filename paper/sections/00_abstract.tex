@@ -1,35 +1,38 @@
 \begin{abstract}
-Network digital twins for 6G need a propagation model for places where no
-measurement exists yet. Tile-based transfer fits a log-distance exponent and
-intercept per map tile and carries them to unmeasured tiles by descriptor
-similarity. We test this across cities on open ray-traced corpora:
-\nCities{} geo-referenced cities with \nSites{} rooftop sites at
+Network digital twins are expected to become a standard component of the
+planning and operation of sixth-generation (6G) mobile networks, and they
+require a propagation model for areas where no measurement campaign exists
+yet. Tile-based transfer fits a log-distance exponent and intercept per map
+tile and carries them to unmeasured tiles by descriptor similarity. This
+article evaluates such transfer across cities, and measures what its errors
+cost a network planner, on open ray-traced corpora: \nCities{}
+geo-referenced cities with \nSites{} rooftop sites at
 \SI{\freqGHz}{\giga\hertz} and in the upper mid-band at
 \SI{\freqTwoGHz}{\giga\hertz} (\nSamples{} and \nSamplesTwo{} links),
-replicates with other sitings and random building materials, and
-independently modelled external scenes. Tile labels are imprecise, with a
-cluster-robust uncertainty \seRatio{} times the naive one, and they change
-with the serving sites, the tile size and the dynamic range of the data. At
-the network level, even exact tile labels leave a path-loss error of
-\SI{\netOracle}{\decibel} and the correct serving site for \assocOracle\% of
-the pixels. We decompose the gap: a cut-off model for distant sites removes
-most of the planning loss, a line-of-sight dual-slope label part of the rest,
-and the remainder is the geometry of each link. A site-aware hurdle model that
-predicts every link, and whether it exists, from its obstruction and
-diffraction geometry reaches \SI{\netLink}{\decibel}, \assocLink\% correct
-serving sites and a planning regret of \regretLink\% for five sites, in every
-held-out city, and it outperforms per-link physics baselines (free space with
-single or multiple knife edges, 3GPP UMa with geometric line of sight) in
-path loss and serving site under the same protocol. On scenes with other materials a survey of 25 random tiles
-calibrates it to the accuracy of exact tile labels, and a distribution-free
-city-level certificate lets it promise \certClaimLink\% of the pixels as
-covered at a guaranteed risk, against \certClaimGbdt\% for tile transfer.
-Every number, table and figure is regenerated from the released data by one
-command.
+replicates with other site placements and random building materials, and
+independently modelled external scenes. The tile labels are shown to be
+imprecise, with a cluster-robust uncertainty \seRatio{} times the naive one,
+and to change with the serving sites, the tile size and the dynamic range of
+the data. At the network level, even exact tile labels leave a path-loss
+error of \SI{\netOracle}{\decibel} and assign the correct serving site to
+\assocOracle\% of the locations. The gap is decomposed: a reachability model
+for distant sites removes most of the planning loss, a line-of-sight
+dual-slope label part of the remainder, and the rest is the geometry of each
+link. A site-aware hurdle model, which predicts every link and whether it
+exists from its obstruction and diffraction geometry, reaches
+\SI{\netLink}{\decibel}, \assocLink\% correct serving sites and a planning
+regret of \regretLink\% for a five-site plan in every held-out city, and
+outperforms per-link physics baselines in path loss and serving site under
+the same protocol. On scenes with other materials, a survey of 25 random
+tiles calibrates it to the accuracy of exact tile labels, and a
+distribution-free city-level certificate allows \certClaimLink\% of the
+locations to be promised as covered at a guaranteed risk, against
+\certClaimGbdt\% for tile transfer. All corpora, code and results are
+released, and every number, table and figure of the article is regenerated
+by one command.
 \end{abstract}
 
 \begin{keyword}
-6G \sep network digital twin \sep network planning \sep path-loss modelling
-\sep transfer learning \sep ray tracing \sep upper mid-band \sep coverage
-certification
+6G \sep digital twin network \sep network planning \sep mobile networks
+\sep transfer learning \sep network simulation \sep coverage certification
 \end{keyword}

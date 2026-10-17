@@ -6,7 +6,7 @@
 Reads only outputs/tables/*.csv and data/processed (tile tables), and writes
   paper/generated/numbers.tex   \\newcommand macros for every number in the text
   paper/generated/tab_*.tex     tables
-  paper/figures/fig_*.pdf       figures (monochrome)
+  paper/figures/fig_*.pdf       figures (colour-vision-safe palette)
 Nothing in the manuscript is typed by hand, so text, tables and figures
 cannot disagree with the results. Statements of the text that depend on the
 direction of a result are driven by macros as well (e.g. counts of cities,
@@ -30,6 +30,19 @@ import pandas as pd  # noqa: E402
 from omegaconf import OmegaConf  # noqa: E402
 
 NICE = {"newyork": "New York", "etoile": "\\'Etoile"}
+# names of the per-link baselines and tile variants as they read inside a sentence
+PROSE = {"fspl_ke": "the single knife-edge model", "deygout": "the Deygout model",
+         "uma_geo": "3GPP UMa with geometric line of sight", "gbdt": "GBDT",
+         "gbdt+h": "GBDT with the hurdle", "gbdt+los": "GBDT with the dual-slope label",
+         "gbdt+los+h": "GBDT with the dual-slope label and the hurdle"}
+WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+         "ten", "eleven", "twelve"]
+
+
+def word(n):
+    """Number as a word in running text (style: numbers up to twelve are spelled out)."""
+    return WORDS[int(n)] if 0 <= int(n) < len(WORDS) else str(int(n))
+
 OPS = ["median", "uma_los", "uma_nlos", "cost231", "kernel", "gp_ard", "knn", "ridge", "coral",
        "mlp", "encoder", "gbdt", "gbdt_iw"]
 OP_NAME = {"median": "Source median", "uma_los": "3GPP UMa LoS", "uma_nlos": "3GPP UMa NLoS",
@@ -74,12 +87,20 @@ plt.rcParams.update({
     "font.family": "serif", "font.serif": ["Times", "Nimbus Roman", "DejaVu Serif"],
     "mathtext.fontset": "stix", "font.size": 7.5, "axes.labelsize": 7.5,
     "axes.titlesize": 7.5, "legend.fontsize": 6.5, "xtick.labelsize": 6.5,
-    "ytick.labelsize": 6.5, "axes.linewidth": 0.5, "lines.linewidth": 0.9,
+    "ytick.labelsize": 6.5, "axes.linewidth": 0.5, "lines.linewidth": 1.1,
     "xtick.major.width": 0.5, "ytick.major.width": 0.5, "savefig.bbox": "tight",
     "savefig.pad_inches": 0.02, "axes.spines.top": False, "axes.spines.right": False,
     "pdf.fonttype": 42, "axes.unicode_minus": True})
 W1, W2 = 3.46, 7.16          # single / double column width (in)
 MARK = ["o", "s", "^", "D", "v", "P", "X", "*"]
+# Colour-vision-safe palette (defined once in figures_extra.py): three hues
+# validated for every pairwise contrast, achromatic tones and an ordinal ramp.
+import figures_extra  # noqa: E402
+from figures_extra import BLUES, C_AQUA, C_BLACK, C_BLUE, C_GREY, C_LIGHT, C_ORANGE, C_PALE  # noqa: E402
+
+FAMILY = {"median": C_BLACK, "uma_los": C_BLACK, "uma_nlos": C_BLACK, "cost231": C_BLACK,
+          "kernel": C_ORANGE, "gp_ard": C_ORANGE, "knn": C_BLUE, "ridge": C_BLUE,
+          "coral": C_BLUE, "mlp": C_BLUE, "encoder": C_BLUE, "gbdt": C_BLUE, "gbdt_iw": C_BLUE}
 
 LINK_NAME = {"ke_loss_db": "knife-edge loss", "max_excess": "max.\\ excess height",
              "n_cross": "buildings crossed", "log_d3": "log distance",
@@ -272,10 +293,11 @@ def corpus(T, G, N, fig_dir, tiles):
     fig, ax = plt.subplots(1, 2, figsize=(W2, 2.2), gridspec_kw={"width_ratios": [1.15, 1]})
     data = [tiles[tiles.city == c].gamma.dropna().to_numpy() for c in order]
     bp = ax[0].boxplot(data, widths=0.6, patch_artist=True, showfliers=False,
-                       medianprops=dict(color="k", lw=1.0), whiskerprops=dict(lw=0.6),
-                       capprops=dict(lw=0.6), boxprops=dict(lw=0.6))
+                       medianprops=dict(color=BLUES[2], lw=1.0),
+                       whiskerprops=dict(lw=0.6, color=C_BLACK),
+                       capprops=dict(lw=0.6, color=C_BLACK), boxprops=dict(lw=0.6, color=C_BLACK))
     for b in bp["boxes"]:
-        b.set_facecolor("0.85")
+        b.set_facecolor(C_PALE)
     ax[0].set_xticks(range(1, len(order) + 1))
     ax[0].set_xticklabels([nice(c) for c in order], rotation=45, ha="right")
     ax[0].set_ylabel(r"tile exponent $\gamma$")
@@ -286,12 +308,12 @@ def corpus(T, G, N, fig_dir, tiles):
     r = np.array([np.corrcoef(D[:, j], g)[0, 1] for j in live])
     top = np.argsort(-np.abs(r))[:10]
     y = np.arange(len(top))
-    ax[1].barh(y, r[top], color=["0.25" if v > 0 else "0.7" for v in r[top]],
-               edgecolor="k", lw=0.4)
+    ax[1].barh(y, r[top], color=[C_BLUE if v > 0 else C_ORANGE for v in r[top]],
+               edgecolor="none", height=0.72)
     ax[1].set_yticks(y)
     ax[1].set_yticklabels([desc_name(DESCRIPTOR_NAMES[live[j]]) for j in top])
     ax[1].invert_yaxis()
-    ax[1].axvline(0, color="k", lw=0.5)
+    ax[1].axvline(0, color=C_BLACK, lw=0.5)
     ax[1].set_xlabel(r"Pearson $r$ with $\gamma$ (all tiles)")
     ax[1].set_title("(b)", loc="left")
     fig.tight_layout(w_pad=1.5)
@@ -371,7 +393,7 @@ def loco(T, G, N, fig_dir):
     order = g["median"].sort_values().index
     for i, o in enumerate(show):
         ax.plot(g.loc[order, o].to_numpy(), np.arange(len(order)) + (i - len(show) / 2) * 0.09,
-                MARK[i], ms=3.2, mfc="none" if i % 2 else "k", mec="k", mew=0.6,
+                MARK[i], ms=3.6, mfc="white" if i % 2 else FAMILY[o], mec=FAMILY[o], mew=0.7,
                 ls="none", label=SHORT[o])
     ax.set_yticks(range(len(order)))
     ax.set_yticklabels([nice(c) for c in order])
@@ -424,8 +446,41 @@ def stats(T, G, N):
                             f"{'yes' if r.holm_reject else 'no'} \\\\")
         save_table(G, name, tabular("llrrrrc", [
             r"Comparison & Metric & $\Delta$ & 95\% CI & $p$ & better & Holm \\"], rows))
-    table(["zero_shot", "pairs", "few_shot"], "tab_stats_param")
-    table(["network", "decomp", "band2"], "tab_stats_net")
+    key_rows = [("gbdt", "median", "gamma_rmse", "zero_shot"),
+                ("kernel", "median", "gamma_rmse", "zero_shot"),
+                ("gp_ard", "kernel", "gamma_rmse", "pairs"),
+                ("gbdt@k10", "gbdt@k0", "gamma_rmse", "few_shot"),
+                ("gbdt", "median", "pl_rmse_db", "network"),
+                ("link", "gbdt", "pl_rmse_db", "network"),
+                ("link", "oracle", "pl_rmse_db", "network"),
+                ("link", "gbdt", "assoc_acc", "network"),
+                ("link", "gbdt", "regret", "network"),
+                ("link", "oracle", "regret", "network"),
+                ("link+k25", "link", "pl_rmse_db", "network"),
+                ("link+k25d", "link+k25", "pl_rmse_db", "network"),
+                ("gbdt+h", "gbdt", "regret", "decomp"),
+                ("gbdt+los", "gbdt", "assoc_acc", "decomp"),
+                ("link", "gbdt+los+h", "pl_rmse_db", "decomp"),
+                ("link", "deygout", "pl_rmse_db", "decomp"),
+                ("link", "deygout", "regret", "decomp"),
+                ("link", "gbdt", "pl_rmse_db", "band2"),
+                ("link_x_phys", "link", "pl_rmse_db", "band2")]
+    rows = []
+    last_fam = None
+    for a, b, mtr, fam in key_rows:
+        q = s[(s.a == a) & (s.b == b) & (s.metric == mtr) & (s.family == fam)]
+        if not len(q):
+            continue
+        r = q.iloc[0]
+        if fam != last_fam:
+            rows.append(rf"\multicolumn{{7}}{{l}}{{\emph{{{fam_name[fam]}}}}} \\")
+            last_fam = fam
+        d, lo, hi = scaled(r.metric, r["diff"], r.ci_lo, r.ci_hi)
+        rows.append(f"{label.get(r.a, r.a)} vs {label.get(r.b, r.b)} & {metric[r.metric]} & "
+                    f"{d} & [{lo}, {hi}] & {pval(r.p_wilcoxon)} & {r.n_better}/{r.n_folds} & "
+                    f"{'yes' if r.holm_reject else 'no'} \\\\")
+    save_table(G, "tab_stats_key", tabular("llrrrrc", [
+        r"Comparison & Metric & $\Delta$ & 95\% CI & $p$ & better & Holm \\"], rows))
 
     def get(a, b, mtr, family):
         q = s[(s.a == a) & (s.b == b) & (s.metric == mtr) & (s.family == family)]
@@ -491,6 +546,29 @@ def stats(T, G, N):
         N[f"n{key}"] = f"{r.n_better}"
         N[f"holm{key}"] = "significant" if r.holm_reject else "not significant"
     N["nFolds"] = int(s.n_folds.max())
+    n_f = int(s.n_folds.max())
+    parts = [("link", "gbdt", "pl_rmse_db", "path loss"),
+             ("link", "gbdt", "assoc_acc", "serving site"),
+             ("link", "gbdt", "sinr_mae_db", "SINR"), ("link", "gbdt", "regret", "planning regret"),
+             ("link", "oracle", "pl_rmse_db", "path loss"),
+             ("link", "oracle", "assoc_acc", "serving site"),
+             ("link", "oracle", "regret", "planning regret")]
+    cnt = [int(get(a_, b_, m_, "network").n_better) for a_, b_, m_, _ in parts]
+    holm = all(bool(get(a_, b_, m_, "network").holm_reject) for a_, b_, m_, _ in parts)
+    if all(c == n_f for c in cnt):
+        N["netLinkSummary"] = (
+            "Link transfer is better than GBDT tile transfer in path loss, serving site, SINR and "
+            "planning regret, and better than the tile model with the true labels in path loss, "
+            f"serving site and planning regret, in every one of the {word(n_f)} held-out cities")
+    else:
+        g = ", ".join(f"{lab} in {c}" for (_, _, _, lab), c in zip(parts[:4], cnt[:4], strict=True))
+        o = ", ".join(f"{lab} in {c}" for (_, _, _, lab), c in zip(parts[4:], cnt[4:], strict=True))
+        N["netLinkSummary"] = (f"Link transfer is better than GBDT tile transfer in {g} of the "
+                               f"{n_f} held-out cities, and better than the tile model with the "
+                               f"true labels in {o}")
+    N["netLinkSummaryHolm"] = ("all seven comparisons remain significant after Holm's correction"
+                               if holm else "not all seven comparisons remain significant after "
+                               "Holm's correction")
     zs = s[s.family == "zero_shot"]
     N["nZeroShotTotal"] = len(zs)
     better = zs[zs.holm_reject & (zs["diff"] < 0)]
@@ -501,6 +579,7 @@ def stats(T, G, N):
                                    if len(better) else "")
     N["nZeroShotSigWorse"] = len(worse)
     N["zeroShotSigWorseList"] = ", ".join(label.get(a, a) for a in worse.a) or "none"
+    N["zeroShotSigBetterVerb"] = "survives" if len(better) <= 1 else "survive"
     N["zeroShotSigBetterWord"] = ("none" if len(better) == 0 else
                                   "one" if len(better) == 1 else str(len(better)))
     nb = zs[zs["diff"] < 0].n_better
@@ -587,40 +666,39 @@ def fewshot(T, G, N, fig_dir):
     rows = [f"{nice(c)} & {pc.loc[c, 0]:.3f} & {pc.loc[c, 10]:.3f} & "
             f"{pc.loc[c, 50] if 50 in pc else float('nan'):.3f} & "
             f"{100 * (pc.loc[c, 10] / pc.loc[c, 0] - 1):+.0f} \\\\" for c in pc.index]
-    save_table(G, "tab_kshot_city", tabular("lrrrr", [
-        r"Target & $k{=}0$ & $k{=}10$ & $k{=}50$ & $\Delta_{10}$ (\%) \\"], [*rows, r"\midrule",
-        f"Mean & {pc[0].mean():.3f} & {pc[10].mean():.3f} & {pc[50].mean():.3f} & \\\\",
-        f"S.d. & {pc[0].std(ddof=1):.3f} & {pc[10].std(ddof=1):.3f} & "
-        f"{pc[50].std(ddof=1):.3f} & \\\\"]))
+    del rows
 
     fig, ax = plt.subplots(1, 2, figsize=(W2, 2.2))
-    for i, o in enumerate(FS_OPS):
-        ax[0].plot(tab.index, tab[o], marker=MARK[i], ms=3, color="k",
-                   mfc="none" if i % 2 else "k", ls=["-", "--", ":", "-."][i], label=OP_NAME[o])
-    ax[0].plot(bias.index, bias["gbdt"], color="0.55", marker="x", ms=3, ls="-",
+    # panel (a): kernel transfer and the GBDT variants; ridge and the MLP lie within
+    # the line width of GBDT and are listed in the table instead
+    ax[0].plot(tab.index, tab["kernel"], marker="o", ms=3.2, color=C_ORANGE, mfc=C_ORANGE,
+               ls="-", label=OP_NAME["kernel"])
+    ax[0].plot(tab.index, tab["gbdt"], marker="D", ms=3.2, color=C_BLUE, mfc=C_BLUE, ls="-",
+               label="GBDT, random tiles")
+    ax[0].plot(design.index, design["gbdt"], color=C_BLUE, marker="*", ms=4.6, ls="-.",
+               mfc="white", label="GBDT, designed tiles")
+    ax[0].plot(bias.index, bias["gbdt"], color=C_BLUE, marker="x", ms=3.6, ls="--",
                label="GBDT, plain bias")
-    ax[0].plot(patch.index, patch["gbdt"], color="0.55", marker="+", ms=3, ls="--",
+    ax[0].plot(patch.index, patch["gbdt"], color=C_BLUE, marker="+", ms=4.2, ls=":",
                label="GBDT, contiguous tiles")
     ax[0].set_xscale("symlog", linthresh=3)
     ax[0].set_xticks(tab.index)
     ax[0].set_xticklabels([str(int(v)) for v in tab.index])
     ax[0].set_xlabel("surveyed target tiles $k$")
     ax[0].set_ylabel(r"$\gamma$ RMSE (unsurveyed tiles)")
-    lo_, hi_ = ax[0].get_ylim()
-    ax[0].set_ylim(lo_, hi_ + 0.6 * (hi_ - lo_))
-    ax[0].legend(frameon=False, ncol=2, loc="upper center")
+    ax[0].legend(frameon=False, ncol=2, loc="lower right", bbox_to_anchor=(1.0, 1.0),
+                 handlelength=2.4, columnspacing=1.2, handletextpad=0.4)
     ax[0].set_title("(a)", loc="left")
     order = pc[0].sort_values(ascending=False).index
     x = np.arange(len(order))
-    for j, (kk, col) in enumerate([(0, "0.2"), (10, "0.6"), (50, "0.9")]):
+    for j, (kk, col) in enumerate([(0, BLUES[0]), (10, BLUES[1]), (50, BLUES[2])]):
         if kk in pc:
-            ax[1].bar(x + (j - 1) * 0.27, pc.loc[order, kk], 0.27, color=col, edgecolor="k",
-                      lw=0.4, label=f"$k={kk}$")
+            ax[1].bar(x + (j - 1) * 0.27, pc.loc[order, kk], 0.26, color=col,
+                      edgecolor="none", label=f"$k={kk}$")
     ax[1].set_xticks(x)
     ax[1].set_xticklabels([nice(c) for c in order], rotation=45, ha="right")
     ax[1].set_ylabel(r"$\gamma$ RMSE, GBDT")
-    ax[1].set_ylim(0, 1.3 * ax[1].get_ylim()[1])
-    ax[1].legend(frameon=False, ncol=3, loc="upper center")
+    ax[1].legend(frameon=False, ncol=3, loc="lower right", bbox_to_anchor=(1.0, 1.0))
     ax[1].set_title("(b)", loc="left")
     fig.tight_layout(w_pad=1.5)
     fig.savefig(fig_dir / "fig_kshot.pdf")
@@ -630,21 +708,9 @@ def fewshot(T, G, N, fig_dir):
 # ----------------------------------------------------------------------------
 def label_noise(T, G, N):
     d = pd.read_csv(T / "label_noise.csv")
-    rows = [f"{nice(r.city)} & {r.median_n_bs:.0f} & {r.gamma_se_analytic:.3f} & "
-            f"{r.gamma_se_cluster:.3f} & {r.gamma_se_split_full:.3f} & {r.pl0_se_analytic:.2f} & "
-            f"{r.pl0_se_cluster:.2f} & {r.pl0_se_split_full:.2f} \\\\" for r in d.itertuples()]
-
     def rms(col):
         return float(np.sqrt((d[col] ** 2).mean()))
-    save_table(G, "tab_noise", tabular("lrrrrrrr", [
-        r"& & \multicolumn{3}{c}{$\mathrm{se}(\gamma)$} & "
-        r"\multicolumn{3}{c}{$\mathrm{se}(P_{L_0})$ (dB)} \\",
-        r"\cmidrule(lr){3-5}\cmidrule(lr){6-8}",
-        r"City & sites/tile & iid & cluster & split & iid & cluster & split \\"], [
-        *rows, r"\midrule",
-        f"RMS & & {rms('gamma_se_analytic'):.3f} & {rms('gamma_se_cluster'):.3f} & "
-        f"{rms('gamma_se_split_full'):.3f} & {rms('pl0_se_analytic'):.2f} & "
-        f"{rms('pl0_se_cluster'):.2f} & {rms('pl0_se_split_full'):.2f} \\\\"]))
+    # the per-city standard errors are shown as a figure (fig_noise.pdf)
     a, c, s = rms("gamma_se_analytic"), rms("gamma_se_cluster"), rms("gamma_se_split_full")
     N["seIid"], N["seCluster"], N["seSplit"] = f(a), f(c), f(s)
     N["seRatio"] = f(c / a, 1)
@@ -716,18 +782,7 @@ def network(T, G, N, fig_dir):
         N[f"reach{key}"] = pct(mean.loc[o, "reach_acc"])
         N[f"linkPrec{key}"] = pct(mean.loc[o, "link_precision"])
         N[f"linkRec{key}"] = pct(mean.loc[o, "link_recall"])
-    # per-city table of the link model against GBDT and the oracle
-    rows = []
-    for c in sorted(per.loc["link"].index):
-        a, b, o = per.loc[("link", c)], per.loc[("gbdt", c)], per.loc[("oracle", c)]
-        rows.append(f"{nice(c)} & {o.pl_rmse_db:.2f} & {b.pl_rmse_db:.2f} & {a.pl_rmse_db:.2f} & "
-                    f"{pct(o.assoc_acc)} & {pct(a.assoc_acc)} & {pct(o.regret)} & "
-                    f"{pct(b.regret)} & {pct(a.regret)} \\\\")
-    save_table(G, "tab_link_city", tabular("lrrrrrrrr", [
-        r"& \multicolumn{3}{c}{Path loss (dB)} & \multicolumn{2}{c}{Serving (\%)} & "
-        r"\multicolumn{3}{c}{Regret $K{=}5$ (\%)} \\",
-        r"\cmidrule(lr){2-4}\cmidrule(lr){5-6}\cmidrule(lr){7-9}",
-        r"City & oracle & GBDT & link & oracle & link & oracle & GBDT & link \\"], rows))
+    # the per-city comparison is shown as a figure (fig_cityres.pdf)
     lb = per.loc["link"]
     N["nLinkBetterGbdtPl"] = int((lb.pl_rmse_db < per.loc["gbdt"].pl_rmse_db).sum())
     N["nLinkBetterOraclePl"] = int((lb.pl_rmse_db < per.loc["oracle"].pl_rmse_db).sum())
@@ -741,9 +796,9 @@ def network(T, G, N, fig_dir):
     ops = [o for o in ["oracle", "median", "kernel", "ridge", "gbdt", "link", "link+k25"]
            if o in mean.index]
     y = np.arange(len(ops))
-    shade = {"oracle": "0.35", "link": "0.1", "link+k25": "0.1"}
+    shade = {"oracle": C_GREY, "link": C_BLUE, "link+k25": C_BLUE}
     ax[0].barh(y, [mean.loc[o, "pl_rmse_db"] for o in ops],
-               color=[shade.get(o, "0.8") for o in ops], edgecolor="k", lw=0.4)
+               color=[shade.get(o, C_LIGHT) for o in ops], edgecolor="none", height=0.72)
     ax[0].set_yticks(y)
     ax[0].set_yticklabels([OP_NAME[o] for o in ops])
     ax[0].invert_yaxis()
@@ -753,16 +808,19 @@ def network(T, G, N, fig_dir):
     pl_all = pd.concat([pd.read_csv(T / "planning.csv"), pd.read_csv(T / "planning_link.csv")])
     pl_all = pl_all[(pl_all.sites == pl_all.sites.max()) & (pl_all.K > 0)]
     reg = pl_all.groupby(["operator", "K", "fold"]).regret.mean().groupby(["operator", "K"]).mean()
-    for i, o in enumerate([o for o in ["oracle", "median", "kernel", "gbdt", "link"]
-                           if o in mean.index]):
+    net_style = {"oracle": (C_BLACK, "-", "o", 1.0), "median": (C_GREY, "--", "s", 1.0),
+                 "kernel": (C_ORANGE, ":", "^", 1.0), "gbdt": (C_AQUA, "-.", "D", 1.0),
+                 "link": (C_BLUE, "-", "v", 1.6)}
+    for o in [o for o in ["oracle", "median", "kernel", "gbdt", "link"] if o in mean.index]:
         r = reg.loc[o]
-        ax[1].plot(r.index, 100 * r.to_numpy(), marker=MARK[i], ms=3, color="k",
-                   mfc="none" if i % 2 else "k", ls=["-", "--", ":", "-.", "-"][i],
-                   lw=1.8 if o == "link" else 0.9, label=OP_NAME[o])
+        c_, ls_, m_, lw_ = net_style[o]
+        ax[1].plot(r.index, 100 * r.to_numpy(), marker=m_, ms=3.4, color=c_, mfc=c_, ls=ls_,
+                   lw=lw_, label=OP_NAME[o])
     ax[1].set_xlabel("sites selected $K$")
     ax[1].set_ylabel("planning regret (% of pixels)")
-    ax[1].set_ylim(0, 1.45 * ax[1].get_ylim()[1])
-    ax[1].legend(frameon=False, ncol=2, loc="upper center")
+    ax[1].set_ylim(0, None)
+    ax[1].legend(frameon=False, ncol=3, loc="lower right", bbox_to_anchor=(1.0, 1.0),
+                 handlelength=2.4, columnspacing=0.9, handletextpad=0.4)
     ax[1].set_title("(b)", loc="left")
     fig.tight_layout(w_pad=1.5)
     fig.savefig(fig_dir / "fig_network.pdf")
@@ -943,6 +1001,8 @@ def variants(T, G, N):
         bp = (m.loc[phys, mtr].idxmin() if lower else m.loc[phys, mtr].idxmax())
         N[f"varBestTile{name}"] = OP_NAME[bt]
         N[f"varBestPhys{name}"] = OP_NAME[bp]
+        N[f"varBestTile{name}Prose"] = PROSE[bt]
+        N[f"varBestPhys{name}Prose"] = PROSE[bp]
         N[f"varBestPhys{name}Val"] = (f(m.loc[bp, mtr], 1) if lower and mtr.endswith("db")
                                       else pct(m.loc[bp, mtr]))
         lk, bst = per.loc["link"][mtr], per.loc[bp][mtr]
@@ -1099,6 +1159,7 @@ def siting(T, G, N):
         rows))
     N["repList"] = ", ".join(rep_name[r].lower() for r in reps)
     N["nReplicates"] = len(reps)
+    N["nReplicatesWord"] = word(len(reps))
     for rep in reps:
         m = s[s.replicate == rep].groupby(["operator", "city"]).mean(numeric_only=True) \
             .groupby("operator").mean()
@@ -1188,6 +1249,7 @@ def external(T, G, N):
         r"Predictor & PL (dB) & bias & serv.\ (\%) & SINR (dB) & edge (m) & regret (\%) \\"],
         rows))
     N["nExtScenes"] = e.scene.nunique()
+    N["nExtScenesWord"] = word(e.scene.nunique())
     N["nExtLinks"] = thou(e.groupby("scene").links.first().sum())
     for o, key in [("oracle", "Oracle"), ("median", "Median"), ("gbdt", "Gbdt"),
                    ("link", "Link"), ("link+k10", "LinkTen"), ("link+k25", "LinkTwentyFive"),
@@ -1239,7 +1301,7 @@ def mixed(T, G, N):
                                                        ("kernel", "Kernel (NW)"),
                                                        ("gbdt", "GBDT")],
                mxf.xs("piecewise", level="model")),
-              (r"Mixed path, summed (\ref{app:summed})", [("oracle", "Tile labels (oracle)"),
+              (r"Mixed path, summed (literal reading)", [("oracle", "Tile labels (oracle)"),
                                                            ("median", "Source median"),
                                                            ("kernel", "Kernel (NW)"),
                                                            ("gbdt", "GBDT")],
@@ -1302,7 +1364,7 @@ def mixed_sizes(T, G, N):
                       pct(m.loc[(model, o), "assoc_acc"])]
         rows.append(" & ".join(r) + r" \\")
     save_table(G, "tab_mixed_size", tabular("rrrrrrrrrrrrrr", [
-        r"& & \multicolumn{4}{c}{Summed (\ref{app:summed})} & "
+        r"& & \multicolumn{4}{c}{Summed (literal)} & "
         r"\multicolumn{4}{c}{Piecewise} & \multicolumn{4}{c}{Path-averaged} \\",
         r"\cmidrule(lr){3-6}\cmidrule(lr){7-10}\cmidrule(lr){11-14}",
         r"& & \multicolumn{2}{c}{labels} & \multicolumn{2}{c}{GBDT} & "
@@ -1356,11 +1418,7 @@ def convergence(T, G, N):
             rows.append(f"{sci(r.rays)} & {r.seconds:.0f} & " + " & ".join(
                 f"{100 * getattr(r, f'frac_of_ref_{L}'):.1f} & {getattr(r, f'rms_diff_{L}'):.2f}"
                 for L in (120, 130, 140, 150)) + " \\\\")
-    save_table(G, "tab_convergence", tabular("rrrrrrrrrr", [
-        r"& & \multicolumn{2}{c}{$\le120$\,dB} & \multicolumn{2}{c}{$\le130$\,dB} & "
-        r"\multicolumn{2}{c}{$\le140$\,dB} & \multicolumn{2}{c}{$\le150$\,dB} \\",
-        r"\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}",
-        r"Rays & s & cells & RMS & cells & RMS & cells & RMS & cells & RMS \\"], rows))
+    del rows                      # the convergence study is shown as a figure
     used = c[c.rays == 10 ** 8]
     N["convNSites"] = int(len(used))
     N["convNCities"] = int(used.city.nunique())
@@ -1376,19 +1434,43 @@ def convergence(T, G, N):
     N["convRefSecondsMax"] = f"{c[c.rays == c.ref_rays].seconds.max():.0f}"
 
 
+STAGE = {"02_build_tiles.py": "Tile labels and descriptors",
+         "03_make_splits.py": "Leave-one-city-out splits",
+         "04_fit_baselines.py": "Zero-shot transfer operators",
+         "05_kshot.py": "Few-shot tile correction",
+         "06_train_neural.py": "Neural encoder",
+         "07_label_noise.py": "Label precision",
+         "08_degeneracy.py": "Kernel regimes",
+         "09_network_eval.py": "Network-level evaluation",
+         "10_stats.py": "City-level statistics",
+         "11_link_transfer.py": "Link model and calibration",
+         "12_tile_size.py": "Tile size",
+         "13_certified_coverage.py": "Coverage certificate",
+         "14_censoring.py": "Path-loss cut-off",
+         "15_siting.py": "Siting and material replicates",
+         "16_band.py": "Second band",
+         "17_external_scenes.py": "External scenes",
+         "18_mixed_path.py": "Mixed-path compositions",
+         "19_tile_variants.py": "Gap decomposition and physics baselines"}
+
+
 def runtime(T, G, N):
     r = pd.read_csv(T / "runtime.csv")
-    us = "\\_"
-    def short(a):
-        a = "" if pd.isna(a) else str(a)
-        return a.replace("configs/data/", "").replace("--config ", "").replace("_", us)
-    rows = [f"\\texttt{{{x.script.replace('_', us)}}} & \\texttt{{{short(x.args)}}} & "
-            f"{x.seconds / 60:.0f} \\\\" for x in r.itertuples()]
-    save_table(G, "tab_runtime", tabular("lp{4.1cm}r", [r"Script & Configuration & minutes \\"],
-                                         rows))
+    g = r.groupby("script", sort=False).agg(runs=("seconds", "size"), seconds=("seconds", "sum"))
+    g = g.loc[sorted(g.index)]
+
+    def minutes(sec):
+        return "$<$1" if sec < 30 else f"{sec / 60:.0f}"
+    rows = [f"{STAGE.get(sc, sc.replace('_', ' '))} & {int(x.runs)} & {minutes(x.seconds)} \\\\"
+            for sc, x in g.iterrows()]
+    rows += [r"\midrule", f"Total & {int(g.runs.sum())} & {g.seconds.sum() / 60:.0f} \\\\"]
+    save_table(G, "tab_runtime", tabular("lrr", [r"Analysis stage & Runs & Minutes \\"], rows))
     N["rtTotalHours"] = f"{r.seconds.sum() / 3600:.1f}"
     N["rtCpus"] = int(r.cpus.iloc[0])
     N["rtMachine"] = str(r.machine.iloc[0]).replace("_", "\\_")
+    heavy = g.seconds.sort_values(ascending=False)
+    N["rtHeaviestStage"] = STAGE.get(heavy.index[0], heavy.index[0]).lower()
+    N["rtHeaviestHours"] = f"{heavy.iloc[0] / 3600:.1f}"
 
 
 def highlights(N, out):
@@ -1438,7 +1520,7 @@ def city_figure(repo, base, cfg, fig_dir, city):
     fig, ax = plt.subplots(1, 3, figsize=(W2, 2.45))
     hv = np.clip(heights, 0, 60)
     pc = PolyCollection([np.asarray(q.exterior.coords) for q in parts], array=hv,
-                        cmap="Greys", edgecolors="none", clim=(0, 60))
+                        cmap="Blues", edgecolors="none", clim=(0, 60))
     ax[0].add_collection(pc)
     fig.colorbar(pc, ax=ax[0], fraction=0.046, pad=0.02, label="height (m)")
 
@@ -1452,12 +1534,12 @@ def city_figure(repo, base, cfg, fig_dir, city):
     ext = (-half, half, -half, half)
     cell = float(np.median(np.diff(np.unique(np.round(bx, 3)))))
     im = ax[1].imshow(raster(bx, by, best.pathloss_db.to_numpy(), cell), origin="lower",
-                      extent=ext, cmap="Greys", vmin=70, vmax=150, interpolation="nearest")
+                      extent=ext, cmap="Blues", vmin=70, vmax=150, interpolation="nearest")
     fig.colorbar(im, ax=ax[1], fraction=0.046, pad=0.02, label="best-server path loss (dB)")
     ok = np.isfinite(tiles.gamma).to_numpy()
     tcell = float(cfg.tile_size_m)
     im2 = ax[2].imshow(raster(tx[ok], ty[ok], tiles.gamma.to_numpy()[ok], tcell), origin="lower",
-                       extent=ext, cmap="Greys", interpolation="nearest")
+                       extent=ext, cmap="Blues", interpolation="nearest")
     fig.colorbar(im2, ax=ax[2], fraction=0.046, pad=0.02, label=r"tile exponent $\gamma$")
     for i, a in enumerate(ax):
         a.set_xlim(-half, half)
@@ -1510,6 +1592,7 @@ def corpus_settings(repo, base, cfg, N):
     mat = OmegaConf.load(repo / "configs" / "data" / "sionna_cities_materials.yaml")
     N["matList"] = ", ".join(str(m) for m in mat.materials)
     N["nMat"] = len(mat.materials)
+    N["nMatWord"] = word(len(mat.materials))
 
 
 def main():
@@ -1561,6 +1644,7 @@ def main():
     OP_NAME["link_x_fs"] = rf"Link, {float(cfg.freq_ghz):g}\,GHz model, offset only"
     rand = OmegaConf.load(repo / "configs" / "data" / "sionna_cities_randsite.yaml")
     N["nRandCities"] = len(rand.rt_cities)
+    N["nRandCitiesWord"] = word(len(rand.rt_cities))
     N["randCities"] = ", ".join(nice(c) for c in rand.rt_cities)
     fig_city_name = str(cfg.get("figure_city", cfg.cities[0]))
     city_figure(repo, base, cfg, F, fig_city_name)
@@ -1583,11 +1667,24 @@ def main():
     mixed(T, G, N)
     mixed_sizes(T, G, N)
     runtime(T, G, N)
+    n_all, pl_all, per_all = nets(T)
+    T2 = repo / str(cfg2.outputs_dir) / "tables"
+    figures_extra.fig_convergence(T, F, nice)
+    figures_extra.fig_noise(T, F, nice)
+    figures_extra.fig_city_results(per_all, F, nice)
+    figures_extra.fig_decomp(T, F, OP_NAME)
+    figures_extra.fig_survey(n_all, pl_all, F)
+    figures_extra.fig_certified(T, F, OP_NAME)
+    figures_extra.fig_replicates(T, F, per_all)
+    figures_extra.fig_band(T, T2, F, nice, OP_NAME, float(cfg.freq_ghz), float(cfg2.freq_ghz))
+    figures_extra.fig_mixed(T, F, per_all, MIX_SIZES)
+    figures_extra.fig_external(T, F, nice, OP_NAME)
     import importlib.util
     spec = importlib.util.spec_from_file_location("ext", repo / "scripts" / "17_external_scenes.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     N["nExtSites"] = mod.SITES
+    N["nExtSitesWord"] = word(mod.SITES)
     N["extMinSep"] = f"{mod.MIN_SEP:g}"
     # siunitx cannot parse the text-mode minus: macros used inside \SI must be raw
     vals = {ln.split("}{", 1)[0][len("\\newcommand{\\"):]: ln.split("}{", 1)[1][:-1]

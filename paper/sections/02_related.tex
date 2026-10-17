@@ -2,7 +2,14 @@
 \section{Related work}
 \label{sec:related}
 
-\paragraph{Empirical and site-specific propagation models}
+The problem studied here lies at the intersection of three bodies of work:
+propagation models and the digital twins that consume them for network
+planning, learned and transferred propagation models, and distribution-free
+uncertainty for decisions taken on predicted quantities. This section
+reviews each in turn and closes with a feature-based comparison between the
+representative studies and the present work.
+
+\subsection{Propagation models and network digital twins}
 Empirical models such as Okumura--Hata~\cite{hata1980} and the 3GPP
 TR~38.901 formulas~\cite{tr38901} express path loss through a small number
 of parameters fitted to measurement campaigns and applied uniformly over an
@@ -12,15 +19,26 @@ geometry. Measurement studies showed early that the path-loss exponent is
 itself a random quantity that changes from cell to cell~\cite{erceg1999},
 which is the variability a tile-level model tries to capture. Diffraction
 over the buildings along a link is described by the knife-edge and
-multiple-edge constructions of ITU-R P.526~\cite{itup526}, which we use as
-non-learned per-link baselines. Deterministic ray tracing resolves the
-geometry explicitly~\cite{yun2015raytracing}; differentiable ray tracers
-such as Sionna~RT make city-scale simulation and calibration against
-measurements practical~\cite{hoydis2023sionna,hoydis2024learning}. We use
-ray tracing to produce ground truth for many cities, not as the run-time
-predictor.
+multiple-edge constructions of ITU-R P.526~\cite{itup526}, which serve in
+this study as non-learned per-link baselines. Deterministic ray tracing
+resolves the geometry explicitly~\cite{yun2015raytracing}; differentiable
+ray tracers such as Sionna~RT make city-scale simulation and calibration
+against measurements practical~\cite{hoydis2023sionna,hoydis2024learning}.
+In this study, ray tracing produces the ground truth for many cities and is
+not the run-time predictor.
 
-\paragraph{Learned radio maps and path-loss regression}
+Digital twins of wireless networks~\cite{khan2022dt,alkhateeb2023dt} and the
+ITU-T digital twin network architecture~\cite{ituy3090} need propagation
+models for regions where no measurements exist yet and consume them through
+planning functions. Site selection with propagation predictions is a
+classical optimisation problem~\cite{amaldi2003}; coverage maximisation is
+submodular and admits greedy approximation guarantees~\cite{nemhauser1978}.
+In operational networks, targeted measurements can be collected with the
+minimisation-of-drive-tests (MDT) framework~\cite{johansson2012mdt,ts37320},
+which motivates the few-shot setting of this study; choosing where to
+measure is a submodular sensor-placement problem~\cite{krause2008}.
+
+\subsection{Learned and transferred propagation models}
 Convolutional~\cite{levie2021radiounet}, autoencoder~\cite{teganya2022},
 adversarial~\cite{zhang2023rmegan} and diffusion~\cite{wang2025radiodiff}
 models predict dense radio maps from environment maps, and radio-map
@@ -28,22 +46,20 @@ estimation from sparse measurements has a mature statistical
 treatment~\cite{romero2022}. Channel knowledge maps~\cite{zeng2021ckm}
 generalise the idea to other channel quantities. Regression of path loss
 from engineered or image features has been studied with measurements at
-\SI{2.6}{\giga\hertz}~\cite{thrane2020} and \SI{28}{\giga\hertz}~\cite{gupta2022},
-across several cities with obstruction-height maps~\cite{dempsey2025}, and is
-surveyed in~\cite{seretis2022}. These methods predict path loss or maps
-directly; the tile-parameter approach studied here predicts a compact,
-physically interpretable pair per tile that a planning tool can evaluate
-for any site layout. Our link model belongs to the feature-regression family
-of~\cite{thrane2020,dempsey2025}; its purpose here is to serve as a strong,
-simple and interpretable reference against which the tile representation is
-measured.
+\SI{2.6}{\giga\hertz}~\cite{thrane2020} and
+\SI{28}{\giga\hertz}~\cite{gupta2022}, across several cities with
+obstruction-height maps~\cite{dempsey2025}, and is surveyed
+in~\cite{seretis2022}. These methods predict path loss or maps directly; the
+tile-parameter approach studied here predicts a compact, physically
+interpretable pair per tile that a planning tool can evaluate for any site
+layout. The link model of this study belongs to the feature-regression
+family of~\cite{thrane2020,dempsey2025}; its purpose is to serve as a
+strong, simple and interpretable reference against which the tile
+representation is measured.
 
-\paragraph{Tile-based transfer and digital twins}
-Digital twins of wireless networks~\cite{khan2022dt,alkhateeb2023dt,ituy3090}
-need propagation models for regions where no measurements exist yet. MAPLE
-divides 3-D city maps into tiles and estimates mixed-path propagation in a
-new deployment area from the similarity of its tiles to tiles of measured
-areas~\cite{ozyurt2020maple}. The descriptor-based framework
+MAPLE divides 3-D city maps into tiles and estimates mixed-path propagation
+in a new deployment area from the similarity of its tiles to tiles of
+measured areas~\cite{ozyurt2020maple}. The descriptor-based framework
 of~\cite{ozyurt2026} describes each tile by 116 terrain, built-structure,
 land-cover and climatic descriptors, calibrates log-distance parameters per
 tile from measurements with the mixed-path composition of MAPLE, and
@@ -52,33 +68,79 @@ descriptor similarity. It was evaluated with confidential measurements of an
 industrial partner in two European cities, each serving once as the source
 of the other, with tiles of \SI{200}{\metre} to \SI{1000}{\metre}, by the
 normalised error of the received power, and against empirical models only.
-We study the same transfer problem on a larger public corpus with a
-re-implementation of its operator on the built-structure descriptors,
-analyse the kernel operator, compare it with learned regressors under a
-common protocol, evaluate both the receiver-tile and the mixed-path
-composition, and measure the consequences for network planning.
-
-\paragraph{Transfer under covariate shift and planning}
 Transfer between domains with different input distributions is covariate
 shift~\cite{shimodaira2000}, and its difficulty depends on the discrepancy
 between the domains~\cite{bendavid2010}; importance
 weighting~\cite{shimodaira2000} and the alignment of feature
-statistics~\cite{sun2016coral} are standard remedies, which we include as
-baselines. In operational networks, targeted measurements can be collected
-with the minimisation-of-drive-tests (MDT) framework~\cite{johansson2012mdt,ts37320},
-which motivates our few-shot setting; choosing where to measure is a
-submodular sensor-placement problem~\cite{krause2008}. Site selection with
-propagation predictions is a classical optimisation
-problem~\cite{amaldi2003}; coverage maximisation is submodular and admits
-greedy approximation guarantees~\cite{nemhauser1978}.
+statistics~\cite{sun2016coral} are standard remedies, which are included
+here as baselines.
 
-\paragraph{Uncertainty and censored measurements}
+\subsection{Uncertainty, censoring and positioning of this study}
 Conformal prediction gives distribution-free prediction sets under
 exchangeability~\cite{vovk2005}, and leave-one-out variants such as the
-jackknife+ reuse every training point for calibration~\cite{barber2021}; we
-apply the exchangeability argument at the level of cities, the unit of
-shift. Measurements with a detection floor are censored, for which the
-Tobit model is the classical treatment~\cite{tobin1958}; received-power
+jackknife+ reuse every training point for calibration~\cite{barber2021};
+this study applies the exchangeability argument at the level of cities, the
+unit of shift. Measurements with a detection floor are censored, for which
+the Tobit model is the classical treatment~\cite{tobin1958}; received-power
 data beyond a receiver's sensitivity are censored in exactly this sense, and
 a hurdle model that first predicts whether a link exists is the natural
 counterpart for prediction.
+
+Table~\ref{tab:related} summarises how the present study relates to the
+representative works above. None of the learned propagation models has been
+scored through the quantities a planner decides on, none states what
+coverage can be promised from a transferred model, and the tile-transfer
+framework has been evaluated on two cities with confidential data. The
+present study addresses the same transfer problem on a larger public corpus
+with a re-implementation of the kernel operator on the built-structure
+descriptors, analyses that operator, compares it with learned regressors
+under a common protocol, evaluates both the receiver-tile and the mixed-path
+composition, measures the consequences for network planning, and states the
+coverage that can be promised at a given risk.
+
+\begin{table*}[!tp]
+\centering
+\caption{Feature-based comparison between representative related studies
+and the present work. Cross-city: trained on some cities and evaluated on
+others. Tile parameters: a per-tile log-distance pair that a planning tool
+can reuse. Link geometry: per-link obstruction or image features. Network
+level: serving site, SINR, coverage or cell edges scored against the truth.
+Planning: site selection or dimensioning. Guarantee: a statistical coverage
+guarantee for the transferred model.}
+\label{tab:related}
+\footnotesize\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccccc>{\raggedright\arraybackslash}p{5.4cm}}
+\toprule
+Reference & Cross-city & Tile parameters & Link geometry & Network level &
+Planning & Guarantee & Main limitation with respect to this study \\
+\midrule
+MAPLE~\cite{ozyurt2020maple} & \checkmark & \checkmark & -- & -- & -- & -- &
+Tile-similarity estimation of mixed-path propagation; evaluated through the
+propagation estimate rather than through planning quantities. \\
+Ozyurt~\cite{ozyurt2026} & \checkmark & \checkmark & -- & -- & -- & -- &
+Two cities with confidential measurements, each the source of the other;
+received-power error against empirical models only. \\
+Thrane et al.~\cite{thrane2020} & -- & -- & \checkmark & -- & -- & -- &
+Measurements from one area at \SI{2.6}{\giga\hertz}; path loss only. \\
+Gupta et al.~\cite{gupta2022} & -- & -- & \checkmark & -- & -- & -- &
+One city at \SI{28}{\giga\hertz}; path loss only. \\
+Dempsey et al.~\cite{dempsey2025} & \checkmark & -- & \checkmark & -- & -- & -- &
+Path loss only; no reusable parameter representation and no planning
+quantities. \\
+RadioUNet~\cite{levie2021radiounet} & -- & -- & -- & -- & -- & -- &
+Dense map prediction on simulated maps, split at random rather than held out
+by city. \\
+RadioDiff~\cite{wang2025radiodiff} & -- & -- & -- & -- & -- & -- &
+Generative map prediction on simulated maps; no network-level evaluation. \\
+Hoydis et al.~\cite{hoydis2024learning} & -- & -- & \checkmark & -- & -- & -- &
+Calibration of a ray tracer to measurements of one area; the ray tracer
+remains the predictor. \\
+Amaldi et al.~\cite{amaldi2003} & -- & -- & -- & \checkmark & \checkmark & -- &
+Optimisation with given propagation predictions; no learned or transferred
+model. \\
+\textbf{This work} & \checkmark & \checkmark & \checkmark & \checkmark &
+\checkmark & \checkmark & Ray-traced rather than measured truth; eleven
+cities limit the power of city-level tests. \\
+\bottomrule
+\end{tabular}
+\end{table*}

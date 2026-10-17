@@ -2,8 +2,8 @@
 
 Code, data and manuscript for
 
-> **Cross-city path-loss transfer for 6G digital-twin network planning: why
-> tile parameters fall short and how site-aware link models close the gap**
+> **Cross-city propagation-model transfer for network planning in 6G digital
+> twin networks: tile parameters versus site-aware link models**
 
 The repository reproduces every number, table and figure of the manuscript
 (`paper/main.pdf`) from the ray-traced corpora with one command.
@@ -75,7 +75,7 @@ make test               # unit tests + an end-to-end run on a synthetic corpus
 
 `make reproduce` needs no GPU and no network access; it runs from the
 ray-traced corpora in `data/raw/`. The wall-clock time of every step is
-recorded in `outputs/tables/runtime.csv` and reported in the appendix of the
+recorded in `outputs/tables/runtime.csv` and reported in the experimental-setting section of the
 manuscript (about one CPU-day on four cores for the nested protocol).
 `paper/scripts/check_build.py` fails the LaTeX build on undefined
 references, unused or missing generated macros and tables, and on any
